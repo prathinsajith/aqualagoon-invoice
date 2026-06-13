@@ -1,0 +1,93 @@
+export const COMPANY_NAME = "Aqua Lagoon";
+export const COMPANY_TAGLINE = "Swimming Pool & Kids Water Park";
+
+export interface NavItem {
+    title: string;
+    url: string;
+    icon: string;
+    /** When set, the item is shown only if the user holds this permission. */
+    permission?: string;
+    children?: {
+        title: string;
+        href: string;
+    }[];
+}
+
+export const NAVBAR_DATA: {
+    navMain: NavItem[];
+    navSecondary: NavItem[];
+} = {
+    navMain: [
+        {
+            title: "Dashboard",
+            url: "/dashboard",
+            icon: 'IconLayoutDashboard',
+        },
+        // Hidden for now — uncomment to restore.
+        // {
+        //     title: "Calendar",
+        //     url: "/calendar",
+        //     icon: 'IconCalendar',
+        // },
+        // {
+        //     title: "Status",
+        //     url: "/status",
+        //     icon: 'IconAnalyze',
+        // },
+        {
+            title: "Users",
+            url: "/users",
+            icon: 'IconUsers',
+            permission: 'user.view',
+        },
+        // Products & Categories now live under Settings (profile dropdown → Settings).
+        {
+            // POS is launched as a full-screen "New sale" modal from the Invoices page.
+            title: "Invoices",
+            url: "/invoices",
+            icon: 'IconReceipt',
+            permission: 'invoice.view',
+        },
+        {
+            title: "Passes",
+            url: "/passes",
+            icon: 'IconTicket',
+            permission: 'pass.view',
+        },
+        // Roles management now lives under Settings (profile dropdown → Settings).
+        {
+            title: "Audit Logs",
+            url: "/audit-logs",
+            icon: 'IconHistory',
+            permission: 'audit.view',
+        },
+        // Hidden for now — uncomment to restore.
+        // {
+        //     title: "Analytics",
+        //     url: "/analytics",
+        //     icon: 'IconChartBar',
+        // },
+    ],
+    navSecondary: [
+        {
+            title: "Profile",
+            url: "/profile",
+            icon: 'IconUserCircle',
+        },
+        {
+            title: "Settings",
+            url: "/settings",
+            icon: 'IconSettings',
+        },
+        {
+            title: "Get Help",
+            url: "/help",
+            icon: 'IconHelp',
+        },
+        {
+            title: "Search",
+            url: "/search",
+            icon: 'IconSearch',
+        },
+    ],
+}

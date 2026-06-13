@@ -1,0 +1,22 @@
+# dependencies
+/node_modules
+
+# build output
+/dist
+
+# generated prisma client (regenerated via `pnpm prisma:generate`)
+/src/generated
+
+# env files
+.env
+.env.*
+!.env.example
+
+# uploaded files (user avatars, etc.)
+/uploads
+
+# logs
+*.log
+
+# misc
+.DS_Store

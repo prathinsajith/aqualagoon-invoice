@@ -1,0 +1,39 @@
+/* FullCalendar Dark Mode Fix */
+.dark .fc-theme-standard .fc-scrollgrid,
+.dark .fc-theme-standard td,
+.dark .fc-theme-standard th {
+    border-color: rgb(63 63 70) !important;
+    /* zinc-700 */
+}
+
+.dark .fc .fc-col-header-cell-cushion {
+    color: white !important;
+}
+
+.dark .fc .fc-daygrid-day-number,
+.dark .fc .fc-daygrid-day-top {
+    color: white !important;
+}
+
+.dark .fc .fc-toolbar-title {
+    color: white !important;
+}
+
+.dark .fc .fc-button {
+    background-color: rgb(63 63 70) !important;
+    color: white !important;
+    border-color: rgb(82 82 91) !important;
+}
+
+.dark .fc .fc-button:not(:disabled):hover {
+    background-color: rgb(82 82 91) !important;
+}
+
+.dark .fc .fc-col-header-cell {
+    background-color: rgb(39 39 42) !important;
+    /* zinc-900-ish */
+}
+
+.dark .fc .fc-col-header-cell {
+    background-color: rgb(24 24 27) !important;
+}

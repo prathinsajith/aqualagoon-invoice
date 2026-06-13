@@ -1,0 +1,175 @@
+import type { PrismaClient } from "../../generated/prisma/client.js";
+import { invoiceSummaryInclude, toInvoiceSummaryDto } from "../billing/billing.types.js";
+import type { InvoiceSummaryDto } from "../billing/billing.types.js";
+
+export interface SalesSummary {
+  invoices: number;
+  revenue: number;
+  itemsSold: number;
+}
+
+export interface TopProduct {
+  productId: string;
+  name: string;
+  quantitySold: number;
+  revenue: number;
+  /** Current stock on hand, or null if the product no longer exists. */
+  stockRemaining: number | null;
+}
+
+export interface LowStockProduct {
+  id: string;
+  name: string;
+  sku: string;
+  stockQuantity: number;
+  minimumStock: number;
+}
+
+export interface PaymentMethodTotal {
+  paymentMethodId: string;
+  name: string;
+  amount: number;
+}
+
+/** Inclusive date window used to scope dashboard analytics. */
+export interface DateRange {
+  from?: Date;
+  to?: Date;
+}
+
+export class DashboardService {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  /**
+   * Builds a Prisma date filter from a range. When neither bound is given it
+   * falls back to "today" (start of the current day onward) when `defaultToday`
+   * is set, otherwise returns undefined (no date constraint).
+   */
+  private dateFilter(
+    range: DateRange | undefined,
+    defaultToday: boolean,
+  ): { gte?: Date; lte?: Date } | undefined {
+    if (range?.from || range?.to) {
+      return {
+        ...(range.from ? { gte: range.from } : {}),
+        ...(range.to ? { lte: range.to } : {}),
+      };
+    }
+    if (!defaultToday) return undefined;
+    const now = new Date();
+    return { gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) };
+  }
+
+  /** Amount received in the range, grouped by payment method (excludes cancelled). */
+  async paymentsByMethod(range?: DateRange): Promise<PaymentMethodTotal[]> {
+    const paymentDate = this.dateFilter(range, true);
+    const rows = await this.prisma.payment.groupBy({
+      by: ["paymentMethodId"],
+      where: {
+        ...(paymentDate ? { paymentDate } : {}),
+        invoice: { status: { not: "CANCELLED" } },
+      },
+      _sum: { amount: true },
+      orderBy: { _sum: { amount: "desc" } },
+    });
+    if (rows.length === 0) return [];
+
+    const methods = await this.prisma.paymentMethod.findMany({
+      where: { id: { in: rows.map((r) => r.paymentMethodId) } },
+      select: { id: true, name: true },
+    });
+    const nameById = new Map(methods.map((m) => [m.id, m.name]));
+
+    return rows.map((r) => ({
+      paymentMethodId: r.paymentMethodId,
+      name: nameById.get(r.paymentMethodId) ?? "Unknown",
+      amount: r._sum.amount?.toNumber() ?? 0,
+    }));
+  }
+
+  /** Sales metrics for the range (defaults to today; excludes cancelled invoices). */
+  async salesSummary(range?: DateRange): Promise<SalesSummary> {
+    const createdAt = this.dateFilter(range, true);
+    const where = {
+      ...(createdAt ? { createdAt } : {}),
+      status: { not: "CANCELLED" as const },
+    };
+
+    const [invoices, agg, items] = await Promise.all([
+      this.prisma.invoice.count({ where }),
+      this.prisma.invoice.aggregate({ where, _sum: { totalAmount: true } }),
+      this.prisma.invoiceItem.aggregate({ where: { invoice: where }, _sum: { quantity: true } }),
+    ]);
+
+    return {
+      invoices,
+      revenue: agg._sum.totalAmount?.toNumber() ?? 0,
+      itemsSold: items._sum.quantity ?? 0,
+    };
+  }
+
+  /** Best-selling products by units sold in the range (excluding cancelled). */
+  async topProducts(limit: number, range?: DateRange): Promise<TopProduct[]> {
+    const createdAt = this.dateFilter(range, false);
+    const rows = await this.prisma.invoiceItem.groupBy({
+      by: ["itemId", "itemName"],
+      where: {
+        itemType: "PRODUCT",
+        invoice: { status: { not: "CANCELLED" }, ...(createdAt ? { createdAt } : {}) },
+      },
+      _sum: { quantity: true, totalAmount: true },
+      orderBy: { _sum: { quantity: "desc" } },
+      take: limit,
+    });
+
+    // Pull current stock for the listed products so the dashboard can show
+    // "still in stock" alongside units sold.
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: rows.map((r) => r.itemId) } },
+      select: { id: true, stockQuantity: true },
+    });
+    const stockById = new Map(products.map((p) => [p.id, p.stockQuantity]));
+
+    return rows.map((r) => ({
+      productId: r.itemId,
+      name: r.itemName,
+      quantitySold: r._sum.quantity ?? 0,
+      revenue: r._sum.totalAmount?.toNumber() ?? 0,
+      stockRemaining: stockById.get(r.itemId) ?? null,
+    }));
+  }
+
+  /**
+   * Active products at or below their minimum stock (most urgent first). Uses a
+   * raw query because Prisma's `where` can't compare two columns.
+   */
+  async lowStock(limit: number): Promise<LowStockProduct[]> {
+    const rows = await this.prisma.$queryRaw<
+      { id: string; name: string; sku: string; stock_quantity: number; minimum_stock: number }[]
+    >`
+      SELECT id, name, sku, stock_quantity, minimum_stock
+      FROM products
+      WHERE deleted_at IS NULL AND status = 'ACTIVE' AND stock_quantity <= minimum_stock
+      ORDER BY stock_quantity ASC, name ASC
+      LIMIT ${limit}
+    `;
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      sku: r.sku,
+      stockQuantity: Number(r.stock_quantity),
+      minimumStock: Number(r.minimum_stock),
+    }));
+  }
+
+  async recentInvoices(limit: number, range?: DateRange): Promise<InvoiceSummaryDto[]> {
+    const createdAt = this.dateFilter(range, false);
+    const rows = await this.prisma.invoice.findMany({
+      where: createdAt ? { createdAt } : undefined,
+      include: invoiceSummaryInclude,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+    return rows.map(toInvoiceSummaryDto);
+  }
+}

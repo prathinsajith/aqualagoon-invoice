@@ -1,0 +1,289 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/**
+ * Light Theme (Default)
+ * Primary Color: #12284c (Deep Navy Blue)
+ * Designed for maximum readability and professional appearance
+ */
+:root {
+  /* Metronic 8 Color Palette */
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Metronic Neutrals (Cool Grays) */
+  --color-gray-50: #f9f9fc;
+  --color-gray-100: #f1f1f4;
+  --color-gray-200: #e4e6ef;
+  --color-gray-300: #b5b5c3;
+  --color-gray-400: #a1a5b7;
+  --color-gray-500: #7e8299;
+  --color-gray-600: #5e6278;
+  --color-gray-700: #3f4254;
+  --color-gray-800: #181c32;
+  --color-gray-900: #131628;
+
+  /* Aqua Lagoon Brand — bright cyan → azure blue, matched to the logo */
+  --color-aqua-50: #e9f6fe;
+  --color-aqua-100: #cdeafd;
+  --color-aqua-200: #a3d8fa;
+  /* "AQUA" light cyan */
+  --color-aqua-500: #29abe2;
+  /* "LAGOON" vivid azure — Primary */
+  --color-aqua-600: #0a84d6;
+  --color-aqua-700: #0866ab;
+
+  /* Kept for any legacy references */
+  --color-blue-50: #e9f6fe;
+  --color-blue-100: #cdeafd;
+  --color-blue-500: #29abe2;
+  --color-blue-600: #0a84d6;
+  --color-blue-700: #0866ab;
+
+  --color-green-50: #e8fff3;
+  --color-green-100: #c9f7f5;
+  --color-green-500: #1bc5bd;
+  --color-green-600: #0bb783;
+
+  --color-red-50: #ffe2e5;
+  --color-red-100: #f8d7da;
+  --color-red-500: #f64e60;
+  --color-red-600: #ee2d41;
+
+  --color-yellow-50: #fff4de;
+  --color-yellow-100: #fff0c2;
+  --color-yellow-500: #ffa800;
+  --color-yellow-600: #ffc700;
+
+  /* Shadcn Theme Mapping to Metronic Colors */
+  --background: var(--color-white);
+  /* Light gray background for the app */
+  --foreground: var(--color-gray-800);
+
+  --card: var(--color-white);
+  --card-foreground: var(--color-gray-800);
+
+  --popover: var(--color-white);
+  --popover-foreground: var(--color-gray-800);
+
+  --primary: var(--color-aqua-600);
+  --primary-foreground: var(--color-white);
+
+  --secondary: var(--color-gray-100);
+  --secondary-foreground: var(--color-gray-700);
+
+  --muted: var(--color-gray-100);
+  --muted-foreground: var(--color-gray-500);
+
+  --accent: var(--color-gray-100);
+  --accent-foreground: var(--color-gray-800);
+
+  --destructive: var(--color-red-500);
+  --destructive-foreground: var(--color-white);
+
+  --border: var(--color-gray-200);
+  /* Soften borders */
+  --input: var(--color-gray-200);
+  --ring: var(--color-aqua-600);
+
+  --radius: 0.75rem;
+  /* 12px for cards */
+
+  /* Chart Colors */
+  --chart-1: var(--color-aqua-600);
+  --chart-2: var(--color-green-500);
+  --chart-3: var(--color-yellow-500);
+  --chart-4: var(--color-red-500);
+  --chart-5: var(--color-gray-500);
+
+  /* Sidebar Colors */
+  --sidebar: var(--color-white);
+  --sidebar-foreground: var(--color-gray-600);
+  --sidebar-primary: var(--color-aqua-600);
+  --sidebar-primary-foreground: var(--color-white);
+  --sidebar-accent: var(--color-aqua-50);
+  --sidebar-accent-foreground: var(--color-aqua-600);
+  --sidebar-border: var(--color-gray-200);
+  --sidebar-ring: var(--color-aqua-600);
+}
+
+.dark {
+  --background: var(--color-gray-900);
+  --foreground: var(--color-gray-50);
+
+  --card: var(--color-gray-800);
+  --card-foreground: var(--color-gray-50);
+
+  --popover: var(--color-gray-800);
+  --popover-foreground: var(--color-gray-50);
+
+  --primary: var(--color-aqua-600);
+  --primary-foreground: var(--color-white);
+
+  --secondary: var(--color-gray-700);
+  --secondary-foreground: var(--color-gray-50);
+
+  --muted: var(--color-gray-800);
+  --muted-foreground: var(--color-gray-400);
+
+  --accent: var(--color-gray-700);
+  --accent-foreground: var(--color-gray-50);
+
+  --destructive: var(--color-red-500);
+  --destructive-foreground: var(--color-white);
+
+  --border: var(--color-gray-800);
+  /* Input border must stay lighter than --card (gray-800) so fields read as boxes */
+  --input: var(--color-gray-700);
+  --ring: var(--color-aqua-600);
+
+  --sidebar: var(--color-gray-900);
+  --sidebar-foreground: var(--color-gray-400);
+  --sidebar-primary: var(--color-aqua-600);
+  --sidebar-primary-foreground: var(--color-white);
+  --sidebar-accent: var(--color-gray-800);
+  --sidebar-accent-foreground: var(--color-white);
+  --sidebar-border: var(--color-gray-700);
+  --sidebar-ring: var(--color-aqua-600);
+}
+
+/* ... existing base styles ... */
+
+/* FullCalendar Custom Theme Overrides - Friendly Style */
+.fc {
+  --fc-border-color: var(--border);
+  --fc-button-text-color: var(--primary-foreground);
+  --fc-button-bg-color: var(--primary);
+  --fc-button-border-color: var(--primary);
+  --fc-button-hover-bg-color: oklch(from var(--primary) l c h / 0.9);
+  --fc-button-hover-border-color: oklch(from var(--primary) l c h / 0.9);
+  --fc-button-active-bg-color: oklch(from var(--primary) l c h / 0.8);
+  --fc-button-active-border-color: oklch(from var(--primary) l c h / 0.8);
+
+  /* Softer Event Styling */
+  --fc-event-bg-color: var(--chart-1);
+  /* Use friendly blue */
+  --fc-event-border-color: var(--chart-1);
+  --fc-today-bg-color: oklch(from var(--primary) l c h / 0.05);
+  /* Very subtle today highlight */
+  --fc-neutral-bg-color: var(--muted);
+  --fc-list-event-hover-bg-color: var(--muted);
+  --fc-page-bg-color: var(--card);
+}
+
+
+
+/* ... existing root vars ... */
+
+/* Metronic 8 Style Utilities */
+
+/* Solid Card Style */
+.metronic-card {
+  @apply bg-card border-0 shadow-sm rounded-xl transition-all duration-200 hover:shadow-md;
+}
+
+/* Active State (Light Primary) */
+.metronic-active {
+  @apply bg-primary/10 text-primary font-semibold;
+}
+
+/* Data Table Styles - Metronic Style */
+.table-container {
+  @apply rounded-xl border border-border/40 bg-card text-card-foreground shadow-sm overflow-hidden;
+}
+
+.table-header {
+  @apply bg-muted/50 text-muted-foreground font-bold text-[11px] uppercase tracking-wider border-b border-border;
+  /* In dark mode the muted band matches the card, so lift the header with a
+     lighter overlay + a clearer divider for contrast against the rows. */
+  @apply dark:bg-white/[0.055] dark:border-white/15;
+}
+
+.table-row {
+  @apply transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted/50 border-b border-border/60 dark:border-white/15 last:border-0;
+}
+
+.fc .fc-event {
+  @apply rounded-md shadow-sm border-0 px-2 py-0.5 text-white font-medium;
+  /* Pill shape with white text */
+}
+
+.fc .fc-toolbar-title {
+  @apply text-xl font-semibold tracking-tight text-foreground;
+}
+
+.fc .fc-button {
+  @apply font-medium text-sm px-4 py-2 rounded-full shadow-sm transition-all;
+  /* Rounded buttons */
+}
+
+.fc .fc-daygrid-day-number {
+  @apply text-sm font-medium text-muted-foreground p-2 no-underline;
+  /* Remove underline */
+}
+
+.fc .fc-col-header-cell-cushion {
+  @apply text-sm font-medium text-muted-foreground py-3 no-underline;
+  /* Remove underline */
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+  @apply border-border/30;
+  /* Extremely subtle grid lines */
+}
+
+
+/* Print Styles */
+@media print {
+  * {
+    @apply text-foreground bg-background;
+  }
+
+  body {
+    @apply text-sm;
+  }
+}
