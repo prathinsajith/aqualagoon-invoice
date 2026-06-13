@@ -31,7 +31,8 @@ export function SectionCard({
 }) {
   return (
     <Card className="border-0 shadow-sm">
-      <CardHeader className="flex-row items-center gap-3 space-y-0">
+      {/* Force flex over CardHeader's default grid so the icon and title sit inline. */}
+      <CardHeader className="flex! flex-row items-center gap-3 space-y-0">
         <span
           className={cn(
             "flex size-10 shrink-0 items-center justify-center rounded-xl",

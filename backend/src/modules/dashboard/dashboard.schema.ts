@@ -47,6 +47,36 @@ export const paymentsByMethodResponse = z.object({
   ),
 });
 
+export const revenueBreakdownResponse = z.object({
+  data: z.object({
+    product: z.number(),
+    pass: z.number(),
+    total: z.number(),
+  }),
+});
+
+export const passesByTypeResponse = z.object({
+  data: z.array(
+    z.object({
+      passTypeId: z.string(),
+      name: z.string(),
+      count: z.number().int(),
+      revenue: z.number(),
+    }),
+  ),
+});
+
+export const topPassBuyersResponse = z.object({
+  data: z.array(
+    z.object({
+      userId: z.string().nullable(),
+      name: z.string(),
+      passCount: z.number().int(),
+      totalSpent: z.number(),
+    }),
+  ),
+});
+
 /** Inclusive date window shared by the analytical dashboard endpoints. */
 const dateRange = {
   from: z.coerce.date().optional(),

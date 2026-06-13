@@ -64,6 +64,9 @@ export const PERMISSIONS: PermissionDef[] = [
   def("payment_method", "update", "Update payment methods"),
   def("payment_method", "delete", "Delete payment methods"),
 
+  // Dashboard (admin analytics overview)
+  def("dashboard", "view", "View the admin dashboard"),
+
   // Billing / POS
   def("billing", "view", "View billing dashboard & sales summaries"),
   def("billing", "create", "Create invoices via POS billing"),

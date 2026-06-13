@@ -24,7 +24,7 @@ function layout(brand: MailBranding, bodyHtml: string): string {
           <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="width:480px;max-width:92%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
             <tr>
               <td style="background:linear-gradient(135deg,${AQUA_LIGHT},${AQUA});padding:28px 32px;text-align:center;">
-                <img src="${brand.logoUrl}" width="64" height="64" alt="${name}" style="display:inline-block;width:64px;height:64px;border-radius:16px;background:#ffffff;padding:6px;border:0;outline:none;text-decoration:none;" />
+                <img src="${escapeHtml(brand.logoUrl)}" width="64" height="64" alt="${name}" style="display:inline-block;width:64px;height:64px;border-radius:16px;background:#ffffff;padding:6px;border:0;outline:none;text-decoration:none;" />
                 <div style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-0.3px;margin-top:14px;">${name}</div>
                 ${brand.tagline ? `<div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:4px;">${escapeHtml(brand.tagline)}</div>` : ""}
               </td>

@@ -1,3 +1,5 @@
+import type { PassKind } from "@/types/pass";
+
 export type InvoiceStatus =
     | "DRAFT"
     | "PENDING"
@@ -87,6 +89,7 @@ export interface IssuedPass {
     id: string;
     passNumber: string;
     passTypeName: string;
+    holderName: string | null;
     expiryTime: string;
 }
 
@@ -109,6 +112,8 @@ export interface CatalogItem {
     stockQuantity: number | null;
     subtitle: string | null;
     imageUrl: string | null;
+    /** The pass kind (null for products) — drives POS quantity rules. */
+    passKind: PassKind | null;
 }
 
 export interface Receipt {
@@ -167,4 +172,25 @@ export interface PaymentMethodTotal {
     paymentMethodId: string;
     name: string;
     amount: number;
+}
+
+export interface PassTypeTotal {
+    passTypeId: string;
+    name: string;
+    count: number;
+    revenue: number;
+}
+
+/** Revenue split by what was sold — products vs passes — for a date range. */
+export interface RevenueBreakdown {
+    product: number;
+    pass: number;
+    total: number;
+}
+
+export interface TopPassBuyer {
+    userId: string | null;
+    name: string;
+    passCount: number;
+    totalSpent: number;
 }

@@ -8,10 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { DateText } from "@/components/date-text";
 import { IconArrowRight } from "@tabler/icons-react";
 import { useRoles } from "@/hooks/queries/use-roles";
+import { humanizeAction, titleCase } from "./audit-utils";
 import type { AuditLog } from "@/types/rbac";
 
 // Technical / identifier fields we never surface as changes.
@@ -45,32 +45,7 @@ const LABELS: Record<string, string> = {
   userCodePrefix: "User code prefix",
 };
 
-const titleCase = (s: string) =>
-  s.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase()).trim();
-
 const labelize = (key: string) => LABELS[key] ?? titleCase(key);
-
-/** "PRODUCT_CATEGORY_UPDATE" -> "Product category updated". */
-export function humanizeAction(action: string): string {
-  const VERBS: Record<string, string> = {
-    CREATE: "created",
-    UPDATE: "updated",
-    DELETE: "deleted",
-    RESTORE: "restored",
-    LOGIN: "signed in",
-    LOGOUT: "signed out",
-    LOGOUT_ALL: "signed out everywhere",
-    ASSIGNMENT: "assignment changed",
-  };
-  const parts = action.split("_");
-  const last = parts[parts.length - 1];
-  if (VERBS[action]) return VERBS[action].replace(/^./, (c) => c.toUpperCase());
-  if (last && VERBS[last]) {
-    const subject = parts.slice(0, -1).join(" ").toLowerCase();
-    return `${subject.charAt(0).toUpperCase()}${subject.slice(1)} ${VERBS[last]}`;
-  }
-  return titleCase(action.toLowerCase().replace(/_/g, " "));
-}
 
 /** Renders a stored value as a human label, resolving ids/objects to names. */
 function useValueFormatter() {
@@ -114,10 +89,15 @@ function diffRows(oldData: unknown, newData: unknown): Row[] {
   const o = (oldData ?? {}) as Record<string, unknown>;
   const n = (newData ?? {}) as Record<string, unknown>;
   const keys = Array.from(new Set([...Object.keys(o), ...Object.keys(n)]));
-  return keys
-    .filter((k) => !SKIP.has(k))
-    .map((k) => ({ key: k, before: o[k], after: n[k] }))
-    .filter((r) => JSON.stringify(r.before) !== JSON.stringify(r.after));
+  // Single pass: skip ignored keys and keep only changed values.
+  const rows: Row[] = [];
+  for (const k of keys) {
+    if (SKIP.has(k)) continue;
+    if (JSON.stringify(o[k]) !== JSON.stringify(n[k])) {
+      rows.push({ key: k, before: o[k], after: n[k] });
+    }
+  }
+  return rows;
 }
 
 export function AuditLogDetailDialog({

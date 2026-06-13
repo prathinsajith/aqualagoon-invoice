@@ -31,6 +31,25 @@ export interface PaymentMethodTotal {
   amount: number;
 }
 
+export interface PassTypeTotal {
+  passTypeId: string;
+  name: string;
+  /** Number of passes issued in the range. */
+  count: number;
+  /** Revenue from those passes (sum of final amount). */
+  revenue: number;
+}
+
+export interface TopPassBuyer {
+  /** Registered holder id, or null for a walk-in (named) buyer. */
+  userId: string | null;
+  name: string;
+  /** Passes bought in the range. */
+  passCount: number;
+  /** Total spent on those passes. */
+  totalSpent: number;
+}
+
 /** Inclusive date window used to scope dashboard analytics. */
 export interface DateRange {
   from?: Date;
@@ -85,6 +104,104 @@ export class DashboardService {
       name: nameById.get(r.paymentMethodId) ?? "Unknown",
       amount: r._sum.amount?.toNumber() ?? 0,
     }));
+  }
+
+  /**
+   * Revenue split by what was sold — products vs passes — for the range
+   * (defaults to today; excludes cancelled invoices). Summing invoice-item
+   * totals keeps each stream isolated (product totals include their tax; passes
+   * are untaxed), and `total` is their sum.
+   */
+  async revenueBreakdown(range?: DateRange): Promise<{ product: number; pass: number; total: number }> {
+    const createdAt = this.dateFilter(range, true);
+    const rows = await this.prisma.invoiceItem.groupBy({
+      by: ["itemType"],
+      where: {
+        invoice: { status: { not: "CANCELLED" }, ...(createdAt ? { createdAt } : {}) },
+      },
+      _sum: { totalAmount: true },
+    });
+
+    let product = 0;
+    let pass = 0;
+    for (const r of rows) {
+      const amount = r._sum.totalAmount?.toNumber() ?? 0;
+      if (r.itemType === "PRODUCT") product += amount;
+      else if (r.itemType === "PASS") pass += amount;
+    }
+    return { product, pass, total: product + pass };
+  }
+
+  /** Passes issued in the range, grouped by pass type (defaults to today; excludes cancelled). */
+  async passesByType(range?: DateRange): Promise<PassTypeTotal[]> {
+    const createdAt = this.dateFilter(range, true);
+    const rows = await this.prisma.userPass.groupBy({
+      by: ["passTypeId"],
+      where: {
+        ...(createdAt ? { createdAt } : {}),
+        status: { not: "CANCELLED" },
+      },
+      _count: { _all: true },
+      _sum: { finalAmount: true },
+      orderBy: { _count: { passTypeId: "desc" } },
+    });
+    if (rows.length === 0) return [];
+
+    const types = await this.prisma.passType.findMany({
+      where: { id: { in: rows.map((r) => r.passTypeId) } },
+      select: { id: true, name: true },
+    });
+    const nameById = new Map(types.map((t) => [t.id, t.name]));
+
+    return rows.map((r) => ({
+      passTypeId: r.passTypeId,
+      name: nameById.get(r.passTypeId) ?? "Unknown",
+      count: r._count._all,
+      revenue: r._sum.finalAmount?.toNumber() ?? 0,
+    }));
+  }
+
+  /** Top pass buyers in the range by number of passes bought (defaults to today). */
+  async topPassBuyers(limit: number, range?: DateRange): Promise<TopPassBuyer[]> {
+    const createdAt = this.dateFilter(range, true);
+    const rows = await this.prisma.userPass.findMany({
+      where: {
+        ...(createdAt ? { createdAt } : {}),
+        status: { not: "CANCELLED" },
+      },
+      select: {
+        userId: true,
+        holderName: true,
+        finalAmount: true,
+        user: { select: { firstName: true, lastName: true } },
+      },
+    });
+
+    // Aggregate per holder — registered users key on their id, walk-ins on their
+    // captured name so each named buyer is counted separately.
+    const byBuyer = new Map<string, TopPassBuyer>();
+    for (const r of rows) {
+      const key = r.userId ?? `walk-in:${r.holderName ?? "Unknown"}`;
+      const name = r.user
+        ? `${r.user.firstName} ${r.user.lastName}`.trim()
+        : r.holderName ?? "Walk-in";
+      const existing = byBuyer.get(key);
+      if (existing) {
+        existing.passCount += 1;
+        existing.totalSpent += r.finalAmount.toNumber();
+      } else {
+        byBuyer.set(key, {
+          userId: r.userId,
+          name,
+          passCount: 1,
+          totalSpent: r.finalAmount.toNumber(),
+        });
+      }
+    }
+
+    return [...byBuyer.values()]
+      .sort((a, b) => b.passCount - a.passCount || b.totalSpent - a.totalSpent)
+      .slice(0, limit);
   }
 
   /** Sales metrics for the range (defaults to today; excludes cancelled invoices). */

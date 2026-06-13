@@ -21,9 +21,11 @@ interface MainNavProps {
  */
 export function MainNav({ items, orientation = "horizontal", onNavigate }: MainNavProps) {
   const pathname = usePathname();
-  const { can } = usePermissions();
+  const { can, isAdmin } = usePermissions();
 
-  const visible = items.filter((item) => !item.permission || can(item.permission));
+  const visible = items.filter(
+    (item) => (!item.permission || can(item.permission)) && (!item.adminOnly || isAdmin),
+  );
   const isHorizontal = orientation === "horizontal";
 
   return (

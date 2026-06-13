@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useReducer, useState } from "react";
 import type { PaginationState } from "@tanstack/react-table";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { toast } from "sonner";
@@ -25,6 +25,8 @@ import {
 import { getUserColumns } from "./columns";
 import { UserFormDialog } from "./user-form-dialog";
 import { UserViewDialog } from "./user-view-dialog";
+import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
+import { resolveRangeValue, type RangeValue } from "@/lib/date-range";
 import { useUsers, useUserMutations } from "@/hooks/queries/use-users";
 import { useRoles } from "@/hooks/queries/use-roles";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -34,16 +36,50 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import { USER_STATUSES } from "@/schemas/user";
 import type { ManagedUser } from "@/types/rbac";
 
+interface UserFilters {
+  search: string;
+  status: string;
+  role: string;
+  archived: boolean;
+  range: RangeValue;
+}
+
+const INITIAL_USER_FILTERS: UserFilters = {
+  search: "",
+  status: "all",
+  role: "all",
+  archived: false,
+  // Joined-date window — defaults to all time so the full directory shows.
+  range: { preset: "all" },
+};
+
+interface UserDialogs {
+  form: boolean;
+  editing: ManagedUser | null;
+  viewing: ManagedUser | null;
+  pending: { user: ManagedUser; type: "delete" | "restore" } | null;
+}
+
+const INITIAL_USER_DIALOGS: UserDialogs = { form: false, editing: null, viewing: null, pending: null };
+
 function UsersContent() {
   const { can } = usePermissions();
   const currentUserId = useAuthStore((s) => s.user?.id);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
-  const [searchInput, setSearchInput] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [showArchived, setShowArchived] = useState(false);
+  // Group related state in reducers so one logical update is a single render.
+  const [filters, patchFilters] = useReducer(
+    (state: UserFilters, patch: Partial<UserFilters>) => ({ ...state, ...patch }),
+    INITIAL_USER_FILTERS,
+  );
+  const [dialogs, patchDialogs] = useReducer(
+    (state: UserDialogs, patch: Partial<UserDialogs>) => ({ ...state, ...patch }),
+    INITIAL_USER_DIALOGS,
+  );
+  const { search: searchInput, status: statusFilter, role: roleFilter, archived: showArchived, range: rangeValue } = filters;
+  const { form: formOpen, editing, viewing, pending: pendingAction } = dialogs;
 
   const search = useDebounce(searchInput, 400);
+  const range = useMemo(() => resolveRangeValue(rangeValue), [rangeValue]);
 
   const params = useMemo(
     () => ({
@@ -53,19 +89,15 @@ function UsersContent() {
       status: statusFilter === "all" ? undefined : statusFilter,
       roleId: roleFilter === "all" ? undefined : roleFilter,
       onlyDeleted: showArchived || undefined,
+      createdFrom: range.from.toISOString(),
+      createdTo: range.to.toISOString(),
     }),
-    [pagination, search, statusFilter, roleFilter, showArchived],
+    [pagination, search, statusFilter, roleFilter, showArchived, range],
   );
 
   const { data, isLoading, isError, error } = useUsers(params);
   const { data: rolesData } = useRoles({ limit: 100 });
   const { remove, restore } = useUserMutations();
-
-  // Dialog state.
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<ManagedUser | null>(null);
-  const [viewing, setViewing] = useState<ManagedUser | null>(null);
-  const [pendingAction, setPendingAction] = useState<{ user: ManagedUser; type: "delete" | "restore" } | null>(null);
 
   const resetToFirstPage = () => setPagination((p) => ({ ...p, pageIndex: 0 }));
 
@@ -74,13 +106,10 @@ function UsersContent() {
       getUserColumns({
         can,
         currentUserId,
-        onView: setViewing,
-        onEdit: (u) => {
-          setEditing(u);
-          setFormOpen(true);
-        },
-        onDelete: (u) => setPendingAction({ user: u, type: "delete" }),
-        onRestore: (u) => setPendingAction({ user: u, type: "restore" }),
+        onView: (u) => patchDialogs({ viewing: u }),
+        onEdit: (u) => patchDialogs({ editing: u, form: true }),
+        onDelete: (u) => patchDialogs({ pending: { user: u, type: "delete" } }),
+        onRestore: (u) => patchDialogs({ pending: { user: u, type: "restore" } }),
       }),
     [can, currentUserId],
   );
@@ -96,7 +125,7 @@ function UsersContent() {
         await restore.mutateAsync(user.id);
         toast.success("User restored");
       }
-      setPendingAction(null);
+      patchDialogs({ pending: null });
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     }
@@ -107,10 +136,7 @@ function UsersContent() {
       <PageHeader title="Users" description="Manage user accounts, roles and access.">
         <Can permission="user.create">
           <Button
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
+            onClick={() => patchDialogs({ editing: null, form: true })}
           >
             <IconPlus className="size-4" /> New user
           </Button>
@@ -124,7 +150,7 @@ function UsersContent() {
           <Input
             value={searchInput}
             onChange={(e) => {
-              setSearchInput(e.target.value);
+              patchFilters({ search: e.target.value });
               resetToFirstPage();
             }}
             placeholder="Search name, email, code…"
@@ -135,7 +161,7 @@ function UsersContent() {
         <Select
           value={statusFilter}
           onValueChange={(v) => {
-            setStatusFilter(v);
+            patchFilters({ status: v });
             resetToFirstPage();
           }}
         >
@@ -155,7 +181,7 @@ function UsersContent() {
         <Select
           value={roleFilter}
           onValueChange={(v) => {
-            setRoleFilter(v);
+            patchFilters({ role: v });
             resetToFirstPage();
           }}
         >
@@ -172,16 +198,27 @@ function UsersContent() {
           </SelectContent>
         </Select>
 
-        <label className="flex items-center gap-2 text-sm">
+        <label htmlFor="show-archived" className="flex items-center gap-2 text-sm">
           <Checkbox
+            id="show-archived"
             checked={showArchived}
             onCheckedChange={(v) => {
-              setShowArchived(!!v);
+              patchFilters({ archived: !!v });
               resetToFirstPage();
             }}
           />
           Show archived
         </label>
+
+        <div className="sm:ml-auto">
+          <DateRangeFilter
+            value={rangeValue}
+            onChange={(v) => {
+              patchFilters({ range: v });
+              resetToFirstPage();
+            }}
+          />
+        </div>
       </div>
 
       {isError ? (
@@ -201,16 +238,24 @@ function UsersContent() {
           totalItems={data?.meta.pagination.totalItems ?? 0}
           pagination={pagination}
           onPaginationChange={setPagination}
-          onRowClick={setViewing}
+          onRowClick={(u) => patchDialogs({ viewing: u })}
           showColumnVisibility={false}
         />
       )}
 
-      <UserFormDialog open={formOpen} onOpenChange={setFormOpen} user={editing} />
-      <UserViewDialog user={viewing} open={!!viewing} onOpenChange={(o) => !o && setViewing(null)} />
+      <UserFormDialog
+        open={formOpen}
+        onOpenChange={(o) => patchDialogs({ form: o })}
+        user={editing}
+      />
+      <UserViewDialog
+        user={viewing}
+        open={!!viewing}
+        onOpenChange={(o) => !o && patchDialogs({ viewing: null })}
+      />
       <ConfirmDialog
         open={!!pendingAction}
-        onOpenChange={(o) => !o && setPendingAction(null)}
+        onOpenChange={(o) => !o && patchDialogs({ pending: null })}
         title={pendingAction?.type === "delete" ? "Archive user?" : "Restore user?"}
         description={
           pendingAction?.type === "delete"

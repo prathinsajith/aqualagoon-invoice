@@ -42,10 +42,9 @@ export class BillingService {
     if (new Set(keys).size !== keys.length) {
       throw BadRequest("Duplicate items in cart — combine them into one line.");
     }
-    for (const it of input.items) {
-      if (it.itemType === "PASS" && it.quantity !== 1) {
-        throw BadRequest("Each pass is sold individually (quantity 1).");
-      }
+    // Only one pass (type) may be sold per sale; its quantity can still be > 1.
+    if (input.items.filter((i) => i.itemType === "PASS").length > 1) {
+      throw BadRequest("Only one pass can be sold per sale.");
     }
 
     const result = await this.prisma.$transaction(async (tx) => {
@@ -71,7 +70,7 @@ export class BillingService {
       let taxTotal = new D(0);
       const itemRows: Prisma.InvoiceItemCreateWithoutInvoiceInput[] = [];
       const stockOps: { id: string; name: string; quantity: number }[] = [];
-      const passOps: { passType: (typeof passTypes)[number]; original: Prisma.Decimal; discount: Prisma.Decimal; net: Prisma.Decimal }[] = [];
+      const passOps: { passType: (typeof passTypes)[number]; quantity: number; original: Prisma.Decimal; discount: Prisma.Decimal; net: Prisma.Decimal }[] = [];
 
       for (const item of input.items) {
         if (item.itemType === "PRODUCT") {
@@ -105,6 +104,10 @@ export class BillingService {
         } else {
           const pt = passTypeById.get(item.id);
           if (!pt) throw BadRequest("One or more passes are unavailable or inactive");
+          // A student pass is an individual membership — only one per sale.
+          if (pt.type === "STUDENT" && item.quantity !== 1) {
+            throw BadRequest("A student pass can only be bought one at a time.");
+          }
           const gross = pt.price;
           // The pass's own built-in discount (NONE / FIXED / PERCENTAGE).
           let discount = new D(0);
@@ -113,21 +116,27 @@ export class BillingService {
           if (discount.greaterThan(gross)) discount = gross;
           discount = discount.toDecimalPlaces(2);
           const net = gross.sub(discount).toDecimalPlaces(2);
+          // A guest may buy several of the same pass at once; each becomes its
+          // own pass (own number) but they share one validity window.
+          const qty = item.quantity;
+          const lineGross = gross.mul(qty);
+          const lineDiscount = discount.mul(qty);
+          const lineNet = net.mul(qty);
 
-          subtotal = subtotal.add(gross);
-          discountTotal = discountTotal.add(discount);
+          subtotal = subtotal.add(lineGross);
+          discountTotal = discountTotal.add(lineDiscount);
           // Passes are not taxed.
           itemRows.push({
             itemType: "PASS",
             itemId: pt.id,
             itemName: pt.name,
-            quantity: 1,
+            quantity: qty,
             unitPrice: gross,
-            discountAmount: discount,
+            discountAmount: lineDiscount,
             taxAmount: new D(0),
-            totalAmount: net,
+            totalAmount: lineNet,
           });
-          passOps.push({ passType: pt, original: gross, discount, net });
+          passOps.push({ passType: pt, quantity: qty, original: gross, discount, net });
         }
       }
 
@@ -211,38 +220,62 @@ export class BillingService {
       // 9. Issue + activate passes — only now that payment has succeeded.
       const passes: IssuedPass[] = [];
       const now = new Date();
+      const holderName = input.holderName?.trim() || null;
       for (const op of passOps) {
-        const pseq = await tx.passSequence.upsert({
-          where: { year },
-          create: { year, lastNumber: 1 },
-          update: { lastNumber: { increment: 1 } },
-        });
-        const passNumber = `PASS-${year}-${String(pseq.lastNumber).padStart(6, "0")}`;
+        // All copies of this pass share the same start/expiry window.
         const expiryTime = addDuration(now, op.passType.durationType, op.passType.durationValue);
-        const created = await tx.userPass.create({
-          data: {
-            userId: input.customerId ?? null,
-            passTypeId: op.passType.id,
-            invoiceId: invoice.id,
+        for (let i = 0; i < op.quantity; i++) {
+          const pseq = await tx.passSequence.upsert({
+            where: { year },
+            create: { year, lastNumber: 1 },
+            update: { lastNumber: { increment: 1 } },
+          });
+          const passNumber = `PASS-${year}-${String(pseq.lastNumber).padStart(6, "0")}`;
+          // A single-entry pass is consumed the moment it's issued — taking the
+          // pass IS the one entry, so it starts with 0 left and the entry is logged.
+          const isSingleEntry =
+            op.passType.entryType === "LIMITED" && op.passType.allowedEntries === 1;
+          const created = await tx.userPass.create({
+            data: {
+              userId: input.customerId ?? null,
+              holderName,
+              passTypeId: op.passType.id,
+              invoiceId: invoice.id,
+              passNumber,
+              startTime: now,
+              expiryTime,
+              originalPrice: op.original,
+              discountAmount: op.discount,
+              finalAmount: op.net,
+              remainingEntries:
+                op.passType.entryType === "LIMITED"
+                  ? isSingleEntry
+                    ? 0
+                    : op.passType.allowedEntries
+                  : null,
+              status: "ACTIVE",
+              activatedAt: now,
+              createdBy: actor.userId,
+            },
+          });
+          if (isSingleEntry) {
+            await tx.passUsageLog.create({
+              data: {
+                userPassId: created.id,
+                userId: input.customerId ?? null,
+                entryTime: now,
+                remarks: "Entry recorded on issue (single-entry pass)",
+              },
+            });
+          }
+          passes.push({
+            id: created.id,
             passNumber,
-            startTime: now,
+            passTypeName: op.passType.name,
+            holderName,
             expiryTime,
-            originalPrice: op.original,
-            discountAmount: op.discount,
-            finalAmount: op.net,
-            remainingEntries:
-              op.passType.entryType === "LIMITED" ? op.passType.allowedEntries : null,
-            status: "ACTIVE",
-            activatedAt: now,
-            createdBy: actor.userId,
-          },
-        });
-        passes.push({
-          id: created.id,
-          passNumber,
-          passTypeName: op.passType.name,
-          expiryTime,
-        });
+          });
+        }
       }
 
       const full = await tx.invoice.findUniqueOrThrow({
@@ -323,6 +356,7 @@ export class BillingService {
       stockQuantity: p.stockQuantity,
       subtitle: p.category.name,
       imageUrl: p.imageUrl,
+      passKind: null,
     }));
 
     const passItems: CatalogItemDto[] = passTypes.map((pt) => {
@@ -341,6 +375,7 @@ export class BillingService {
         stockQuantity: null,
         subtitle: `${pt.type} · ${pt.durationValue} ${pt.durationType.toLowerCase()}${pt.durationValue > 1 ? "s" : ""}`,
         imageUrl: null,
+        passKind: pt.type,
       };
     });
 

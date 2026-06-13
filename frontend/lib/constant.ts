@@ -7,6 +7,8 @@ export interface NavItem {
     icon: string;
     /** When set, the item is shown only if the user holds this permission. */
     permission?: string;
+    /** When true, the item is shown only to admins. */
+    adminOnly?: boolean;
     children?: {
         title: string;
         href: string;
@@ -22,6 +24,7 @@ export const NAVBAR_DATA: {
             title: "Dashboard",
             url: "/dashboard",
             icon: 'IconLayoutDashboard',
+            adminOnly: true,
         },
         // Hidden for now — uncomment to restore.
         // {

@@ -21,6 +21,8 @@ export interface CheckoutLine {
 export interface CheckoutPayload {
     customerId?: string | null;
     notes?: string | null;
+    /** Name of the pass holder (used when selling a pass to a walk-in). */
+    holderName?: string | null;
     items: CheckoutLine[];
     payment: {
         paymentMethodId: string;

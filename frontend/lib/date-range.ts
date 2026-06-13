@@ -14,7 +14,9 @@ import {
 
 /** Identifiers for the dashboard date-range presets. */
 export type RangePreset =
+  | "all"
   | "today"
+  | "yesterday"
   | "last7"
   | "thisWeek"
   | "lastWeek"
@@ -34,7 +36,9 @@ const WEEK_OPTS = { weekStartsOn: 1 as const };
 
 /** Preset menu metadata, in display order. `custom` is handled separately. */
 export const RANGE_PRESETS: { value: RangePreset; label: string }[] = [
+  { value: "all", label: "All time" },
   { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
   { value: "last7", label: "Last 7 days" },
   { value: "thisWeek", label: "This week" },
   { value: "lastWeek", label: "Last week" },
@@ -49,8 +53,15 @@ export const DEFAULT_PRESET: Exclude<RangePreset, "custom"> = "today";
 /** Resolves a preset (relative to `now`) into a concrete inclusive window. */
 export function resolvePreset(preset: Exclude<RangePreset, "custom">, now: Date = new Date()): DateRange {
   switch (preset) {
+    case "all":
+      // Effectively unbounded — covers every record without a real window.
+      return { from: new Date(0), to: new Date(Date.UTC(2999, 11, 31, 23, 59, 59, 999)) };
     case "today":
       return { from: startOfDay(now), to: endOfDay(now) };
+    case "yesterday": {
+      const prev = subDays(now, 1);
+      return { from: startOfDay(prev), to: endOfDay(prev) };
+    }
     case "last7":
       return { from: startOfDay(subDays(now, 6)), to: endOfDay(now) };
     case "thisWeek":
@@ -85,4 +96,16 @@ export function toRangeParams(range: DateRange): { from: string; to: string } {
 export function rangeLabel(preset: RangePreset): string {
   if (preset === "custom") return "Custom range";
   return RANGE_PRESETS.find((p) => p.value === preset)?.label ?? "Today";
+}
+
+/** A selected window: a named preset, or a custom from/to pair. */
+export interface RangeValue {
+  preset: RangePreset;
+  custom?: DateRange;
+}
+
+/** Resolves a {@link RangeValue} into the concrete window used for queries. */
+export function resolveRangeValue(value: RangeValue): DateRange {
+  if (value.preset === "custom" && value.custom) return value.custom;
+  return resolvePreset(value.preset === "custom" ? DEFAULT_PRESET : value.preset);
 }

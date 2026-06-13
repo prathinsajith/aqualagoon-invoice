@@ -21,7 +21,8 @@ import { useAuditLogs } from "@/hooks/queries/use-audit-logs";
 import { useDebounce } from "@/hooks/use-debounce";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { DateText } from "@/components/date-text";
-import { AuditLogDetailDialog, humanizeAction } from "./audit-log-detail-dialog";
+import { AuditLogDetailDialog } from "./audit-log-detail-dialog";
+import { humanizeAction } from "./audit-utils";
 import type { AuditLog } from "@/types/rbac";
 
 const MODULES = [

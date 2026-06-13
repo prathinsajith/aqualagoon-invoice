@@ -526,6 +526,8 @@ model UserPass {
   id         String  @id @default(uuid())
   // Holder — null for a bearer pass sold to a walk-in customer.
   userId     String? @map("user_id")
+  // Name captured at sale time — lets walk-in (no account) passes name a holder.
+  holderName String? @map("holder_name")
   passTypeId String  @map("pass_type_id")
   // The invoice that sold this pass (null only for admin-issued passes).
   invoiceId  String? @map("invoice_id")

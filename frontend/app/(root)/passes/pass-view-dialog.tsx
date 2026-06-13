@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import {
+  IconAlertTriangle,
   IconCircleCheck,
   IconLogin,
   IconLogout,
   IconPlayerPause,
-  IconRefresh,
   IconX,
 } from "@tabler/icons-react";
 
@@ -30,6 +30,16 @@ import { usePass, usePassMutations } from "@/hooks/queries/use-passes";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 import type { UserPassStatus } from "@/types/pass";
+
+/** Runs a pass action, toasting success or the API error message. */
+async function run(fn: () => Promise<unknown>, success: string) {
+  try {
+    await fn();
+    toast.success(success);
+  } catch (err) {
+    toast.error(getApiErrorMessage(err));
+  }
+}
 
 function Field({
   label,
@@ -60,30 +70,28 @@ export function PassViewDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { data: pass, isLoading } = usePass(open ? passId : null);
-  const { activate, suspend, cancel, renew, entry, exit } = usePassMutations();
+  const { activate, suspend, cancel, entry, exit } = usePassMutations();
   const [confirm, setConfirm] = useState<null | "suspend" | "cancel">(null);
 
   const busy =
     activate.isPending ||
     suspend.isPending ||
     cancel.isPending ||
-    renew.isPending ||
     entry.isPending ||
     exit.isPending;
 
-  const run = async (fn: () => Promise<unknown>, success: string) => {
-    try {
-      await fn();
-      toast.success(success);
-    } catch (err) {
-      toast.error(getApiErrorMessage(err));
-    }
-  };
-
   const status: UserPassStatus | undefined = pass?.status;
-  const canRenew = status === "ACTIVE" || status === "EXPIRED" || status === "SUSPENDED";
-  const canCancel = status != null && status !== "CANCELLED";
+  const isLimited = pass?.passType.entryType === "LIMITED";
+  // Unlimited passes always allow entry; limited passes only while entries remain.
+  const entriesLeft = isLimited ? pass?.remainingEntries ?? 0 : Infinity;
+  // A limited pass with no entries left is spent — renewal isn't offered; a new
+  // pass should be sold instead.
+  const isExhausted = isLimited && entriesLeft <= 0;
+  // An entry is still open (no exit recorded) — the holder must exit before a
+  // new entry can be recorded, so only one of the two actions shows at a time.
   const hasOpenEntry = pass?.usageLogs.some((l) => l.exitTime === null) ?? false;
+  const canRecordEntry = status === "ACTIVE" && entriesLeft > 0 && !hasOpenEntry;
+  const canCancel = status != null && status !== "CANCELLED";
 
   return (
     <>
@@ -118,15 +126,16 @@ export function PassViewDialog({
                 <Field
                   label="Entries"
                   value={
-                    pass.passType.entryType === "UNLIMITED"
-                      ? "Unlimited"
-                      : `${pass.remainingEntries ?? 0} remaining`
+                    isLimited ? (
+                      <span className={cn(isExhausted && "text-destructive")}>
+                        {pass.remainingEntries ?? 0} remaining
+                      </span>
+                    ) : (
+                      "Unlimited"
+                    )
                   }
                 />
-                <Field
-                  label="Entry type"
-                  value={pass.passType.entryType === "UNLIMITED" ? "Unlimited" : "Limited entries"}
-                />
+                <Field label="Entry type" value={isLimited ? "Limited entries" : "Unlimited"} />
                 <Field label="Paid" value={formatMoney(pass.finalAmount)} />
                 <Field
                   label="Activated"
@@ -134,8 +143,16 @@ export function PassViewDialog({
                 />
               </div>
 
+              {/* Entries used up — a new pass should be issued. */}
+              {isExhausted && status !== "CANCELLED" && (
+                <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+                  <IconAlertTriangle className="size-4 shrink-0" />
+                  Entries used up — issue a new pass for this holder.
+                </div>
+              )}
+
               {/* Actions */}
-              <div className="flex flex-wrap gap-2 border-t pt-4">
+              <div className="flex flex-wrap items-center gap-2 border-t pt-4">
                 {status === "PENDING" && (
                   <Can permission="pass.activate">
                     <Button size="sm" disabled={busy} onClick={() => run(() => activate.mutateAsync(pass.id), "Pass activated")}>
@@ -143,11 +160,10 @@ export function PassViewDialog({
                     </Button>
                   </Can>
                 )}
-                {status === "ACTIVE" && (
+                {canRecordEntry && (
                   <Can permission="pass.view">
                     <Button
                       size="sm"
-                      variant="outline"
                       disabled={busy}
                       onClick={() => run(() => entry.mutateAsync({ id: pass.id }), "Entry recorded")}
                     >
@@ -167,18 +183,6 @@ export function PassViewDialog({
                     </Button>
                   </Can>
                 )}
-                {canRenew && (
-                  <Can permission="pass.renew">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => run(() => renew.mutateAsync({ id: pass.id }), "Pass renewed")}
-                    >
-                      <IconRefresh className="size-4" /> Renew
-                    </Button>
-                  </Can>
-                )}
                 {status === "ACTIVE" && (
                   <Can permission="pass.suspend">
                     <Button size="sm" variant="outline" disabled={busy} onClick={() => setConfirm("suspend")}>
@@ -188,7 +192,13 @@ export function PassViewDialog({
                 )}
                 {canCancel && (
                   <Can permission="pass.cancel">
-                    <Button size="sm" variant="outline" className="text-destructive" disabled={busy} onClick={() => setConfirm("cancel")}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive hover:text-destructive sm:ml-auto"
+                      disabled={busy}
+                      onClick={() => setConfirm("cancel")}
+                    >
                       <IconX className="size-4" /> Cancel
                     </Button>
                   </Can>

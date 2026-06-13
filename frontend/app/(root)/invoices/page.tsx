@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useReducer, useState } from "react";
 import type { PaginationState } from "@tanstack/react-table";
 import { useQueryClient } from "@tanstack/react-query";
 import { IconSearch, IconShoppingCart } from "@tabler/icons-react";
@@ -29,18 +29,46 @@ import {
 import { getInvoiceColumns } from "./columns";
 import { InvoiceViewDialog } from "./invoice-view-dialog";
 import { PosScreen } from "@/components/billing/pos-screen";
+import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
+import { resolveRangeValue, type RangeValue } from "@/lib/date-range";
 import { useInvoices, invoiceKeys } from "@/hooks/queries/use-invoices";
 import { useDebounce } from "@/hooks/use-debounce";
 import { getApiErrorMessage } from "@/lib/api-error";
-import type { InvoiceStatus, InvoiceSummary } from "@/types/billing";
+import type { InvoiceStatus, InvoiceSummary, InvoiceType } from "@/types/billing";
 
 const STATUSES: InvoiceStatus[] = ["DRAFT", "PENDING", "PARTIAL", "PAID", "CANCELLED", "REFUNDED"];
+const TYPES: { value: InvoiceType; label: string }[] = [
+  { value: "PRODUCT", label: "Products" },
+  { value: "PASS", label: "Passes" },
+  { value: "MIXED", label: "Mixed" },
+  { value: "TRAINING", label: "Training" },
+];
+
+interface InvoiceFilters {
+  search: string;
+  status: string;
+  type: string;
+  range: RangeValue;
+}
+
+const INITIAL_INVOICE_FILTERS: InvoiceFilters = {
+  search: "",
+  status: "all",
+  type: "all",
+  range: { preset: "today" },
+};
 
 function InvoicesContent() {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
-  const [searchInput, setSearchInput] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  // One reducer for all filters — a single update never fans out into separate renders.
+  const [filters, patchFilters] = useReducer(
+    (state: InvoiceFilters, patch: Partial<InvoiceFilters>) => ({ ...state, ...patch }),
+    INITIAL_INVOICE_FILTERS,
+  );
+  const { search: searchInput, status: statusFilter, type: typeFilter, range: rangeValue } = filters;
   const search = useDebounce(searchInput, 400);
+
+  const range = useMemo(() => resolveRangeValue(rangeValue), [rangeValue]);
 
   const params = useMemo(
     () => ({
@@ -48,8 +76,11 @@ function InvoicesContent() {
       limit: pagination.pageSize,
       search: search || undefined,
       status: statusFilter === "all" ? undefined : (statusFilter as InvoiceStatus),
+      invoiceType: typeFilter === "all" ? undefined : (typeFilter as InvoiceType),
+      dateFrom: range.from.toISOString(),
+      dateTo: range.to.toISOString(),
     }),
-    [pagination, search, statusFilter],
+    [pagination, search, statusFilter, typeFilter, range],
   );
 
   const { data, isLoading, isError, error } = useInvoices(params);
@@ -76,7 +107,7 @@ function InvoicesContent() {
           <Input
             value={searchInput}
             onChange={(e) => {
-              setSearchInput(e.target.value);
+              patchFilters({ search: e.target.value });
               resetToFirstPage();
             }}
             placeholder="Search invoice number…"
@@ -87,7 +118,7 @@ function InvoicesContent() {
         <Select
           value={statusFilter}
           onValueChange={(v) => {
-            setStatusFilter(v);
+            patchFilters({ status: v });
             resetToFirstPage();
           }}
         >
@@ -103,6 +134,36 @@ function InvoicesContent() {
             ))}
           </SelectContent>
         </Select>
+
+        <Select
+          value={typeFilter}
+          onValueChange={(v) => {
+            patchFilters({ type: v });
+            resetToFirstPage();
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            {TYPES.map((t) => (
+              <SelectItem key={t.value} value={t.value}>
+                {t.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="sm:ml-auto">
+          <DateRangeFilter
+            value={rangeValue}
+            onChange={(v) => {
+              patchFilters({ range: v });
+              resetToFirstPage();
+            }}
+          />
+        </div>
       </div>
 
       {isError ? (

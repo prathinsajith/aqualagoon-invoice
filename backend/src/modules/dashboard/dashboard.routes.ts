@@ -6,10 +6,13 @@ import {
   limitQuery,
   limitRangeQuery,
   lowStockResponse,
+  passesByTypeResponse,
   paymentsByMethodResponse,
   rangeQuery,
   recentInvoicesResponse,
+  revenueBreakdownResponse,
   salesSummaryResponse,
+  topPassBuyersResponse,
   topProductsResponse,
 } from "./dashboard.schema.js";
 
@@ -23,7 +26,7 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
   r.get(
     "/dashboard/sales-summary",
     {
-      preHandler: [app.authenticate, app.requirePermission("billing.view")],
+      preHandler: [app.authenticate, app.requirePermission("dashboard.view")],
       schema: {
         tags,
         summary: "Sales, revenue and invoice count for a date range (default today)",
@@ -36,9 +39,24 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
   );
 
   r.get(
+    "/dashboard/revenue-breakdown",
+    {
+      preHandler: [app.authenticate, app.requirePermission("dashboard.view")],
+      schema: {
+        tags,
+        summary: "Revenue split into products vs passes for a date range (default today)",
+        security,
+        querystring: rangeQuery,
+        response: { 200: revenueBreakdownResponse, ...commonErrors },
+      },
+    },
+    async (request) => ({ data: await service.revenueBreakdown(request.query) }),
+  );
+
+  r.get(
     "/dashboard/top-products",
     {
-      preHandler: [app.authenticate, app.requirePermission("billing.view")],
+      preHandler: [app.authenticate, app.requirePermission("dashboard.view")],
       schema: {
         tags,
         summary: "Top selling products by units sold",
@@ -55,7 +73,7 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
   r.get(
     "/dashboard/recent-invoices",
     {
-      preHandler: [app.authenticate, app.requirePermission("billing.view")],
+      preHandler: [app.authenticate, app.requirePermission("dashboard.view")],
       schema: {
         tags,
         summary: "Most recent invoices",
@@ -72,7 +90,7 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
   r.get(
     "/dashboard/payments-by-method",
     {
-      preHandler: [app.authenticate, app.requirePermission("billing.view")],
+      preHandler: [app.authenticate, app.requirePermission("dashboard.view")],
       schema: {
         tags,
         summary: "Amount received per payment method for a date range (default today)",
@@ -85,9 +103,41 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
   );
 
   r.get(
+    "/dashboard/passes-by-type",
+    {
+      preHandler: [app.authenticate, app.requirePermission("dashboard.view")],
+      schema: {
+        tags,
+        summary: "Passes issued per type for a date range (default today)",
+        security,
+        querystring: rangeQuery,
+        response: { 200: passesByTypeResponse, ...commonErrors },
+      },
+    },
+    async (request) => ({ data: await service.passesByType(request.query) }),
+  );
+
+  r.get(
+    "/dashboard/top-pass-buyers",
+    {
+      preHandler: [app.authenticate, app.requirePermission("dashboard.view")],
+      schema: {
+        tags,
+        summary: "Top pass buyers for a date range (default today)",
+        security,
+        querystring: limitRangeQuery,
+        response: { 200: topPassBuyersResponse, ...commonErrors },
+      },
+    },
+    async (request) => ({
+      data: await service.topPassBuyers(request.query.limit, request.query),
+    }),
+  );
+
+  r.get(
     "/dashboard/low-stock",
     {
-      preHandler: [app.authenticate, app.requirePermission("product.view")],
+      preHandler: [app.authenticate, app.requirePermission("dashboard.view")],
       schema: {
         tags,
         summary: "Active products at or below minimum stock",

@@ -19,6 +19,7 @@ export interface IssuedPass {
   id: string;
   passNumber: string;
   passTypeName: string;
+  holderName: string | null;
   expiryTime: Date;
 }
 

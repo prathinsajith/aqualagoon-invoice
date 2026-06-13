@@ -1,14 +1,18 @@
 import { api } from "@/lib/axios";
 import type { Paginated } from "@/types/rbac";
-import type { UserPass, UserPassDetail, UserPassStatus } from "@/types/pass";
+import type { PassKind, UserPass, UserPassDetail, UserPassStatus } from "@/types/pass";
 
 export interface PassListParams {
     page?: number;
     limit?: number;
     search?: string;
     status?: UserPassStatus;
+    type?: PassKind;
     passTypeId?: string;
     userId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    expiryWindow?: "expiring5" | "expired5" | "expired10";
     sortBy?: "createdAt" | "expiryTime";
     sortOrder?: "asc" | "desc";
 }

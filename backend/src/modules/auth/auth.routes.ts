@@ -54,6 +54,9 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   r.post(
     "/auth/refresh",
     {
+      // Not throttled: token-gated (no brute-force value) and called frequently
+      // (every reload / 401 retry), so an IP-keyed limit would risk logging out
+      // legitimate users sharing an origin.
       schema: {
         tags,
         summary: "Exchange a refresh token for a new token pair",
@@ -81,6 +84,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   r.post(
     "/auth/reset-password",
     {
+      config: credentialRateLimit,
       schema: {
         tags,
         summary: "Reset a password using a reset token",

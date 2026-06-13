@@ -15,9 +15,11 @@ import { cn } from "@/lib/utils";
  */
 export function BottomNav() {
   const pathname = usePathname();
-  const { can } = usePermissions();
+  const { can, isAdmin } = usePermissions();
 
-  const items = NAVBAR_DATA.navMain.filter((item) => !item.permission || can(item.permission));
+  const items = NAVBAR_DATA.navMain.filter(
+    (item) => (!item.permission || can(item.permission)) && (!item.adminOnly || isAdmin),
+  );
 
   return (
     <nav

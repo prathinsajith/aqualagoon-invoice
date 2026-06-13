@@ -62,7 +62,7 @@ export function getPassColumns({ onView }: ColumnHandlers): ColumnDef<UserPass>[
       header: "Expires",
       cell: ({ row }) => (
         <span className="text-sm">
-          <DateText value={row.original.expiryTime} />
+          <DateText value={row.original.expiryTime} withTime />
         </span>
       ),
     },

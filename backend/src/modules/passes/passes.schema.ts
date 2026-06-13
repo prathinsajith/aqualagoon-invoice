@@ -59,10 +59,26 @@ export const userPassDetailSchema = userPassSchema.extend({
 
 export const passIdParams = z.object({ id: z.uuid() });
 
+/**
+ * Expiry-proximity windows (relative to "now"), for catching passes about to
+ * lapse or just lapsed at the desk:
+ *  - expiring5  → expires within the next 5 minutes
+ *  - expired5   → expired within the last 5 minutes
+ *  - expired10  → expired within the last 10 minutes
+ */
+export const expiryWindowSchema = z.enum(["expiring5", "expired5", "expired10"]);
+
 export const listPassesQuery = paginationQuery.extend({
   status: userPassStatusSchema.optional(),
+  // Filter by pass kind (e.g. GUEST, STUDENT) — joins through the pass type.
+  type: passKindSchema.optional(),
   passTypeId: z.uuid().optional(),
   userId: z.uuid().optional(),
+  // Filter by when the pass was taken (createdAt) — inclusive window.
+  dateFrom: z.coerce.date().optional(),
+  dateTo: z.coerce.date().optional(),
+  // Filter by expiry proximity relative to now.
+  expiryWindow: expiryWindowSchema.optional(),
   sortBy: z.enum(["createdAt", "expiryTime"]).default("createdAt"),
 });
 

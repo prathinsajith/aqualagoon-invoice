@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useReducer } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { IconPlus, IconPencil, IconTrash, IconDotsVertical } from "@tabler/icons-react";
 import { toast } from "sonner";
@@ -25,27 +25,43 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { getApiErrorMessage } from "@/lib/api-error";
 import type { PaymentMethod } from "@/types/billing";
 
+interface PaymentMethodsUi {
+  form: boolean;
+  editing: PaymentMethod | null;
+  pendingDelete: PaymentMethod | null;
+  pendingToggle: PaymentMethod | null;
+  /** Optimistic drag order; cleared once the reordered server data returns. */
+  override: PaymentMethod[] | null;
+}
+
+const INITIAL_UI: PaymentMethodsUi = {
+  form: false,
+  editing: null,
+  pendingDelete: null,
+  pendingToggle: null,
+  override: null,
+};
+
 export function PaymentMethodsSection() {
   const { can } = usePermissions();
   const canUpdate = can("payment_method.update");
   const { data, isLoading, isError, error } = usePaymentMethods({ limit: 100 });
   const { update, remove, reorder } = usePaymentMethodMutations();
 
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<PaymentMethod | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<PaymentMethod | null>(null);
-  const [pendingToggle, setPendingToggle] = useState<PaymentMethod | null>(null);
-
-  // Optimistic drag order; cleared once the server data (now reordered) returns.
-  const [override, setOverride] = useState<PaymentMethod[] | null>(null);
+  // One reducer for all dialog/interaction state — a single update, one render.
+  const [ui, patchUi] = useReducer(
+    (state: PaymentMethodsUi, patch: Partial<PaymentMethodsUi>) => ({ ...state, ...patch }),
+    INITIAL_UI,
+  );
+  const { form: formOpen, editing, pendingDelete, pendingToggle, override } = ui;
   const list = override ?? data?.data ?? [];
 
   const handleReorder = (next: PaymentMethod[]) => {
-    setOverride(next);
+    patchUi({ override: next });
     reorder.mutate(next.map((m) => m.id), {
-      onSuccess: () => setOverride(null),
+      onSuccess: () => patchUi({ override: null }),
       onError: (err) => {
-        setOverride(null);
+        patchUi({ override: null });
         toast.error(getApiErrorMessage(err));
       },
     });
@@ -59,7 +75,7 @@ export function PaymentMethodsSection() {
         payload: { isActive: !pendingToggle.isActive },
       });
       toast.success(pendingToggle.isActive ? "Deactivated" : "Activated");
-      setPendingToggle(null);
+      patchUi({ pendingToggle: null });
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     }
@@ -70,7 +86,7 @@ export function PaymentMethodsSection() {
     try {
       await remove.mutateAsync(pendingDelete.id);
       toast.success("Payment method deleted");
-      setPendingDelete(null);
+      patchUi({ pendingDelete: null });
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     }
@@ -108,7 +124,7 @@ export function PaymentMethodsSection() {
           <div onClick={(e) => e.stopPropagation()}>
             <Switch
               checked={row.original.isActive}
-              onCheckedChange={() => setPendingToggle(row.original)}
+              onCheckedChange={() => patchUi({ pendingToggle: row.original })}
               disabled={!canUpdate || update.isPending}
             />
           </div>
@@ -131,18 +147,13 @@ export function PaymentMethodsSection() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <Can permission="payment_method.update">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setEditing(m);
-                        setFormOpen(true);
-                      }}
-                    >
+                    <DropdownMenuItem onClick={() => patchUi({ editing: m, form: true })}>
                       <IconPencil className="size-4" /> Edit
                     </DropdownMenuItem>
                   </Can>
                   <Can permission="payment_method.delete">
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onClick={() => setPendingDelete(m)}>
+                    <DropdownMenuItem variant="destructive" onClick={() => patchUi({ pendingDelete: m })}>
                       <IconTrash className="size-4" /> Delete
                     </DropdownMenuItem>
                   </Can>
@@ -153,7 +164,6 @@ export function PaymentMethodsSection() {
         },
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [canUpdate, update.isPending],
   );
 
@@ -164,13 +174,7 @@ export function PaymentMethodsSection() {
           Payment methods available to cashiers at checkout. Drag to reorder; inactive methods are hidden from billing.
         </p>
         <Can permission="payment_method.create">
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
+          <Button size="sm" onClick={() => patchUi({ editing: null, form: true })}>
             <IconPlus className="size-4" /> New method
           </Button>
         </Can>
@@ -194,10 +198,14 @@ export function PaymentMethodsSection() {
         />
       )}
 
-      <PaymentMethodFormDialog open={formOpen} onOpenChange={setFormOpen} method={editing} />
+      <PaymentMethodFormDialog
+        open={formOpen}
+        onOpenChange={(o) => patchUi({ form: o })}
+        method={editing}
+      />
       <ConfirmDialog
         open={!!pendingDelete}
-        onOpenChange={(o) => !o && setPendingDelete(null)}
+        onOpenChange={(o) => !o && patchUi({ pendingDelete: null })}
         title="Delete payment method?"
         description="It will be removed from billing. Methods already used in payments can't be deleted."
         confirmLabel="Delete"
@@ -207,7 +215,7 @@ export function PaymentMethodsSection() {
       />
       <ConfirmDialog
         open={!!pendingToggle}
-        onOpenChange={(o) => !o && setPendingToggle(null)}
+        onOpenChange={(o) => !o && patchUi({ pendingToggle: null })}
         title={pendingToggle?.isActive ? "Deactivate payment method?" : "Activate payment method?"}
         description={
           pendingToggle?.isActive

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { paginationQuery } from "../../lib/pagination.js";
+import { passKindSchema } from "../pass-types/pass-types.schema.js";
 
 export const invoiceStatusSchema = z.enum([
   "DRAFT",
@@ -34,6 +35,9 @@ export const checkoutItemSchema = z.object({
 export const checkoutBody = z.object({
   customerId: z.uuid().nullish(),
   notes: z.string().trim().max(1000).nullish(),
+  // Name of the person the pass is for (used when selling to a walk-in with no
+  // account). Applied to every pass issued by this sale.
+  holderName: z.string().trim().max(120).nullish(),
   items: z.array(checkoutItemSchema).min(1, "Add at least one item"),
   payment: z.object({
     paymentMethodId: z.uuid(),
@@ -56,6 +60,8 @@ export const catalogItemSchema = z.object({
   stockQuantity: z.number().int().nullable(),
   subtitle: z.string().nullable(),
   imageUrl: z.string().nullable(),
+  // The pass kind (null for products) — drives POS quantity rules.
+  passKind: passKindSchema.nullable(),
 });
 
 export const catalogResponse = z.object({ data: z.array(catalogItemSchema) });
@@ -137,6 +143,7 @@ export const checkoutResponse = z.object({
         id: z.string(),
         passNumber: z.string(),
         passTypeName: z.string(),
+        holderName: z.string().nullable(),
         expiryTime: z.date(),
       }),
     ),

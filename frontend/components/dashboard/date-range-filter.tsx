@@ -10,33 +10,21 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useDateFormat } from "@/hooks/useCompany";
 import { cn } from "@/lib/utils";
 import {
-  DEFAULT_PRESET,
   RANGE_PRESETS,
   rangeLabel,
   resolveCustom,
-  resolvePreset,
-  type DateRange,
   type RangePreset,
+  type RangeValue,
 } from "@/lib/date-range";
-
-/** The dashboard's selected window: a preset, or a custom from/to pair. */
-export interface RangeValue {
-  preset: RangePreset;
-  custom?: DateRange;
-}
-
-/** Resolves a {@link RangeValue} into the concrete window used for queries. */
-export function resolveRangeValue(value: RangeValue): DateRange {
-  if (value.preset === "custom" && value.custom) return value.custom;
-  return resolvePreset(value.preset === "custom" ? DEFAULT_PRESET : value.preset);
-}
 
 export function DateRangeFilter({
   value,
   onChange,
+  disabled,
 }: {
   value: RangeValue;
   onChange: (value: RangeValue) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [showCustom, setShowCustom] = useState(value.preset === "custom");
@@ -69,7 +57,7 @@ export function DateRangeFilter({
       }}
     >
       <PopoverTrigger asChild>
-        <Button variant="outline" className="h-9 gap-2 font-medium">
+        <Button variant="outline" className="h-9 gap-2 font-medium" disabled={disabled}>
           <IconCalendar className="size-4 text-muted-foreground" />
           {triggerLabel}
           <IconChevronDown className="size-4 text-muted-foreground" />

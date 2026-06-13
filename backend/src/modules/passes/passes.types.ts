@@ -30,7 +30,8 @@ export function toUserPassDto(p: UserPassWithRelations): UserPassDto {
   return {
     id: p.id,
     userId: p.userId,
-    holderName: p.user ? `${p.user.firstName} ${p.user.lastName}` : null,
+    // Prefer the name captured at sale; fall back to the linked account.
+    holderName: p.holderName ?? (p.user ? `${p.user.firstName} ${p.user.lastName}` : null),
     passTypeId: p.passTypeId,
     passType: {
       id: p.passType.id,

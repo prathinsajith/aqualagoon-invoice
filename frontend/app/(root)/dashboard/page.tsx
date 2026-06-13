@@ -1,29 +1,33 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   IconUsers,
+  IconUser,
   IconUserCheck,
   IconCoin,
   IconAlertTriangle,
   IconPackageOff,
-  IconChevronRight,
   IconTriangle,
   IconTriangleInverted,
+  IconShoppingCart,
+  IconTicket,
 } from "@tabler/icons-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
 import { UserStatusBadge } from "@/components/rbac/status-badge";
-import { BillingWidgets } from "@/components/billing/billing-widgets";
 import {
-  DateRangeFilter,
-  resolveRangeValue,
-  type RangeValue,
-} from "@/components/dashboard/date-range-filter";
+  PaymentsReceivedCard,
+  TopProductsCard,
+  RecentInvoicesCard,
+} from "@/components/billing/billing-widgets";
+import { PassesIssuedCard, TopPassBuyersCard } from "@/components/dashboard/passes-widget";
+import { SectionCard, ViewAllLink } from "@/components/dashboard/section-card";
+import { AdminPage } from "@/components/rbac/admin-page";
+import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 
 import { UserService } from "@/services/user-service";
 import { DashboardService } from "@/services/dashboard-service";
@@ -33,7 +37,7 @@ import { fullName, useAuthStore } from "@/stores/auth-store";
 import { useGreeting } from "@/hooks/useGreeting";
 import { avatarColor, initialsOf } from "@/lib/avatar";
 import { formatMoney } from "@/lib/format";
-import { rangeLabel } from "@/lib/date-range";
+import { rangeLabel, resolveRangeValue, type RangeValue } from "@/lib/date-range";
 import { cn } from "@/lib/utils";
 import { env } from "@/lib/env";
 
@@ -134,7 +138,7 @@ function UsersStatCard({
   );
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { user } = useAuthStore();
   const greeting = useGreeting();
   const { can } = usePermissions();
@@ -150,44 +154,63 @@ export default function DashboardPage() {
   const periodLabel = rangeValue.preset === "custom" ? "Custom range" : rangeLabel(rangeValue.preset);
   const isToday = rangeValue.preset === "today";
 
-  const totalUsersQ = useQuery({
+  const { data: totalUsersData, isLoading: totalUsersLoading } = useQuery({
     queryKey: ["dashboard", "users", "total"],
     queryFn: () => UserService.list({ limit: 1 }),
     enabled: canUsers,
   });
-  const activeUsersQ = useQuery({
+  const { data: activeUsersData, isLoading: activeUsersLoading } = useQuery({
     queryKey: ["dashboard", "users", "active"],
     queryFn: () => UserService.list({ limit: 1, status: "ACTIVE" }),
     enabled: canUsers,
   });
-  const recentUsersQ = useQuery({
+  const { data: recentUsersData, isLoading: recentUsersLoading } = useQuery({
     queryKey: ["dashboard", "users", "recent"],
     queryFn: () => UserService.list({ limit: 5, sortBy: "createdAt", sortOrder: "desc" }),
     enabled: canUsers,
   });
-  const lowStockQ = useQuery({
+  const { data: lowStockData, isLoading: lowStockLoading } = useQuery({
     queryKey: ["dashboard", "low-stock"],
     queryFn: () => DashboardService.lowStock(50),
     enabled: canProducts,
   });
-  const salesSummaryQ = useQuery({
+  const { data: salesSummaryData, isLoading: salesSummaryLoading } = useQuery({
     queryKey: ["dashboard", "sales-summary", range.from.toISOString(), range.to.toISOString()],
     queryFn: () => DashboardService.salesSummary(range),
+    enabled: canBilling,
+  });
+  const { data: revenueBreakdownData, isLoading: revenueBreakdownLoading } = useQuery({
+    queryKey: ["dashboard", "revenue-breakdown", range.from.toISOString(), range.to.toISOString()],
+    queryFn: () => DashboardService.revenueBreakdown(range),
     enabled: canBilling,
   });
 
   const stats = [
     canBilling && {
       label: isToday ? "Today's Revenue" : "Revenue",
-      valueText: formatMoney(salesSummaryQ.data?.revenue ?? 0),
-      loading: salesSummaryQ.isLoading,
+      valueText: formatMoney(salesSummaryData?.revenue ?? 0),
+      loading: salesSummaryLoading,
       icon: IconCoin,
       tint: "bg-emerald-50 text-emerald-400 dark:bg-emerald-900/30 dark:text-emerald-300",
     },
+    canBilling && {
+      label: "Product Revenue",
+      valueText: formatMoney(revenueBreakdownData?.product ?? 0),
+      loading: revenueBreakdownLoading,
+      icon: IconShoppingCart,
+      tint: "bg-sky-50 text-sky-400 dark:bg-sky-900/30 dark:text-sky-300",
+    },
+    canBilling && {
+      label: "Pass Revenue",
+      valueText: formatMoney(revenueBreakdownData?.pass ?? 0),
+      loading: revenueBreakdownLoading,
+      icon: IconTicket,
+      tint: "bg-violet-50 text-violet-400 dark:bg-violet-900/30 dark:text-violet-300",
+    },
     canProducts && {
       label: "Low Stock",
-      value: lowStockQ.data?.length,
-      loading: lowStockQ.isLoading,
+      value: lowStockData?.length,
+      loading: lowStockLoading,
       icon: IconAlertTriangle,
       tint: "bg-amber-50 text-amber-500 dark:bg-amber-900/30 dark:text-amber-300",
     },
@@ -200,8 +223,8 @@ export default function DashboardPage() {
     tint: string;
   }[];
 
-  const recentUsers = recentUsersQ.data?.data ?? [];
-  const lowStock = lowStockQ.data ?? [];
+  const recentUsers = recentUsersData?.data ?? [];
+  const lowStock = lowStockData ?? [];
   const hasCards = canUsers || stats.length > 0;
 
   return (
@@ -222,9 +245,9 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {canUsers && (
             <UsersStatCard
-              total={totalUsersQ.data?.meta.pagination.totalItems}
-              active={activeUsersQ.data?.meta.pagination.totalItems}
-              loading={totalUsersQ.isLoading || activeUsersQ.isLoading}
+              total={totalUsersData?.meta.pagination.totalItems}
+              active={activeUsersData?.meta.pagination.totalItems}
+              loading={totalUsersLoading || activeUsersLoading}
             />
           )}
           {stats.map((s) => (
@@ -233,119 +256,130 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Sales, top products and recent invoices for the selected range (billing.view) */}
-      <BillingWidgets range={range} periodLabel={periodLabel} />
+      {/* Payments received (half) + passes issued (half) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <PaymentsReceivedCard range={range} periodLabel={periodLabel} />
+        <PassesIssuedCard range={range} periodLabel={periodLabel} />
+      </div>
+
+      {/* Top selling products + top pass buyers */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <TopProductsCard range={range} />
+        <TopPassBuyersCard range={range} periodLabel={periodLabel} />
+      </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent users */}
         {canUsers && (
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-base">Recent users</CardTitle>
-              <Link
-                href="/users"
-                className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-              >
-                View all <IconChevronRight className="size-4" />
-              </Link>
-            </CardHeader>
-            <CardContent className="space-y-1">
-              {recentUsersQ.isLoading ? (
-                <div className="grid h-32 place-items-center">
-                  <Spinner className="size-6" />
-                </div>
-              ) : recentUsers.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">No users yet.</p>
-              ) : (
-                recentUsers.map((u) => {
-                  const photo = u.photoUrl
-                    ? u.photoUrl.startsWith("http")
-                      ? u.photoUrl
-                      : `${env.apiUrl}${u.photoUrl}`
-                    : undefined;
-                  return (
-                    <div
-                      key={u.id}
-                      className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/60"
-                    >
-                      <Avatar className="size-9">
-                        <AvatarImage src={photo} alt={u.firstName} className="object-cover" />
-                        <AvatarFallback className={cn("text-xs font-semibold", avatarColor(u.id))}>
-                          {initialsOf(u.firstName, u.lastName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {u.firstName} {u.lastName}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">{u.email}</p>
-                      </div>
-                      <UserStatusBadge status={u.status} />
+          <SectionCard
+            icon={IconUsers}
+            iconClassName="bg-sky-50 text-sky-500 dark:bg-sky-900/30 dark:text-sky-300"
+            title="Recent users"
+            action={<ViewAllLink href="/users" />}
+            contentClassName="space-y-1"
+          >
+            {recentUsersLoading ? (
+              <div className="grid h-32 place-items-center">
+                <Spinner className="size-6" />
+              </div>
+            ) : recentUsers.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">No users yet.</p>
+            ) : (
+              recentUsers.map((u) => {
+                const photo = u.photoUrl
+                  ? u.photoUrl.startsWith("http")
+                    ? u.photoUrl
+                    : `${env.apiUrl}${u.photoUrl}`
+                  : undefined;
+                const initials = initialsOf(u.firstName, u.lastName);
+                return (
+                  <div
+                    key={u.id}
+                    className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/60"
+                  >
+                    <Avatar className="size-9 ring-1 ring-border">
+                      <AvatarImage src={photo} alt={u.firstName} className="object-cover" />
+                      <AvatarFallback className={cn("text-xs font-semibold", avatarColor(u.id))}>
+                        {initials || <IconUser className="size-4" stroke={1.8} />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {u.firstName} {u.lastName}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{u.email}</p>
                     </div>
-                  );
-                })
-              )}
-            </CardContent>
-          </Card>
+                    <UserStatusBadge status={u.status} />
+                  </div>
+                );
+              })
+            )}
+          </SectionCard>
         )}
 
         {/* Low stock alerts */}
         {canProducts && (
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-base">Low stock</CardTitle>
-              <Link
-                href="/products"
-                className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-              >
-                View all <IconChevronRight className="size-4" />
-              </Link>
-            </CardHeader>
-            <CardContent className="space-y-1">
-              {lowStockQ.isLoading ? (
-                <div className="grid h-32 place-items-center">
-                  <Spinner className="size-6" />
-                </div>
-              ) : lowStock.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  Stock levels look healthy.
-                </p>
-              ) : (
-                lowStock.slice(0, 5).map((p) => {
-                  const out = p.stockQuantity <= 0;
-                  return (
-                    <div
-                      key={p.id}
-                      className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/60"
+          <SectionCard
+            icon={IconAlertTriangle}
+            iconClassName="bg-rose-50 text-rose-500 dark:bg-rose-900/30 dark:text-rose-300"
+            title="Low stock"
+            action={<ViewAllLink href="/products" />}
+            contentClassName="space-y-1"
+          >
+            {lowStockLoading ? (
+              <div className="grid h-32 place-items-center">
+                <Spinner className="size-6" />
+              </div>
+            ) : lowStock.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Stock levels look healthy.
+              </p>
+            ) : (
+              lowStock.slice(0, 5).map((p) => {
+                const out = p.stockQuantity <= 0;
+                return (
+                  <div
+                    key={p.id}
+                    className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/60"
+                  >
+                    <span
+                      className={cn(
+                        "flex size-9 shrink-0 items-center justify-center rounded-full",
+                        out
+                          ? "bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400"
+                          : "bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400",
+                      )}
                     >
-                      <span
-                        className={cn(
-                          "flex size-9 shrink-0 items-center justify-center rounded-full",
-                          out
-                            ? "bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400"
-                            : "bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400",
-                        )}
-                      >
-                        {out ? (
-                          <IconPackageOff className="size-4" />
-                        ) : (
-                          <IconAlertTriangle className="size-4" />
-                        )}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{p.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {out ? "Out of stock" : `${p.stockQuantity} left · min ${p.minimumStock}`}
-                        </p>
-                      </div>
+                      {out ? (
+                        <IconPackageOff className="size-4" />
+                      ) : (
+                        <IconAlertTriangle className="size-4" />
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{p.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {out ? "Out of stock" : `${p.stockQuantity} left · min ${p.minimumStock}`}
+                      </p>
                     </div>
-                  );
-                })
-              )}
-            </CardContent>
-          </Card>
+                  </div>
+                );
+              })
+            )}
+          </SectionCard>
         )}
       </div>
+
+      {/* Recent invoices — full width at the bottom */}
+      <RecentInvoicesCard range={range} />
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <AdminPage>
+      <DashboardContent />
+    </AdminPage>
   );
 }
