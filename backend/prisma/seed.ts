@@ -28,6 +28,11 @@ const SYSTEM_ROLES: { name: string; description: string }[] = [
 const ADMIN_EMAIL = process.env["SEED_ADMIN_EMAIL"] ?? "sprathin007@gmail.com";
 const ADMIN_PASSWORD = process.env["SEED_ADMIN_PASSWORD"] ?? "Aqua@2026";
 
+// Sample catalog + a demo trainer (with a known password) are useful for
+// local/staging demos but MUST NOT land in production. Off unless explicitly
+// enabled with SEED_SAMPLES=true.
+const SEED_SAMPLES = process.env["SEED_SAMPLES"] === "true";
+
 async function main(): Promise<void> {
   const adapter = new PrismaPg({ connectionString: process.env["DATABASE_URL"]! });
   const prisma = new PrismaClient({ adapter });
@@ -159,8 +164,8 @@ async function main(): Promise<void> {
       console.log(`✓ Seeded ${methods.length} payment methods`);
     }
 
-    // 7. Sample pass types --------------------------------------------------
-    if ((await prisma.passType.count()) === 0) {
+    // 7. Sample pass types (demo only) --------------------------------------
+    if (SEED_SAMPLES && (await prisma.passType.count()) === 0) {
       await prisma.passType.createMany({
         data: [
           { type: "GUEST", name: "Guest 1 Hour Pass", durationType: "HOUR", durationValue: 1, entryType: "UNLIMITED", price: "100" },
@@ -174,8 +179,8 @@ async function main(): Promise<void> {
       console.log("✓ Seeded 6 sample pass types");
     }
 
-    // 8. Sample training data (types → programs → fee plans → a batch) -------
-    if ((await prisma.trainingType.count()) === 0) {
+    // 8. Sample training data + demo trainer (demo only) --------------------
+    if (SEED_SAMPLES && (await prisma.trainingType.count()) === 0) {
       const trainerRole = await prisma.role.findUnique({ where: { name: "Trainer" } });
       // A demo trainer (idempotent on userCode/email).
       const trainer = await prisma.user.upsert({

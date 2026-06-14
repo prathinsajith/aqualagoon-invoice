@@ -51,6 +51,11 @@ import { studentFeesRoutes } from "./modules/student-fees/student-fees.routes.js
  */
 export async function buildApp() {
   const app = Fastify({
+    // Behind a platform proxy (Railway, and any load balancer) the socket IP is
+    // the proxy's. Trusting X-Forwarded-For makes `request.ip` the real client
+    // IP — essential for the per-IP login rate limit (otherwise every user
+    // shares one IP and trips it together) and for accurate audit-log IPs.
+    trustProxy: true,
     logger: {
       level: env.LOG_LEVEL,
       transport: env.isProduction
