@@ -237,8 +237,11 @@ export class BillingService {
         },
       });
 
-      // 8. Reduce stock + inventory transactions (decrement-and-verify guards
-      // against overselling under concurrent checkouts).
+      // 8. Reduce stock + inventory transactions. The decrement-and-verify must
+      // stay per-product (atomic decrement guards against overselling under
+      // concurrent checkouts), but the matching inventory-transaction rows are
+      // collected and written in a single createMany (2N → N+1 queries).
+      const inventoryRows: Prisma.InventoryTransactionCreateManyInput[] = [];
       for (const op of stockOps) {
         const updated = await tx.product.update({
           where: { id: op.id },
@@ -246,34 +249,45 @@ export class BillingService {
           select: { stockQuantity: true, name: true },
         });
         if (updated.stockQuantity < 0) throw Conflict(`Insufficient stock for ${updated.name}`);
-        await tx.inventoryTransaction.create({
-          data: {
-            productId: op.id,
-            type: "SALE",
-            quantityChange: -op.quantity,
-            balanceAfter: updated.stockQuantity,
-            referenceType: "invoice",
-            referenceId: invoice.id,
-            notes: invoiceNo,
-            createdBy: actor.userId,
-          },
+        inventoryRows.push({
+          productId: op.id,
+          type: "SALE",
+          quantityChange: -op.quantity,
+          balanceAfter: updated.stockQuantity,
+          referenceType: "invoice",
+          referenceId: invoice.id,
+          notes: invoiceNo,
+          createdBy: actor.userId,
         });
+      }
+      if (inventoryRows.length > 0) {
+        await tx.inventoryTransaction.createMany({ data: inventoryRows });
       }
 
       // 9. Issue + activate passes — only now that payment has succeeded.
       const passes: IssuedPass[] = [];
       const now = new Date();
       const holderName = input.holderName?.trim() || null;
+      // Reserve the whole block of pass numbers in ONE sequence bump (instead
+      // of one upsert per pass copy) — fewer round-trips and far less lock
+      // contention on the per-year counter row — then hand them out locally.
+      const totalPassQty = passOps.reduce((sum, op) => sum + op.quantity, 0);
+      let nextPassNumber = 0;
+      if (totalPassQty > 0) {
+        const pseq = await tx.passSequence.upsert({
+          where: { year },
+          create: { year, lastNumber: totalPassQty },
+          update: { lastNumber: { increment: totalPassQty } },
+        });
+        // lastNumber is the highest reserved; our block is the trailing range.
+        nextPassNumber = pseq.lastNumber - totalPassQty + 1;
+      }
       for (const op of passOps) {
         // All copies of this pass share the same start/expiry window.
         const expiryTime = addDuration(now, op.passType.durationType, op.passType.durationValue);
         for (let i = 0; i < op.quantity; i++) {
-          const pseq = await tx.passSequence.upsert({
-            where: { year },
-            create: { year, lastNumber: 1 },
-            update: { lastNumber: { increment: 1 } },
-          });
-          const passNumber = `${passPrefix}-${year}-${String(pseq.lastNumber).padStart(6, "0")}`;
+          const passNumber = `${passPrefix}-${year}-${String(nextPassNumber).padStart(6, "0")}`;
+          nextPassNumber++;
           // A single-entry pass is consumed the moment it's issued — taking the
           // pass IS the one entry, so it starts with 0 left and the entry is logged.
           const isSingleEntry =

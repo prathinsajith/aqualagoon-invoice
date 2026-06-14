@@ -1,4 +1,5 @@
 import Fastify, { type FastifyError } from "fastify";
+import compress from "@fastify/compress";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import {
@@ -133,6 +134,13 @@ export async function buildApp() {
     credentials: true,
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Authorization", "Content-Type"],
+  });
+  // Compress JSON/text responses (brotli > gzip) above ~1 KB — shrinks list and
+  // dashboard payloads ~70–80% for much faster transfer, especially on mobile.
+  await app.register(compress, {
+    global: true,
+    threshold: 1024,
+    encodings: ["br", "gzip", "deflate"],
   });
 
   // Infrastructure plugins.

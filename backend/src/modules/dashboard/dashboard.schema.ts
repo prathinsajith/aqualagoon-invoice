@@ -96,6 +96,23 @@ export const topPassBuyersResponse = z.object({
   ),
 });
 
+/**
+ * Everything the dashboard renders, in one payload — lets the client fetch the
+ * whole screen in a single round-trip instead of ~8 parallel requests.
+ */
+export const overviewResponse = z.object({
+  data: z.object({
+    salesSummary: salesSummaryResponse.shape.data,
+    revenueBreakdown: revenueBreakdownResponse.shape.data,
+    paymentsByMethod: paymentsByMethodResponse.shape.data,
+    passesByType: passesByTypeResponse.shape.data,
+    topPassBuyers: topPassBuyersResponse.shape.data,
+    topProducts: topProductsResponse.shape.data,
+    recentInvoices: recentInvoicesResponse.shape.data,
+    recentEnrollments: recentEnrollmentsResponse.shape.data,
+  }),
+});
+
 /** Inclusive date window shared by the analytical dashboard endpoints. */
 const dateRange = {
   from: z.coerce.date().optional(),

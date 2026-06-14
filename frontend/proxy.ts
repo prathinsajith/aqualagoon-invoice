@@ -62,5 +62,6 @@ export const config = {
     "/attendance/:path*",
     "/student-fees/:path*",
     "/audit-logs/:path*",
+    "/notifications/:path*",
   ],
 };

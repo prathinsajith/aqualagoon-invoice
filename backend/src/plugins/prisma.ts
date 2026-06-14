@@ -16,7 +16,17 @@ declare module "fastify" {
  */
 export default fp(
   async (app) => {
-    const adapter = new PrismaPg({ connectionString: env.DATABASE_URL });
+    const adapter = new PrismaPg({
+      connectionString: env.DATABASE_URL,
+      // Bounded connection pool (node-postgres). One app instance sized to stay
+      // well under Postgres `max_connections`; `connectionTimeoutMillis` fails
+      // fast instead of hanging a request when the pool is saturated, and idle
+      // connections are recycled. Raise `max` only if you scale to more
+      // instances and the database can take it.
+      max: 10,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 10_000,
+    });
     // Connects lazily on first query, so the server can boot before the
     // database is reachable. Use the `/health/db` probe to verify connectivity.
     const prisma = new PrismaClient({ adapter });

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { MediaImage } from "@/components/ui/media-image";
 import { useMemo } from "react";
 import {
   IconSearch,
@@ -44,12 +44,11 @@ function CatalogCard({ item, onAdd }: { item: CatalogItem; onAdd: (item: Catalog
         )}
       >
         {img ? (
-          <Image
+          <MediaImage
             src={img}
             alt={item.name}
             fill
-            unoptimized
-            sizes="150px"
+            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 200px"
             className="object-cover transition-transform group-hover:scale-105"
           />
         ) : (

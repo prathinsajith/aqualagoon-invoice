@@ -11,21 +11,32 @@ import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { rangeKey } from "./dashboard-card-utils";
 import type { DateRange } from "@/lib/date-range";
+import type { TopProduct } from "@/types/billing";
 
 /** Best-selling products in the range. */
-export function TopProductsCard({ range }: { range: DateRange }) {
+export function TopProductsCard({
+  range,
+  data,
+  loading,
+}: {
+  range: DateRange;
+  data?: TopProduct[];
+  loading?: boolean;
+}) {
   const { can } = usePermissions();
   const enabled = can("billing.view");
+  const controlled = data !== undefined;
 
   const { data: topData, isLoading: topLoading } = useQuery({
     queryKey: ["dashboard", "top-products", ...rangeKey(range)],
     queryFn: () => DashboardService.topProducts(5, range),
-    enabled,
+    enabled: enabled && !controlled,
   });
 
   if (!enabled) return null;
 
-  const top = topData ?? [];
+  const top = data ?? topData ?? [];
+  const isLoadingTop = controlled ? !!loading : topLoading;
 
   return (
     <SectionCard
@@ -34,7 +45,7 @@ export function TopProductsCard({ range }: { range: DateRange }) {
       title="Top selling products"
       contentClassName="divide-y divide-foreground/10"
     >
-      {topLoading ? (
+      {isLoadingTop ? (
         <WidgetRowsSkeleton />
       ) : top.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">No sales in this period.</p>

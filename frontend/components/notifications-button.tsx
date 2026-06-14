@@ -45,9 +45,9 @@ export function NotificationsButton() {
       <PopoverContent align="end" sideOffset={10} className="w-80 overflow-hidden p-0">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <p className="text-sm font-semibold">Notifications</p>
-          {canProducts && count > 0 && (
+          {canProducts && (
             <Link
-              href="/products"
+              href="/notifications"
               className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
             >
               View all <IconChevronRight className="size-3.5" />

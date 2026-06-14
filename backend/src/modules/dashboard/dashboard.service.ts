@@ -337,6 +337,42 @@ export class DashboardService {
     }));
   }
 
+  /**
+   * The full dashboard payload in one shot — every widget's data fetched in
+   * parallel. Collapses ~8 client round-trips into one request.
+   */
+  async overview(range?: DateRange) {
+    const [
+      salesSummary,
+      revenueBreakdown,
+      paymentsByMethod,
+      passesByType,
+      topPassBuyers,
+      topProducts,
+      recentInvoices,
+      recentEnrollments,
+    ] = await Promise.all([
+      this.salesSummary(range),
+      this.revenueBreakdown(range),
+      this.paymentsByMethod(range),
+      this.passesByType(range),
+      this.topPassBuyers(5, range),
+      this.topProducts(5, range),
+      this.recentInvoices(5, range),
+      this.recentEnrollments(8, range),
+    ]);
+    return {
+      salesSummary,
+      revenueBreakdown,
+      paymentsByMethod,
+      passesByType,
+      topPassBuyers,
+      topProducts,
+      recentInvoices,
+      recentEnrollments,
+    };
+  }
+
   async recentInvoices(limit: number, range?: DateRange): Promise<InvoiceSummaryDto[]> {
     const createdAt = this.dateFilter(range, false);
     const rows = await this.prisma.invoice.findMany({

@@ -15,7 +15,25 @@ import { toRangeParams, type DateRange } from "@/lib/date-range";
 /** Optional date window passed to the analytical dashboard endpoints. */
 const rangeParams = (range?: DateRange) => (range ? toRangeParams(range) : {});
 
+/** The whole dashboard in one payload (see GET /api/dashboard/overview). */
+export interface DashboardOverview {
+    salesSummary: SalesSummary;
+    revenueBreakdown: RevenueBreakdown;
+    paymentsByMethod: PaymentMethodTotal[];
+    passesByType: PassTypeTotal[];
+    topPassBuyers: TopPassBuyer[];
+    topProducts: TopProduct[];
+    recentInvoices: InvoiceSummary[];
+    recentEnrollments: RecentEnrollment[];
+}
+
 export const DashboardService = {
+    /** Everything the dashboard needs in a single round-trip. */
+    overview: async (range?: DateRange): Promise<DashboardOverview> => {
+        const res = await api.get("/api/dashboard/overview", { params: rangeParams(range) });
+        return res.data.data;
+    },
+
     salesSummary: async (range?: DateRange): Promise<SalesSummary> => {
         const res = await api.get("/api/dashboard/sales-summary", { params: rangeParams(range) });
         return res.data.data;
