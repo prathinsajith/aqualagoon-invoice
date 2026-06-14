@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
 import { IconArrowLeft } from "@tabler/icons-react";
@@ -38,7 +37,6 @@ function safeNextPath(): string {
 }
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
-  const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [redirecting, setRedirecting] = useState(false);
   const [mfaToken, setMfaToken] = useState<string | null>(null);
@@ -47,10 +45,6 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"form">)
   const [recoveryCode, setRecoveryCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const { setToken, setUser } = useAuthStore();
-
-  useEffect(() => {
-    router.prefetch(safeNextPath());
-  }, [router]);
 
   const {
     register,
@@ -70,7 +64,11 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"form">)
     });
     toast.success(`Welcome back, ${fullName(result.user)}!`);
     setRedirecting(true);
-    router.push(safeNextPath());
+    // Hard navigation (not router.push): guarantees the just-set refresh_token
+    // cookie is sent with the request and bypasses any cached RSC redirect from
+    // a logged-out prefetch (which would otherwise replay /dashboard → /login
+    // and hang here). useInitializeAuth re-mints the access token on load.
+    window.location.assign(safeNextPath());
   };
 
   const onSubmit = async (data: LoginSchema): Promise<void> => {
