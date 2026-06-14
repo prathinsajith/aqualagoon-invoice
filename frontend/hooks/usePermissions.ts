@@ -3,7 +3,7 @@
 import { useAuthStore } from "@/stores/auth-store";
 
 /** The seeded system role with full access. */
-export const ADMIN_ROLE = "Admin";
+const ADMIN_ROLE = "Admin";
 
 /**
  * Permission helpers derived from the current user. Re-renders when the user

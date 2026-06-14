@@ -213,6 +213,12 @@ model CompanySetting {
   logoUrl   String?  @map("logo_url")
   // Prefix for generated user codes, e.g. "USR" -> USR-A1B2C3.
   userCodePrefix String @default("USR") @map("user_code_prefix")
+  // Prefix for generated invoice numbers, e.g. "INV" -> INV-2026-000001.
+  invoicePrefix  String @default("INV") @map("invoice_prefix")
+  // Prefix for generated pass numbers, e.g. "PASS" -> PASS-2026-000001.
+  passPrefix     String @default("PASS") @map("pass_prefix")
+  // ISO 4217 currency code used to format all money (e.g. INR, USD, AED).
+  currency       String @default("INR")
   // App-wide date display format (e.g. DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD).
   dateFormat     String @default("DD/MM/YYYY") @map("date_format")
   createdAt DateTime @default(now()) @map("created_at")
@@ -561,6 +567,8 @@ model UserPass {
   @@index([invoiceId])
   @@index([status])
   @@index([expiryTime])
+  // List orders by and filters on createdAt (date-range filter, dashboard aggregates).
+  @@index([createdAt])
   @@map("user_passes")
 }
 

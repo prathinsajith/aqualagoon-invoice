@@ -84,6 +84,12 @@ export default fp(
         root: uploadDir,
         prefix: `${env.UPLOAD_URL_PREFIX}/`,
         decorateReply: false,
+        // Files are content-addressed (random-UUID names never change), so the
+        // browser can cache them indefinitely — avatars/logos load instantly on
+        // repeat views and stop re-hitting the server.
+        cacheControl: true,
+        maxAge: "365d",
+        immutable: true,
       });
     }
 

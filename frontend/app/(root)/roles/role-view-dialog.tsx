@@ -27,7 +27,7 @@ export function RoleViewDialog({
       list.push(p);
       map.set(p.module, list);
     }
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    return [...map.entries()].toSorted((a, b) => a[0].localeCompare(b[0]));
   }, [role]);
 
   if (!role) return null;

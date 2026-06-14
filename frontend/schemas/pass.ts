@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { productStatusEnum } from "@/schemas/product";
 
-export const passKindEnum = z.enum(["GUEST", "STUDENT", "VIP", "FAMILY", "CORPORATE"]);
-export const passDurationTypeEnum = z.enum(["HOUR", "DAY", "MONTH", "YEAR"]);
-export const passEntryTypeEnum = z.enum(["LIMITED", "UNLIMITED"]);
-export const passDiscountTypeEnum = z.enum(["NONE", "FIXED", "PERCENTAGE"]);
+const passKindEnum = z.enum(["GUEST", "STUDENT", "VIP", "FAMILY", "CORPORATE"]);
+const passDurationTypeEnum = z.enum(["HOUR", "DAY", "MONTH", "YEAR"]);
+const passEntryTypeEnum = z.enum(["LIMITED", "UNLIMITED"]);
+const passDiscountTypeEnum = z.enum(["NONE", "FIXED", "PERCENTAGE"]);
 
 // Keep input === output types (no .coerce/.transform/.default) so the single
 // `useForm` generic stays happy. NumberInput emits `undefined` when blank, so

@@ -9,7 +9,7 @@ import {
 import { RoleService } from "@/services/role-service";
 import type { RoleListParams, RolePayload } from "@/services/role-service";
 
-export const roleKeys = {
+const roleKeys = {
     all: ["roles"] as const,
     list: (params: RoleListParams) => ["roles", "list", params] as const,
     detail: (id: string) => ["roles", "detail", id] as const,
@@ -23,39 +23,30 @@ export function useRoles(params: RoleListParams = {}) {
     });
 }
 
-export function useRole(id: string | null) {
-    return useQuery({
-        queryKey: roleKeys.detail(id ?? ""),
-        queryFn: () => RoleService.get(id!),
-        enabled: !!id,
-    });
-}
-
 export function useRoleMutations() {
     const qc = useQueryClient();
-    const invalidate = () => qc.invalidateQueries({ queryKey: roleKeys.all });
 
     const create = useMutation({
         mutationFn: (payload: RolePayload) => RoleService.create(payload),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: roleKeys.all }),
     });
     const update = useMutation({
         mutationFn: ({ id, payload }: { id: string; payload: RolePayload }) =>
             RoleService.update(id, payload),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: roleKeys.all }),
     });
     const remove = useMutation({
         mutationFn: (id: string) => RoleService.remove(id),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: roleKeys.all }),
     });
     const setAssignableRoles = useMutation({
         mutationFn: ({ id, assignableRoleIds }: { id: string; assignableRoleIds: string[] }) =>
             RoleService.setAssignableRoles(id, assignableRoleIds),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: roleKeys.all }),
     });
     const reorder = useMutation({
         mutationFn: (orderedIds: string[]) => RoleService.reorder(orderedIds),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: roleKeys.all }),
     });
 
     return { create, update, remove, setAssignableRoles, reorder };

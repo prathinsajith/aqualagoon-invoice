@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   IconUsers,
-  IconUser,
   IconUserCheck,
   IconCoin,
   IconAlertTriangle,
@@ -16,9 +15,9 @@ import {
 } from "@tabler/icons-react";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
 import { UserStatusBadge } from "@/components/rbac/status-badge";
+import { PersonAvatar } from "@/components/person-avatar";
 import {
   PaymentsReceivedCard,
   TopProductsCard,
@@ -35,11 +34,9 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useCompany } from "@/hooks/useCompany";
 import { fullName, useAuthStore } from "@/stores/auth-store";
 import { useGreeting } from "@/hooks/useGreeting";
-import { avatarColor, initialsOf } from "@/lib/avatar";
 import { formatMoney } from "@/lib/format";
 import { rangeLabel, resolveRangeValue, type RangeValue } from "@/lib/date-range";
 import { cn } from "@/lib/utils";
-import { env } from "@/lib/env";
 
 function StatCard({
   label,
@@ -286,23 +283,17 @@ function DashboardContent() {
               <p className="py-8 text-center text-sm text-muted-foreground">No users yet.</p>
             ) : (
               recentUsers.map((u) => {
-                const photo = u.photoUrl
-                  ? u.photoUrl.startsWith("http")
-                    ? u.photoUrl
-                    : `${env.apiUrl}${u.photoUrl}`
-                  : undefined;
-                const initials = initialsOf(u.firstName, u.lastName);
                 return (
                   <div
                     key={u.id}
                     className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/60"
                   >
-                    <Avatar className="size-9 ring-1 ring-border">
-                      <AvatarImage src={photo} alt={u.firstName} className="object-cover" />
-                      <AvatarFallback className={cn("text-xs font-semibold", avatarColor(u.id))}>
-                        {initials || <IconUser className="size-4" stroke={1.8} />}
-                      </AvatarFallback>
-                    </Avatar>
+                    <PersonAvatar
+                      name={`${u.firstName} ${u.lastName}`}
+                      photoUrl={u.photoUrl}
+                      seed={u.id}
+                      className="size-9"
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">
                         {u.firstName} {u.lastName}

@@ -57,6 +57,7 @@ export interface UserPass {
     id: string;
     userId: string | null;
     holderName: string | null;
+    holderPhotoUrl: string | null;
     passTypeId: string;
     passType: PassTypeRef;
     invoiceId: string | null;

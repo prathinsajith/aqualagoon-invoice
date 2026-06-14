@@ -71,6 +71,7 @@ export const topPassBuyersResponse = z.object({
     z.object({
       userId: z.string().nullable(),
       name: z.string(),
+      photoUrl: z.string().nullable(),
       passCount: z.number().int(),
       totalSpent: z.number(),
     }),

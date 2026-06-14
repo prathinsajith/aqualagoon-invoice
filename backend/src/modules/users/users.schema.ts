@@ -36,7 +36,8 @@ export const createUserBody = z.object({
   // Optional: required only for login roles (enforced in the service). Customer
   // roles (Guest/Student) may be created without an email.
   email: z.email().max(255).nullish(),
-  phone: z.string().trim().min(3).max(30).optional(),
+  // Required for every user — the primary contact at the desk.
+  phone: z.string().trim().min(3).max(30),
   // Optional: when omitted, login users get a "set your password" email instead.
   password: z.string().min(8).max(128).optional(),
   gender: genderSchema.optional(),

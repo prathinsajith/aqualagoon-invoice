@@ -23,6 +23,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { ConfirmDialog } from "@/components/rbac/confirm-dialog";
 import { Can } from "@/components/permission-gate";
 import { PassStatusBadge } from "@/components/passes/pass-status-badge";
+import { PersonAvatar } from "@/components/person-avatar";
 import { DateText } from "@/components/date-text";
 import { formatMoney } from "@/lib/format";
 import { PASS_KIND_LABELS, formatDuration } from "@/lib/pass-format";
@@ -116,7 +117,21 @@ export function PassViewDialog({
           ) : (
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                <Field label="Holder" value={pass.holderName ?? "Walk-in"} />
+                <Field
+                  label="Holder"
+                  value={
+                    <div className="flex items-center gap-2">
+                      <PersonAvatar
+                        name={pass.holderName ?? "Walk-in"}
+                        photoUrl={pass.holderPhotoUrl}
+                        seed={pass.userId ?? pass.holderName}
+                        className="size-7"
+                        textClassName="text-[10px]"
+                      />
+                      <span>{pass.holderName ?? "Walk-in"}</span>
+                    </div>
+                  }
+                />
                 <Field
                   label="Category"
                   value={`${PASS_KIND_LABELS[pass.passType.type]} · ${formatDuration(pass.passType.durationType, pass.passType.durationValue)}`}

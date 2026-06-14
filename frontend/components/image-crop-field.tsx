@@ -77,7 +77,7 @@ export function ImageCropField({
         {busy ? <Spinner className="size-4" /> : <IconCamera className="size-4" />}
         {busy ? "Uploading…" : changeLabel}
       </Button>
-      <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPick} />
+      <input ref={fileRef} type="file" accept="image/*" hidden aria-label={changeLabel} onChange={onPick} />
 
       <ImageCropper
         src={cropSrc}

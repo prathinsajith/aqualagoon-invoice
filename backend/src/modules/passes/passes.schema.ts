@@ -35,6 +35,7 @@ export const userPassSchema = z.object({
   id: z.string(),
   userId: z.string().nullable(),
   holderName: z.string().nullable(),
+  holderPhotoUrl: z.string().nullable(),
   passTypeId: z.string(),
   passType: passTypeRefSchema,
   invoiceId: z.string().nullable(),

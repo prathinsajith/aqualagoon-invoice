@@ -91,11 +91,22 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
     },
   });
 
+  // Clear staged image state the moment the dialog opens — done during render
+  // with a prev-prop comparison (not an effect) so there's no extra commit
+  // showing stale values. See react.dev "adjusting some state when a prop changes".
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setImageFile(null);
+      setImagePreview(null);
+      setRemoveImage(false);
+    }
+  }
+
+  // Hydrate the form fields from the product when the dialog opens.
   useEffect(() => {
     if (!open) return;
-    setImageFile(null);
-    setImagePreview(null);
-    setRemoveImage(false);
     reset({
       name: product?.name ?? "",
       categoryId: product?.categoryId ?? "",
@@ -209,6 +220,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   className="hidden"
+                  aria-label="Upload product image"
                   onChange={onPickFile}
                 />
                 <div className="flex gap-2">

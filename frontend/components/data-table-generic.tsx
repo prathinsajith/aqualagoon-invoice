@@ -53,6 +53,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -91,9 +92,11 @@ export function DataTableGeneric<TData, TValue>({
     onReorder,
 }: DataTableProps<TData, TValue>) {
     const dragFrom = React.useRef<number | null>(null)
+    const [dragOver, setDragOver] = React.useState<number | null>(null)
     const handleDrop = (to: number) => {
         const from = dragFrom.current
         dragFrom.current = null
+        setDragOver(null)
         if (from === null || from === to || !onReorder) return
         const next = [...data]
         const [moved] = next.splice(from, 1)
@@ -245,10 +248,33 @@ export function DataTableGeneric<TData, TValue>({
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
                                     onClick={() => onRowClick?.(row.original)}
-                                    className={`table-row group ${onRowClick ? "cursor-pointer" : ""}`}
+                                    className={cn(
+                                        "table-row group",
+                                        onRowClick && "cursor-pointer",
+                                        // Highlight the row the dragged item will drop onto.
+                                        dragOver === row.index && "border-t-2 border-t-primary",
+                                    )}
                                     draggable={onReorder ? true : undefined}
-                                    onDragStart={onReorder ? () => { dragFrom.current = row.index } : undefined}
-                                    onDragOver={onReorder ? (e) => e.preventDefault() : undefined}
+                                    onDragStart={
+                                        onReorder
+                                            ? (e) => {
+                                                dragFrom.current = row.index
+                                                // Required for the drag to start in Firefox/Safari.
+                                                e.dataTransfer.setData("text/plain", String(row.index))
+                                                e.dataTransfer.effectAllowed = "move"
+                                            }
+                                            : undefined
+                                    }
+                                    onDragOver={
+                                        onReorder
+                                            ? (e) => {
+                                                e.preventDefault()
+                                                e.dataTransfer.dropEffect = "move"
+                                                if (dragOver !== row.index) setDragOver(row.index)
+                                            }
+                                            : undefined
+                                    }
+                                    onDragEnd={onReorder ? () => { dragFrom.current = null; setDragOver(null) } : undefined}
                                     onDrop={onReorder ? () => handleDrop(row.index) : undefined}
                                 >
                                     {onReorder && (

@@ -51,7 +51,7 @@ export function ReceiptView({ receipt }: { receipt: Receipt }) {
         </thead>
         <tbody>
           {receipt.items.map((it, i) => (
-            <tr key={i} className="align-top">
+            <tr key={`${it.name}-${i}`} className="align-top">
               <td className="py-0.5 pr-1">{it.name}</td>
               <td className="py-0.5 text-center">{it.quantity}</td>
               <td className="py-0.5 text-right">{formatMoney(it.unitPrice)}</td>
@@ -79,7 +79,7 @@ export function ReceiptView({ receipt }: { receipt: Receipt }) {
 
       <div className="space-y-0.5 text-[12px]">
         {receipt.payments.map((p, i) => (
-          <div key={i} className="flex justify-between">
+          <div key={`${p.methodName}-${i}`} className="flex justify-between">
             <span>{p.methodName}</span>
             <span>{formatMoney(p.amount)}</span>
           </div>

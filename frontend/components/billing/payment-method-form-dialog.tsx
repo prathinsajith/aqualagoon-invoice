@@ -119,6 +119,9 @@ export function PaymentMethodFormDialog({ open, onOpenChange, method }: PaymentM
                   />
                 )}
               />
+              {errors.displayOrder && (
+                <p className="text-xs text-destructive">{errors.displayOrder.message}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Status</Label>

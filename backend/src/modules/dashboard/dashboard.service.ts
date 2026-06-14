@@ -44,6 +44,8 @@ export interface TopPassBuyer {
   /** Registered holder id, or null for a walk-in (named) buyer. */
   userId: string | null;
   name: string;
+  /** The buyer's uploaded photo (registered users only), else null. */
+  photoUrl: string | null;
   /** Passes bought in the range. */
   passCount: number;
   /** Total spent on those passes. */
@@ -173,7 +175,7 @@ export class DashboardService {
         userId: true,
         holderName: true,
         finalAmount: true,
-        user: { select: { firstName: true, lastName: true } },
+        user: { select: { firstName: true, lastName: true, photoUrl: true } },
       },
     });
 
@@ -193,6 +195,7 @@ export class DashboardService {
         byBuyer.set(key, {
           userId: r.userId,
           name,
+          photoUrl: r.user?.photoUrl ?? null,
           passCount: 1,
           totalSpent: r.finalAmount.toNumber(),
         });

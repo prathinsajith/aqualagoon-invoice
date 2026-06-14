@@ -60,7 +60,7 @@ export function TwoFactorCard() {
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
 
   // How many recovery codes are left (only meaningful while 2FA is enabled).
-  const statusQ = useQuery({
+  const { data: recoveryStatus } = useQuery({
     queryKey: ["2fa-recovery-status"],
     queryFn: () => AuthService.recoveryCodesStatus(),
     enabled,
@@ -148,7 +148,7 @@ export function TwoFactorCard() {
     setRecoveryCodes(null);
   };
 
-  const remaining = statusQ.data?.remaining;
+  const remaining = recoveryStatus?.remaining;
   const lowOnCodes = typeof remaining === "number" && remaining <= 2;
 
   return (
@@ -170,7 +170,7 @@ export function TwoFactorCard() {
           </CardDescription>
           {enabled && typeof remaining === "number" && (
             <p className={`text-xs ${lowOnCodes ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
-              {remaining} of {statusQ.data?.total} recovery codes remaining
+              {remaining} of {recoveryStatus?.total} recovery codes remaining
               {lowOnCodes && " — regenerate soon"}
             </p>
           )}

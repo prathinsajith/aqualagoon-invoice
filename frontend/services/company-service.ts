@@ -11,6 +11,9 @@ export interface CompanyPayload {
     website?: string | null;
     address?: string | null;
     userCodePrefix?: string;
+    invoicePrefix?: string;
+    passPrefix?: string;
+    currency?: string;
     dateFormat?: string;
 }
 

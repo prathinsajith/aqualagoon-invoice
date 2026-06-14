@@ -178,8 +178,9 @@ export function ProductsContent() {
           </SelectContent>
         </Select>
 
-        <label className="flex items-center gap-2 text-sm">
+        <label htmlFor="show-archived" className="flex items-center gap-2 text-sm">
           <Checkbox
+            id="show-archived"
             checked={showArchived}
             onCheckedChange={(v) => {
               setShowArchived(!!v);

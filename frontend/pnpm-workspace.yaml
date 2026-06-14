@@ -1,3 +1,9 @@
 allowBuilds:
   sharp: true
   unrs-resolver: true
+
+# Supply-chain hardening: only install releases that have been public for 7 days
+# (lets malicious versions get caught/unpublished first), and never accept a
+# package whose trust signals (provenance/signatures) weaken between updates.
+minimumReleaseAge: 10080
+trustPolicy: no-downgrade

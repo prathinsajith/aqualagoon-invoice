@@ -18,34 +18,25 @@ export function useProducts(params: ProductListParams) {
     });
 }
 
-export function useProduct(id: string | null) {
-    return useQuery({
-        queryKey: productKeys.detail(id ?? ""),
-        queryFn: () => ProductService.get(id!),
-        enabled: !!id,
-    });
-}
-
 export function useProductMutations() {
     const qc = useQueryClient();
-    const invalidate = () => qc.invalidateQueries({ queryKey: productKeys.all });
 
     const create = useMutation({
         mutationFn: (payload: ProductPayload) => ProductService.create(payload),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: productKeys.all }),
     });
     const update = useMutation({
         mutationFn: ({ id, payload }: { id: string; payload: ProductPayload }) =>
             ProductService.update(id, payload),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: productKeys.all }),
     });
     const remove = useMutation({
         mutationFn: (id: string) => ProductService.remove(id),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: productKeys.all }),
     });
     const restore = useMutation({
         mutationFn: (id: string) => ProductService.restore(id),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: productKeys.all }),
     });
 
     return { create, update, remove, restore };

@@ -69,6 +69,9 @@ export interface Company {
     address: string | null;
     logoUrl: string | null;
     userCodePrefix: string;
+    invoicePrefix: string;
+    passPrefix: string;
+    currency: string;
     dateFormat: string;
     createdAt: string;
     updatedAt: string;

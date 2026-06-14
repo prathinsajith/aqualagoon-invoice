@@ -107,7 +107,7 @@ export function CustomerSelect({
               autoFocus
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search customers…"
+              placeholder="Search by name, phone or email…"
               className="h-9 pl-9"
             />
           </div>
@@ -150,7 +150,7 @@ export function CustomerSelect({
                       {u.firstName} {u.lastName}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {u.email ?? u.phone ?? "No contact"}
+                      {[u.phone, u.email].filter(Boolean).join(" · ") || "No contact"}
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-wrap justify-end gap-1">

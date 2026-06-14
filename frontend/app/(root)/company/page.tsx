@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { ImageCropField } from "@/components/image-crop-field";
 
-import { companySchema, type CompanySchema } from "@/schemas/company";
+import { companySchema, CURRENCIES, type CompanySchema } from "@/schemas/company";
 import { CompanyService, DATE_FORMATS, type CompanyPayload } from "@/services/company-service";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { env } from "@/lib/env";
@@ -65,6 +65,9 @@ function CompanyForm() {
         website: company.website ?? "",
         address: company.address ?? "",
         userCodePrefix: company.userCodePrefix,
+        invoicePrefix: company.invoicePrefix,
+        passPrefix: company.passPrefix,
+        currency: company.currency as CompanySchema["currency"],
         dateFormat: company.dateFormat,
       });
     }
@@ -88,6 +91,9 @@ function CompanyForm() {
       website: values.website || null,
       address: values.address || null,
       userCodePrefix: values.userCodePrefix,
+      invoicePrefix: values.invoicePrefix,
+      passPrefix: values.passPrefix,
+      currency: values.currency,
       dateFormat: values.dateFormat,
     });
 
@@ -151,6 +157,7 @@ function CompanyForm() {
             <div className="space-y-1.5">
               <Label htmlFor="tagline">Tagline</Label>
               <Input id="tagline" placeholder="Swimming Pool & Kids Water Park" {...register("tagline")} />
+              {errors.tagline && <p className="text-xs text-destructive">{errors.tagline.message}</p>}
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
@@ -161,15 +168,18 @@ function CompanyForm() {
               <div className="space-y-1.5">
                 <Label htmlFor="phone">Phone</Label>
                 <Input id="phone" {...register("phone")} />
+                {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
               </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="website">Website</Label>
               <Input id="website" placeholder="https://…" {...register("website")} />
+              {errors.website && <p className="text-xs text-destructive">{errors.website.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="address">Address</Label>
               <Textarea id="address" rows={2} {...register("address")} />
+              {errors.address && <p className="text-xs text-destructive">{errors.address.message}</p>}
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -206,6 +216,63 @@ function CompanyForm() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="invoicePrefix">Invoice prefix</Label>
+                <Input
+                  id="invoicePrefix"
+                  className="uppercase"
+                  placeholder="INV"
+                  {...register("invoicePrefix")}
+                />
+                <p className="text-xs text-muted-foreground">
+                  e.g. <span className="font-medium">{(watch("invoicePrefix") || "INV").toUpperCase()}-2026-000001</span>
+                </p>
+                {errors.invoicePrefix && (
+                  <p className="text-xs text-destructive">{errors.invoicePrefix.message}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="passPrefix">Pass prefix</Label>
+                <Input
+                  id="passPrefix"
+                  className="uppercase"
+                  placeholder="PASS"
+                  {...register("passPrefix")}
+                />
+                <p className="text-xs text-muted-foreground">
+                  e.g. <span className="font-medium">{(watch("passPrefix") || "PASS").toUpperCase()}-2026-000001</span>
+                </p>
+                {errors.passPrefix && (
+                  <p className="text-xs text-destructive">{errors.passPrefix.message}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="currency">Currency</Label>
+                <Select
+                  value={watch("currency") ?? company?.currency ?? ""}
+                  onValueChange={(v) => setValue("currency", v as CompanySchema["currency"], { shouldDirty: true })}
+                >
+                  <SelectTrigger id="currency" className="w-full">
+                    <SelectValue placeholder="Select a currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Used for all prices and totals across the app.
+                </p>
+                {errors.currency && (
+                  <p className="text-xs text-destructive">{errors.currency.message}</p>
+                )}
               </div>
             </div>
 

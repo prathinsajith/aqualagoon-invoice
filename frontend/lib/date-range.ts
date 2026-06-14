@@ -48,10 +48,10 @@ export const RANGE_PRESETS: { value: RangePreset; label: string }[] = [
 ];
 
 /** The default selection when the dashboard first loads. */
-export const DEFAULT_PRESET: Exclude<RangePreset, "custom"> = "today";
+const DEFAULT_PRESET: Exclude<RangePreset, "custom"> = "today";
 
 /** Resolves a preset (relative to `now`) into a concrete inclusive window. */
-export function resolvePreset(preset: Exclude<RangePreset, "custom">, now: Date = new Date()): DateRange {
+function resolvePreset(preset: Exclude<RangePreset, "custom">, now: Date = new Date()): DateRange {
   switch (preset) {
     case "all":
       // Effectively unbounded — covers every record without a real window.

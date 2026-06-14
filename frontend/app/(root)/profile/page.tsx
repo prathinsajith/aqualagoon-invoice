@@ -35,17 +35,10 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import { env } from "@/lib/env";
 import { avatarColor, initialsOf } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
-import { GENDERS } from "@/schemas/user";
+import { GENDERS, profileSchema, type ProfileSchema } from "@/schemas/user";
 import { changePasswordSchema, ChangePasswordSchema } from "@/schemas/auth";
 
-interface ProfileFormValues {
-  firstName: string;
-  lastName: string;
-  phone: string;
-  gender: string;
-  dateOfBirth: string;
-  address: string;
-}
+type ProfileFormValues = ProfileSchema;
 
 type ProfileTab = "profile" | "security";
 
@@ -72,8 +65,10 @@ export default function ProfilePage() {
   const [cropSrc, setCropSrc] = useState<string | null>(null);
 
   const profileForm = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
     defaultValues: { firstName: "", lastName: "", phone: "", gender: "", dateOfBirth: "", address: "" },
   });
+  const profileErrors = profileForm.formState.errors;
 
   useEffect(() => {
     if (profile) {
@@ -200,7 +195,7 @@ export default function ProfilePage() {
                       <IconCamera className="size-4" />
                     )}
                   </button>
-                  <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhotoSelected} />
+                  <input ref={fileRef} type="file" accept="image/*" hidden aria-label="Upload profile photo" onChange={onPhotoSelected} />
                 </div>
                 <p className="mt-3 text-lg font-semibold">
                   {profile.firstName} {profile.lastName}
@@ -261,10 +256,16 @@ export default function ProfilePage() {
                     <div className="space-y-1.5">
                       <Label htmlFor="firstName">First name</Label>
                       <Input id="firstName" {...profileForm.register("firstName")} />
+                      {profileErrors.firstName && (
+                        <p className="text-xs text-destructive">{profileErrors.firstName.message}</p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="lastName">Last name</Label>
                       <Input id="lastName" {...profileForm.register("lastName")} />
+                      {profileErrors.lastName && (
+                        <p className="text-xs text-destructive">{profileErrors.lastName.message}</p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label>Email</Label>
@@ -273,6 +274,9 @@ export default function ProfilePage() {
                     <div className="space-y-1.5">
                       <Label htmlFor="phone">Phone</Label>
                       <Input id="phone" {...profileForm.register("phone")} />
+                      {profileErrors.phone && (
+                        <p className="text-xs text-destructive">{profileErrors.phone.message}</p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="dateOfBirth">Date of birth</Label>
@@ -304,6 +308,9 @@ export default function ProfilePage() {
                     <div className="space-y-1.5 sm:col-span-2">
                       <Label htmlFor="address">Address</Label>
                       <Textarea id="address" rows={2} {...profileForm.register("address")} />
+                      {profileErrors.address && (
+                        <p className="text-xs text-destructive">{profileErrors.address.message}</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex justify-end pt-2">

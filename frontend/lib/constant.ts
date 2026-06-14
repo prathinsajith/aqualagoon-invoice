@@ -1,6 +1,3 @@
-export const COMPANY_NAME = "Aqua Lagoon";
-export const COMPANY_TAGLINE = "Swimming Pool & Kids Water Park";
-
 export interface NavItem {
     title: string;
     url: string;

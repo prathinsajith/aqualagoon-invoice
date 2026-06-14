@@ -14,7 +14,7 @@ export const userPassInclude = {
   passType: {
     select: { id: true, name: true, type: true, durationType: true, durationValue: true, entryType: true },
   },
-  user: { select: { firstName: true, lastName: true } },
+  user: { select: { id: true, firstName: true, lastName: true, photoUrl: true } },
 } satisfies Prisma.UserPassInclude;
 
 export type UserPassWithRelations = Prisma.UserPassGetPayload<{ include: typeof userPassInclude }>;
@@ -32,6 +32,8 @@ export function toUserPassDto(p: UserPassWithRelations): UserPassDto {
     userId: p.userId,
     // Prefer the name captured at sale; fall back to the linked account.
     holderName: p.holderName ?? (p.user ? `${p.user.firstName} ${p.user.lastName}` : null),
+    // The linked holder's uploaded photo, if any (null for walk-ins).
+    holderPhotoUrl: p.user?.photoUrl ?? null,
     passTypeId: p.passTypeId,
     passType: {
       id: p.passType.id,

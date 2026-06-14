@@ -53,7 +53,7 @@ export function PaymentsReceivedCard({ range, periodLabel }: DashboardRangeProps
               </div>
             ))}
           </div>
-          <div className="mt-1 flex items-center justify-between border-t pt-3">
+          <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-3">
             <span className="text-sm font-semibold">Total received</span>
             <span className="text-lg font-bold tabular-nums">{formatMoney(paymentsTotal)}</span>
           </div>

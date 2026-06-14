@@ -19,14 +19,14 @@ export function NotificationsButton() {
   const { can } = usePermissions();
   const canProducts = can("product.view");
 
-  const query = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["notifications", "low-stock"],
     queryFn: () => DashboardService.lowStock(20),
     enabled: canProducts,
     refetchInterval: 60_000,
   });
 
-  const items = query.data ?? [];
+  const items = data ?? [];
   const count = items.length;
 
   return (
@@ -58,7 +58,7 @@ export function NotificationsButton() {
         <div className="max-h-[20rem] overflow-y-auto p-1">
           {!canProducts ? (
             <EmptyState message="You're all caught up." />
-          ) : query.isLoading ? (
+          ) : isLoading ? (
             <div className="grid h-28 place-items-center">
               <Spinner className="size-6" />
             </div>

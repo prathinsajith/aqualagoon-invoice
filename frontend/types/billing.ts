@@ -191,6 +191,7 @@ export interface RevenueBreakdown {
 export interface TopPassBuyer {
     userId: string | null;
     name: string;
+    photoUrl: string | null;
     passCount: number;
     totalSpent: number;
 }

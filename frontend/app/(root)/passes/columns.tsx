@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PassStatusBadge } from "@/components/passes/pass-status-badge";
+import { PersonAvatar } from "@/components/person-avatar";
 import { DateText } from "@/components/date-text";
 import { PASS_KIND_LABELS } from "@/lib/pass-format";
 import type { UserPass } from "@/types/pass";
@@ -31,9 +32,22 @@ export function getPassColumns({ onView }: ColumnHandlers): ColumnDef<UserPass>[
     {
       id: "holder",
       header: "Holder",
-      cell: ({ row }) => (
-        <span className="text-sm">{row.original.holderName ?? "Walk-in"}</span>
-      ),
+      cell: ({ row }) => {
+        const p = row.original;
+        const name = p.holderName ?? "Walk-in";
+        return (
+          <div className="flex items-center gap-2.5">
+            <PersonAvatar
+              name={name}
+              photoUrl={p.holderPhotoUrl}
+              seed={p.userId ?? name}
+              className="size-8"
+              textClassName="text-[10px]"
+            />
+            <span className="text-sm">{name}</span>
+          </div>
+        );
+      },
     },
     {
       id: "passType",

@@ -11,6 +11,9 @@ export const companySchema = z.object({
   address: z.string().nullable(),
   logoUrl: z.string().nullable(),
   userCodePrefix: z.string(),
+  invoicePrefix: z.string(),
+  passPrefix: z.string(),
+  currency: z.string(),
   dateFormat: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -18,6 +21,18 @@ export const companySchema = z.object({
 
 /** Date formats the app supports for display. */
 export const DATE_FORMATS = ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD", "DD MMM YYYY"] as const;
+
+/** ISO 4217 currency codes offered in settings. */
+export const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "SAR", "AUD", "CAD", "SGD"] as const;
+
+/** Reusable prefix rule: 1–10 letters/digits, upper-cased. */
+const prefixField = z
+  .string()
+  .trim()
+  .min(1)
+  .max(10)
+  .regex(/^[A-Za-z0-9]+$/, "Letters and numbers only")
+  .transform((v) => v.toUpperCase());
 
 /** Editable company fields (partial — send only what changed). */
 export const updateCompanyBody = z
@@ -28,13 +43,10 @@ export const updateCompanyBody = z
     phone: z.string().trim().min(3).max(30).nullable(),
     website: z.string().trim().max(200).nullable(),
     address: z.string().trim().max(500).nullable(),
-    userCodePrefix: z
-      .string()
-      .trim()
-      .min(1)
-      .max(10)
-      .regex(/^[A-Za-z0-9]+$/, "Letters and numbers only")
-      .transform((v) => v.toUpperCase()),
+    userCodePrefix: prefixField,
+    invoicePrefix: prefixField,
+    passPrefix: prefixField,
+    currency: z.enum(CURRENCIES),
     dateFormat: z.enum(DATE_FORMATS),
   })
   .partial();

@@ -9,7 +9,7 @@ import {
 import { UserService } from "@/services/user-service";
 import type { UserListParams, UserPayload } from "@/services/user-service";
 
-export const userKeys = {
+const userKeys = {
     all: ["users"] as const,
     list: (params: UserListParams) => ["users", "list", params] as const,
     detail: (id: string) => ["users", "detail", id] as const,
@@ -23,34 +23,25 @@ export function useUsers(params: UserListParams) {
     });
 }
 
-export function useUser(id: string | null) {
-    return useQuery({
-        queryKey: userKeys.detail(id ?? ""),
-        queryFn: () => UserService.get(id!),
-        enabled: !!id,
-    });
-}
-
 export function useUserMutations() {
     const qc = useQueryClient();
-    const invalidate = () => qc.invalidateQueries({ queryKey: userKeys.all });
 
     const create = useMutation({
         mutationFn: (payload: UserPayload) => UserService.create(payload),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
     });
     const update = useMutation({
         mutationFn: ({ id, payload }: { id: string; payload: UserPayload }) =>
             UserService.update(id, payload),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
     });
     const remove = useMutation({
         mutationFn: (id: string) => UserService.remove(id),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
     });
     const restore = useMutation({
         mutationFn: (id: string) => UserService.restore(id),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: userKeys.all }),
     });
 
     return { create, update, remove, restore };

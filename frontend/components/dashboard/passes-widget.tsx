@@ -1,16 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { IconTicket, IconTrophy, IconUser } from "@tabler/icons-react";
+import { IconTicket, IconTrophy } from "@tabler/icons-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
 import { SectionCard, ViewAllLink } from "@/components/dashboard/section-card";
+import { PersonAvatar } from "@/components/person-avatar";
 import { DashboardService } from "@/services/dashboard-service";
 import { usePermissions } from "@/hooks/usePermissions";
 import { formatMoney } from "@/lib/format";
-import { avatarColor, initialsOf } from "@/lib/avatar";
-import { cn } from "@/lib/utils";
 import type { DateRange } from "@/lib/date-range";
 
 const rangeKey = (range: DateRange) => [range.from.toISOString(), range.to.toISOString()];
@@ -71,7 +69,7 @@ export function PassesIssuedCard({
               </div>
             ))}
           </div>
-          <div className="mt-1 flex items-center justify-between border-t pt-3">
+          <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-3">
             <span className="text-sm font-semibold">
               Total · {totalCount} {totalCount === 1 ? "pass" : "passes"}
             </span>
@@ -122,8 +120,6 @@ export function TopPassBuyersCard({
         </p>
       ) : (
         buyers.map((b, i) => {
-          const [first, last] = b.name.split(" ");
-          const initials = initialsOf(first, last);
           return (
             <div
               key={b.userId ?? `walkin-${i}`}
@@ -132,11 +128,12 @@ export function TopPassBuyersCard({
               <span className="w-4 shrink-0 text-center text-xs font-semibold tabular-nums text-muted-foreground">
                 {i + 1}
               </span>
-              <Avatar className="size-9 ring-1 ring-border">
-                <AvatarFallback className={cn("text-xs font-semibold", avatarColor(b.userId ?? b.name))}>
-                  {initials || <IconUser className="size-4" stroke={1.8} />}
-                </AvatarFallback>
-              </Avatar>
+              <PersonAvatar
+                name={b.name}
+                photoUrl={b.photoUrl}
+                seed={b.userId ?? b.name}
+                className="size-9"
+              />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{b.name}</p>
                 <p className="text-xs text-muted-foreground">

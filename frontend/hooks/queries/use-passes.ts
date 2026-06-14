@@ -4,7 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { PassService } from "@/services/pass-service";
 import type { PassListParams, RenewPayload } from "@/services/pass-service";
 
-export const passKeys = {
+const passKeys = {
     all: ["passes"] as const,
     list: (params: PassListParams) => ["passes", "list", params] as const,
     detail: (id: string) => ["passes", "detail", id] as const,
@@ -28,32 +28,31 @@ export function usePass(id: string | null) {
 
 export function usePassMutations() {
     const qc = useQueryClient();
-    const invalidate = () => qc.invalidateQueries({ queryKey: passKeys.all });
 
     const activate = useMutation({
         mutationFn: (id: string) => PassService.activate(id),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: passKeys.all }),
     });
     const suspend = useMutation({
         mutationFn: ({ id, reason }: { id: string; reason?: string }) => PassService.suspend(id, reason),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: passKeys.all }),
     });
     const cancel = useMutation({
         mutationFn: ({ id, reason }: { id: string; reason?: string }) => PassService.cancel(id, reason),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: passKeys.all }),
     });
     const renew = useMutation({
         mutationFn: ({ id, payload }: { id: string; payload?: RenewPayload }) =>
             PassService.renew(id, payload),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: passKeys.all }),
     });
     const entry = useMutation({
         mutationFn: ({ id, remarks }: { id: string; remarks?: string }) => PassService.entry(id, remarks),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: passKeys.all }),
     });
     const exit = useMutation({
         mutationFn: ({ id, remarks }: { id: string; remarks?: string }) => PassService.exit(id, remarks),
-        onSuccess: invalidate,
+        onSuccess: () => qc.invalidateQueries({ queryKey: passKeys.all }),
     });
 
     return { activate, suspend, cancel, renew, entry, exit };

@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { AuditService } from "@/services/audit-service";
 import type { AuditListParams } from "@/services/audit-service";
 
-export const auditKeys = {
+const auditKeys = {
     list: (params: AuditListParams) => ["audit-logs", "list", params] as const,
 };
 

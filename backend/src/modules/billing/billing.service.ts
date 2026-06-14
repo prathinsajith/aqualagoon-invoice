@@ -154,12 +154,18 @@ export class BillingService {
 
       // 5. Sequential invoice number, per year — incremented atomically.
       const year = new Date().getFullYear();
+      // Company-configured prefixes for generated numbers (fall back to defaults).
+      const company = await tx.companySetting.findFirst({
+        select: { invoicePrefix: true, passPrefix: true },
+      });
+      const invoicePrefix = company?.invoicePrefix || "INV";
+      const passPrefix = company?.passPrefix || "PASS";
       const seq = await tx.invoiceSequence.upsert({
         where: { year },
         create: { year, lastNumber: 1 },
         update: { lastNumber: { increment: 1 } },
       });
-      const invoiceNo = `INV-${year}-${String(seq.lastNumber).padStart(6, "0")}`;
+      const invoiceNo = `${invoicePrefix}-${year}-${String(seq.lastNumber).padStart(6, "0")}`;
       const invoiceType =
         stockOps.length > 0 && passOps.length > 0 ? "MIXED" : passOps.length > 0 ? "PASS" : "PRODUCT";
 
@@ -230,7 +236,7 @@ export class BillingService {
             create: { year, lastNumber: 1 },
             update: { lastNumber: { increment: 1 } },
           });
-          const passNumber = `PASS-${year}-${String(pseq.lastNumber).padStart(6, "0")}`;
+          const passNumber = `${passPrefix}-${year}-${String(pseq.lastNumber).padStart(6, "0")}`;
           // A single-entry pass is consumed the moment it's issued — taking the
           // pass IS the one entry, so it starts with 0 left and the entry is logged.
           const isSingleEntry =

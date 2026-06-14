@@ -115,6 +115,18 @@ export function UserFormDialog({ open, onOpenChange, user, onCreated }: UserForm
     defaultValues: emptyDefaults,
   });
 
+  // Clear the staged photo the moment the dialog opens — done during render
+  // with a prev-prop comparison (not an effect) so there's no extra commit with
+  // a stale preview. See react.dev "adjusting some state when a prop changes".
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setPhotoFile(null);
+      setPhotoPreview(null);
+    }
+  }
+
   // Sync the form whenever the dialog opens for a (different) user. Does NOT
   // depend on `roles`, so loading the roles list never wipes in-progress input.
   useEffect(() => {
@@ -122,8 +134,6 @@ export function UserFormDialog({ open, onOpenChange, user, onCreated }: UserForm
       guestDefaultedRef.current = false;
       return;
     }
-    setPhotoFile(null);
-    setPhotoPreview(null);
     if (user) {
       reset({
         firstName: user.firstName,
