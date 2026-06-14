@@ -13,7 +13,11 @@
 #   CORS_ORIGIN        = https://<your-frontend-domain>   # the admin app's URL
 #   FRONTEND_URL       = https://<your-frontend-domain>
 #   NODE_ENV           = production
-# Optional: email (RESEND/SMTP), AWS S3 uploads — see .env.example.
+#   SEED_ADMIN_EMAIL   = <first admin login email>
+#   SEED_ADMIN_PASSWORD= <strong password — change after first login>
+#   SEED_COMPANY_NAME  = <your company/brand name>
+#   SEED_COMPANY_EMAIL = <company contact email>
+# Optional: SEED_COMPANY_TAGLINE, email (RESEND/SMTP), AWS S3 uploads — see .env.example.
 # PORT is injected by Railway automatically; the server already binds it.
 
 [build]
@@ -24,8 +28,12 @@ builder = "NIXPACKS"
 buildCommand = "pnpm install --prod=false --frozen-lockfile && pnpm build"
 
 [deploy]
-# Apply pending migrations (idempotent — only runs what's outstanding), then boot.
-startCommand = "pnpm prisma:deploy && pnpm start"
+# Apply pending migrations + seed the baseline (permissions, roles, admin,
+# company, payment methods), then boot. Both steps are idempotent: migrate only
+# runs what's outstanding, and the seed upserts — it creates the admin if
+# missing but never resets an existing/changed password. Requires the SEED_*
+# vars below to be set (the seed fails fast otherwise).
+startCommand = "pnpm prisma:deploy && pnpm db:seed && pnpm start"
 # Liveness probe — does not touch the DB, so transient DB blips won't restart-loop.
 healthcheckPath = "/health"
 healthcheckTimeout = 300
