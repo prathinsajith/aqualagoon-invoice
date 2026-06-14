@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { PaginationState } from "@tanstack/react-table";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { toast } from "sonner";
@@ -68,14 +68,17 @@ export function EnrollmentsContent() {
 
   const resetToFirstPage = () => setPagination((p) => ({ ...p, pageIndex: 0 }));
 
-  const changeStatus = async (enrollment: StudentEnrollment, status: EnrollmentStatus) => {
-    try {
-      await update.mutateAsync({ id: enrollment.id, payload: { status } });
-      toast.success("Enrollment updated");
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to update enrollment"));
-    }
-  };
+  const changeStatus = useCallback(
+    async (enrollment: StudentEnrollment, status: EnrollmentStatus) => {
+      try {
+        await update.mutateAsync({ id: enrollment.id, payload: { status } });
+        toast.success("Enrollment updated");
+      } catch (err) {
+        toast.error(getApiErrorMessage(err, "Failed to update enrollment"));
+      }
+    },
+    [update],
+  );
 
   const columns = useMemo(
     () =>
@@ -83,8 +86,7 @@ export function EnrollmentsContent() {
         onChangeStatus: changeStatus,
         canUpdate: can("enrollment.update"),
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [can],
+    [can, changeStatus],
   );
 
   return (

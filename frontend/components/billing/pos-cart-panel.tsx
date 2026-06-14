@@ -106,6 +106,7 @@ export function PosCartPanel({
                     <button
                       type="button"
                       onClick={() => onRemove(key)}
+                      aria-label={`Remove ${line.item.name} from cart`}
                       className="text-muted-foreground hover:text-destructive"
                     >
                       <IconTrash className="size-4" />

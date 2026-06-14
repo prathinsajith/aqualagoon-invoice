@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconCamera } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,13 @@ export function ImageCropField({
   const fileRef = useRef<HTMLInputElement>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
 
+  // Revoke the object URL when it changes or the field unmounts — covers
+  // picking a new file before cropping and unmounting mid-crop.
+  useEffect(() => {
+    if (!cropSrc) return;
+    return () => URL.revokeObjectURL(cropSrc);
+  }, [cropSrc]);
+
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) setCropSrc(URL.createObjectURL(file));
@@ -61,7 +68,7 @@ export function ImageCropField({
       >
         {value ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={value} alt="" className="size-full object-cover" />
+          <img src={value} alt="Current image" className="size-full object-cover" />
         ) : (
           fallback
         )}

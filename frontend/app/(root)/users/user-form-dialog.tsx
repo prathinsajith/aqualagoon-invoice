@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -165,12 +165,16 @@ export function UserFormDialog({ open, onOpenChange, user, onCreated }: UserForm
   const gender = watch("gender");
 
   // Customer roles (Guest/Student) don't log in: email is optional and no
-  // password is set here. Login roles require an email and get a setup link.
-  const CUSTOMER_ROLES = ["Guest", "Student"];
-  const selectedRoleNames = roles
-    .filter((r) => selectedRoleIds.includes(r.id))
-    .map((r) => r.name);
-  const isLoginUser = selectedRoleNames.some((n) => !CUSTOMER_ROLES.includes(n));
+  // password is set here. Login roles require an email and get a setup link;
+  // customer roles (Guest/Student) don't.
+  const selectedRoleNames = useMemo(
+    () => roles.filter((r) => selectedRoleIds.includes(r.id)).map((r) => r.name),
+    [roles, selectedRoleIds],
+  );
+  const isLoginUser = useMemo(
+    () => selectedRoleNames.some((n) => n !== "Guest" && n !== "Student"),
+    [selectedRoleNames],
+  );
 
   const toggleRole = (roleId: string) => {
     // Guest is the mandatory base role on a new user — it can't be removed here.
@@ -281,7 +285,11 @@ export function UserFormDialog({ open, onOpenChange, user, onCreated }: UserForm
             <div className="space-y-1.5">
               <Label htmlFor="email">
                 Email{" "}
-                {!isLoginUser && <span className="font-normal text-muted-foreground">(optional)</span>}
+                {isLoginUser ? (
+                  <span className="text-destructive">*</span>
+                ) : (
+                  <span className="font-normal text-muted-foreground">(optional)</span>
+                )}
               </Label>
               <Input id="email" type="email" {...register("email")} />
               {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}

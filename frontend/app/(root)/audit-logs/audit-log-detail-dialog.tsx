@@ -113,7 +113,10 @@ export function AuditLogDetailDialog({
   const hasOld = !!log?.oldData;
   const hasNew = !!log?.newData;
   const isUpdate = hasOld && hasNew;
-  const rows = log ? diffRows(log.oldData, log.newData) : [];
+  const rows = useMemo(
+    () => (log ? diffRows(log.oldData, log.newData) : []),
+    [log],
+  );
   const snapshot = (log?.newData ?? log?.oldData ?? {}) as Record<string, unknown>;
   const snapshotRows = Object.keys(snapshot).filter((k) => !SKIP.has(k));
 

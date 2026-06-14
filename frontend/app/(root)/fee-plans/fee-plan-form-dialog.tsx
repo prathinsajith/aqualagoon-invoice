@@ -44,7 +44,7 @@ const DURATION_TYPES = ["MONTH", "QUARTER", "YEAR", "CUSTOM"] as const;
 export function FeePlanFormDialog({ open, onOpenChange, feePlan }: FeePlanFormDialogProps) {
   const isEdit = !!feePlan;
   const { create, update } = useFeePlanMutations();
-  const { data: programsData } = useTrainingPrograms({ page: 1, limit: 100, status: "ACTIVE" });
+  const { data: programsData } = useTrainingPrograms({ page: 1, limit: 100, status: "ACTIVE" }, { enabled: open });
   const programs = programsData?.data ?? [];
 
   const {

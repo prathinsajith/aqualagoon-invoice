@@ -49,6 +49,11 @@ const notFound = z.object({ message: z.string() });
 export async function statusRoutes(app: FastifyInstance): Promise<void> {
   const r = app.withTypeProvider<ZodTypeProvider>();
 
+  // Every status route requires a valid session — this resource was previously
+  // unauthenticated, allowing anonymous CRUD. The hook is scoped to this
+  // encapsulated plugin, so it gates all routes below in one place.
+  app.addHook("onRequest", app.authenticate);
+
   r.get(
     "/status",
     {

@@ -37,8 +37,11 @@ export class RolesService {
   }
 
   async create(input: CreateRoleInput, actor: ActorContext): Promise<RoleDto> {
-    await this.assertNameAvailable(input.name);
-    await this.assertPermissionsExist(input.permissionIds);
+    // Independent validations — run them together.
+    await Promise.all([
+      this.assertNameAvailable(input.name),
+      this.assertPermissionsExist(input.permissionIds),
+    ]);
 
     const role = await this.repo.create({
       name: input.name,

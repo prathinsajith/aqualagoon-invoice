@@ -55,7 +55,10 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
   const isEdit = !!product;
   const qc = useQueryClient();
   const { create, update } = useProductMutations();
-  const { data: categoriesData } = useProductCategories({ page: 1, limit: 100, sortBy: "name", sortOrder: "asc" });
+  const { data: categoriesData } = useProductCategories(
+    { page: 1, limit: 100, sortBy: "name", sortOrder: "asc" },
+    { enabled: open },
+  );
   const categories = categoriesData?.data ?? [];
 
   // Image state: a staged (cropped) file overrides the existing image; the

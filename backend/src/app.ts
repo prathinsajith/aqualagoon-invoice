@@ -112,6 +112,20 @@ export async function buildApp() {
       if (error.code === "P2025") {
         return reply.status(404).send({ message: "Resource not found", code: "NOT_FOUND" });
       }
+      // Foreign-key / required-relation violations are client errors, not 500s.
+      if (error.code === "P2003" || error.code === "P2014") {
+        return reply.status(409).send({
+          message: "This action conflicts with related records",
+          code: "CONFLICT",
+        });
+      }
+      // Pool/connection timeout — the database is briefly unavailable.
+      if (error.code === "P2024") {
+        return reply.status(503).send({
+          message: "Service temporarily unavailable, please retry",
+          code: "SERVICE_UNAVAILABLE",
+        });
+      }
     }
 
     app.log.error(error);

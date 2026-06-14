@@ -46,7 +46,7 @@ const emptyToNull = (value: string | undefined): string | null =>
 export function BatchFormDialog({ open, onOpenChange, batch }: BatchFormDialogProps) {
   const isEdit = !!batch;
   const { create, update } = useBatchMutations();
-  const { data: programsData } = useTrainingPrograms({ page: 1, limit: 100, status: "ACTIVE" });
+  const { data: programsData } = useTrainingPrograms({ page: 1, limit: 100, status: "ACTIVE" }, { enabled: open });
   const programs = programsData?.data ?? [];
 
   // CustomerSelect needs a ManagedUser; keep the picked trainer locally and sync

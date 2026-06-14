@@ -221,6 +221,25 @@ export function DataTableGeneric<TData, TValue>({
                                                             : ""
                                                     }
                                                     onClick={header.column.getToggleSortingHandler()}
+                                                    // Keyboard-operable sort: focusable + Enter/Space toggles.
+                                                    role={header.column.getCanSort() ? "button" : undefined}
+                                                    tabIndex={header.column.getCanSort() ? 0 : undefined}
+                                                    aria-sort={
+                                                        header.column.getIsSorted() === "asc"
+                                                            ? "ascending"
+                                                            : header.column.getIsSorted() === "desc"
+                                                                ? "descending"
+                                                                : header.column.getCanSort()
+                                                                    ? "none"
+                                                                    : undefined
+                                                    }
+                                                    onKeyDown={(e) => {
+                                                        if (!header.column.getCanSort()) return;
+                                                        if (e.key === "Enter" || e.key === " ") {
+                                                            e.preventDefault();
+                                                            header.column.toggleSorting();
+                                                        }
+                                                    }}
                                                 >
                                                     {flexRender(
                                                         header.column.columnDef.header,

@@ -48,7 +48,7 @@ export function TrainingProgramFormDialog({
 }: TrainingProgramFormDialogProps) {
   const isEdit = !!program;
   const { create, update } = useTrainingProgramMutations();
-  const { data: typesData } = useTrainingTypes({ page: 1, limit: 100, status: "ACTIVE" });
+  const { data: typesData } = useTrainingTypes({ page: 1, limit: 100, status: "ACTIVE" }, { enabled: open });
   const trainingTypes = typesData?.data ?? [];
 
   const {
