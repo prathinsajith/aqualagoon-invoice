@@ -12,7 +12,7 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { isPass, isTraining, lineKey, resolveImg } from "./pos-utils";
@@ -168,8 +168,10 @@ export function PosCatalogPanel({
       </div>
 
       {loading ? (
-        <div className="grid flex-1 place-items-center">
-          <Spinner className="size-7" />
+        <div className="grid grid-cols-2 gap-3 p-1 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-xl" />
+          ))}
         </div>
       ) : items.length === 0 ? (
         <div className="grid flex-1 place-items-center rounded-xl border border-dashed text-sm text-muted-foreground">

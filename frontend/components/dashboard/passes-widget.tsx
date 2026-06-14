@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { IconTicket, IconTrophy } from "@tabler/icons-react";
 
-import { Spinner } from "@/components/ui/spinner";
+import { WidgetRowsSkeleton } from "@/components/skeletons";
 import { SectionCard, ViewAllLink } from "@/components/dashboard/section-card";
 import { PersonAvatar } from "@/components/person-avatar";
 import { DashboardService } from "@/services/dashboard-service";
@@ -45,9 +45,7 @@ export function PassesIssuedCard({
       action={<ViewAllLink href="/passes" />}
     >
       {passesLoading ? (
-        <div className="grid h-24 place-items-center">
-          <Spinner className="size-6" />
-        </div>
+        <WidgetRowsSkeleton rows={3} />
       ) : passes.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No passes issued in this period.
@@ -113,9 +111,7 @@ export function TopPassBuyersCard({
       contentClassName="divide-y divide-foreground/10"
     >
       {buyersLoading ? (
-        <div className="grid h-24 place-items-center">
-          <Spinner className="size-6" />
-        </div>
+        <WidgetRowsSkeleton rows={3} />
       ) : buyers.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No pass buyers in this period.

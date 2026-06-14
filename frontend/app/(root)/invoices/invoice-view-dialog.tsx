@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/rbac/confirm-dialog";
 import { Can } from "@/components/permission-gate";
 import { InvoiceStatusBadge } from "@/components/billing/invoice-status-badge";
@@ -99,8 +100,22 @@ export function InvoiceViewDialog({
           </DialogHeader>
 
           {isLoading || !invoice ? (
-            <div className="grid h-40 place-items-center">
-              <Spinner className="size-7" />
+            <div className="space-y-4 py-2">
+              <Skeleton className="h-24 w-full rounded-lg" />
+              <div className="space-y-2 rounded-lg border px-4 py-3">
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <Skeleton className="h-5 w-14" />
+                  <Skeleton className="h-5 w-20" />
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">

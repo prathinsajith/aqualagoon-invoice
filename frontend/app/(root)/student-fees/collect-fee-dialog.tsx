@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
@@ -191,8 +192,22 @@ export function CollectFeeDialog({
             )}
           </div>
         ) : isLoading ? (
-          <div className="grid h-32 place-items-center">
-            <Spinner className="size-7" />
+          <div className="space-y-4 py-2">
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-9 w-full" />
+              </div>
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-9 w-full" />
+              </div>
+            </div>
+            <div className="flex justify-between border-t pt-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-16" />
+            </div>
           </div>
         ) : outstanding.length === 0 ? (
           <p className="rounded-lg border bg-muted/30 p-6 text-center text-sm text-muted-foreground">

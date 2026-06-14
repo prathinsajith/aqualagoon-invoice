@@ -2,7 +2,7 @@
 
 import { useAuthStore } from "@/stores/auth-store";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Spinner } from "@/components/ui/spinner";
+import { ListPageSkeleton } from "@/components/skeletons";
 import { NoAccess } from "@/components/rbac/no-access";
 
 /**
@@ -20,11 +20,7 @@ export function PermissionPage({
   const { can } = usePermissions();
 
   if (isInitializing) {
-    return (
-      <div className="grid min-h-[50vh] place-items-center">
-        <Spinner className="size-8" />
-      </div>
-    );
+    return <ListPageSkeleton />;
   }
 
   if (!can(permission)) return <NoAccess />;

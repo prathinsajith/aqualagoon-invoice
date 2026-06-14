@@ -73,16 +73,13 @@ export default function StatusPage() {
 
       {/* Data Display Section */}
       <div className="px-4 lg:px-6">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-10">
-            <p className="text-muted-foreground">Loading statuses...</p>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-center py-10 text-red-500">
             <p>{error}</p>
           </div>
         ) : (
           <DataTableGeneric
+            loading={isLoading}
             columns={statusColumns}
             data={statuses}
             searchKey="label"

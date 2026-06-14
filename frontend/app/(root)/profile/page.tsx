@@ -17,6 +17,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { ImageCropperDialog } from "@/components/ui/image-cropper-dialog";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { DetailPageSkeleton } from "@/components/skeletons";
 import {
   Select,
   SelectContent,
@@ -88,11 +89,7 @@ export default function ProfilePage() {
   const [changingPassword, setChangingPassword] = useState(false);
 
   if (isInitializing || isLoading || !profile) {
-    return (
-      <div className="grid min-h-[50vh] place-items-center">
-        <Spinner className="size-8" />
-      </div>
-    );
+    return <DetailPageSkeleton cards={2} />;
   }
 
   const photo = profile.photoUrl

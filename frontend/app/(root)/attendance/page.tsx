@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { DatePicker, DATE_PICKER_PAST_START } from "@/components/ui/date-picker";
 import { MonthPicker } from "@/components/ui/month-picker";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
+import { TableSkeleton } from "@/components/skeletons";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -274,9 +274,7 @@ export function AttendanceContent() {
           Select a batch to view its students and attendance.
         </div>
       ) : rosterLoading ? (
-        <div className="grid min-h-[30vh] place-items-center">
-          <Spinner className="size-8" />
-        </div>
+        <TableSkeleton cols={6} rows={6} />
       ) : roster.length === 0 ? (
         <div className="rounded-md border border-dashed p-10 text-center text-sm text-muted-foreground">
           No active students enrolled in this batch yet.
@@ -459,11 +457,7 @@ function MonthView({
   loading: boolean;
 }) {
   if (loading) {
-    return (
-      <div className="grid min-h-[30vh] place-items-center">
-        <Spinner className="size-8" />
-      </div>
-    );
+    return <TableSkeleton cols={6} rows={6} />;
   }
   return (
     <div className="space-y-3">

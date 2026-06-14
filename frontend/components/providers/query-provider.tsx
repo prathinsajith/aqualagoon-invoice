@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, keepPreviousData } from "@tanstack/react-query";
 
 /**
  * Provides a per-browser-session React Query client. Created in state so it is
@@ -13,9 +13,15 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30_000,
+            // Treat data as fresh for a minute so in-app navigation doesn't
+            // refetch on every mount; keep it cached for 10m after unmount.
+            staleTime: 60_000,
+            gcTime: 10 * 60_000,
             retry: 1,
             refetchOnWindowFocus: false,
+            // Keep showing the previous page/filter's data while the next loads
+            // — eliminates the blank-flicker on pagination and filter changes.
+            placeholderData: keepPreviousData,
           },
         },
       }),

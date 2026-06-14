@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { IconWallet } from "@tabler/icons-react";
 
-import { Spinner } from "@/components/ui/spinner";
+import { WidgetRowsSkeleton } from "@/components/skeletons";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { DashboardService } from "@/services/dashboard-service";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -34,9 +34,7 @@ export function PaymentsReceivedCard({ range, periodLabel }: DashboardRangeProps
       caption={`${periodLabel.toLowerCase()} · by method`}
     >
       {paymentsLoading ? (
-        <div className="grid h-24 place-items-center">
-          <Spinner className="size-6" />
-        </div>
+        <WidgetRowsSkeleton rows={3} />
       ) : payments.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No payments received in this period.

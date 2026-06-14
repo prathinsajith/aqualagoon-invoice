@@ -6,7 +6,7 @@ import { IconBell, IconAlertTriangle, IconPackageOff, IconChevronRight } from "@
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardService } from "@/services/dashboard-service";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
@@ -59,8 +59,16 @@ export function NotificationsButton() {
           {!canProducts ? (
             <EmptyState message="You're all caught up." />
           ) : isLoading ? (
-            <div className="grid h-28 place-items-center">
-              <Spinner className="size-6" />
+            <div className="space-y-1">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-start gap-3 px-3 py-2.5">
+                  <Skeleton className="size-8 shrink-0 rounded-full" />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <Skeleton className="h-3.5 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : count === 0 ? (
             <EmptyState message="No alerts — stock levels look healthy." />

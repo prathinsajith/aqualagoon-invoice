@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/c
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -225,9 +226,7 @@ export function TwoFactorCard() {
               </DialogHeader>
 
               {loadingSetup || !setup ? (
-                <div className="grid h-56 place-items-center">
-                  <Spinner className="size-7" />
-                </div>
+                <Skeleton className="mx-auto size-44 rounded-lg" />
               ) : (
                 <div className="space-y-4">
                   <div className="flex justify-center">

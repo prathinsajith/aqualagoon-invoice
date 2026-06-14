@@ -53,11 +53,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
+    /** Show shimmer rows instead of data — for the first load of this table. */
+    loading?: boolean
     searchKey?: string
     searchPlaceholder?: string
     showColumnVisibility?: boolean
@@ -77,6 +80,7 @@ interface DataTableProps<TData, TValue> {
 export function DataTableGeneric<TData, TValue>({
     columns,
     data,
+    loading = false,
     searchKey,
     searchPlaceholder = "Search...",
     showColumnVisibility = true,
@@ -242,7 +246,18 @@ export function DataTableGeneric<TData, TValue>({
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows?.length ? (
+                        {loading ? (
+                            Array.from({ length: Math.min(currentPageSize, 8) }).map((_, r) => (
+                                <TableRow key={`skeleton-${r}`} className="hover:bg-transparent">
+                                    {onReorder && <TableCell className="w-8 pl-4" />}
+                                    {columns.map((_, c) => (
+                                        <TableCell key={c} className="py-3 px-4 first:pl-4 last:pr-4">
+                                            <Skeleton className={cn("h-4", c === 0 ? "w-32" : "w-20")} />
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
+                        ) : table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}

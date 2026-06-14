@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { useAuthStore } from "@/stores/auth-store";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Spinner } from "@/components/ui/spinner";
+import { ListPageSkeleton } from "@/components/skeletons";
 
 /**
  * Wraps an admin-only page: waits for the initial auth check, then renders the
@@ -18,11 +18,7 @@ export function AdminPage({ children }: { children: React.ReactNode }) {
 
   // Hold the gate until the in-memory session has been restored.
   if (isInitializing) {
-    return (
-      <div className="grid min-h-[50vh] place-items-center">
-        <Spinner className="size-8" />
-      </div>
-    );
+    return <ListPageSkeleton />;
   }
 
   if (!isAdmin) {

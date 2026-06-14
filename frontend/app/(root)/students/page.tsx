@@ -4,7 +4,7 @@ import { IconUserPlus, IconCalendarCheck, IconCash } from "@tabler/icons-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoAccess } from "@/components/rbac/no-access";
-import { Spinner } from "@/components/ui/spinner";
+import { ListPageSkeleton } from "@/components/skeletons";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -25,11 +25,7 @@ export default function StudentsPage() {
   const canFees = can("student_fee.view");
 
   if (isInitializing) {
-    return (
-      <div className="grid min-h-[50vh] place-items-center">
-        <Spinner className="size-8" />
-      </div>
-    );
+    return <ListPageSkeleton />;
   }
 
   if (!canEnrollments && !canAttendance && !canFees) return <NoAccess />;

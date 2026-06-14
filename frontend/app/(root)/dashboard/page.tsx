@@ -16,7 +16,7 @@ import {
 } from "@tabler/icons-react";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserStatusBadge } from "@/components/rbac/status-badge";
 import { PersonAvatar } from "@/components/person-avatar";
 import {
@@ -75,7 +75,7 @@ function StatCard({
           <div className="mt-0.5 flex items-baseline gap-2">
             <span className="text-2xl font-bold tracking-tight">
               {loading ? (
-                <Spinner className="size-5" />
+                <Skeleton className="h-7 w-16" />
               ) : (
                 (valueText ?? (value ?? 0).toLocaleString())
               )}
@@ -114,10 +114,19 @@ function RecentUsersSection({ users, loading }: { users: ManagedUser[]; loading:
       contentClassName="divide-y divide-foreground/10"
     >
       {loading ? (
-        <div className="grid h-32 place-items-center">
-          <Spinner className="size-6" />
+        <div className="space-y-1 py-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-2 py-2">
+              <Skeleton className="size-9 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-3 w-44" />
+              </div>
+              <Skeleton className="h-4 w-12" />
+            </div>
+          ))}
         </div>
-      ) : users.length === 0 ? (
+      ) :users.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">No users yet.</p>
       ) : (
         users.map((u) => (
@@ -153,10 +162,19 @@ function ActiveBatchesSection({ batches, loading }: { batches: TrainingBatch[]; 
       contentClassName="divide-y divide-foreground/10"
     >
       {loading ? (
-        <div className="grid h-32 place-items-center">
-          <Spinner className="size-6" />
+        <div className="space-y-1 py-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-2 py-2">
+              <Skeleton className="size-9 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-3 w-44" />
+              </div>
+              <Skeleton className="h-4 w-12" />
+            </div>
+          ))}
         </div>
-      ) : batches.length === 0 ? (
+      ) :batches.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">No active batches.</p>
       ) : (
         batches.map((b) => {
@@ -214,10 +232,19 @@ function NewAdmissionsSection({
       contentClassName="space-y-1"
     >
       {loading ? (
-        <div className="grid h-32 place-items-center">
-          <Spinner className="size-6" />
+        <div className="space-y-1 py-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-2 py-2">
+              <Skeleton className="size-9 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-3 w-44" />
+              </div>
+              <Skeleton className="h-4 w-12" />
+            </div>
+          ))}
         </div>
-      ) : admissions.length === 0 ? (
+      ) :admissions.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No admissions {isToday ? "today" : "in this period"} yet.
         </p>

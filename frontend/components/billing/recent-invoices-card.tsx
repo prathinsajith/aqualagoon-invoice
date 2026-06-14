@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { IconReceipt2 } from "@tabler/icons-react";
 
-import { Spinner } from "@/components/ui/spinner";
+import { WidgetRowsSkeleton } from "@/components/skeletons";
 import { InvoiceStatusBadge } from "@/components/billing/invoice-status-badge";
 import { SectionCard, ViewAllLink } from "@/components/dashboard/section-card";
 import { DashboardService } from "@/services/dashboard-service";
@@ -37,9 +37,7 @@ export function RecentInvoicesCard({ range }: { range: DateRange }) {
       contentClassName="divide-y divide-foreground/10"
     >
       {recentLoading ? (
-        <div className="grid h-32 place-items-center">
-          <Spinner className="size-6" />
-        </div>
+        <WidgetRowsSkeleton />
       ) : recent.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">No invoices in this period.</p>
       ) : (

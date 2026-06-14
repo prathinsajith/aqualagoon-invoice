@@ -5,6 +5,7 @@ import { IconCheck, IconShieldCheck } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useRoles, useRoleMutations } from "@/hooks/queries/use-roles";
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -42,8 +43,10 @@ export function RoleAccessMatrix() {
 
   if (isLoading && !data) {
     return (
-      <div className="grid min-h-[20vh] place-items-center">
-        <Spinner className="size-7" />
+      <div className="space-y-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-9 w-full rounded-md" />
+        ))}
       </div>
     );
   }

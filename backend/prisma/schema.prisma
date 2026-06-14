@@ -802,6 +802,11 @@ model StudentEnrollment {
   @@index([studentId])
   @@index([batchId])
   @@index([status])
+  // Dashboard "recent admissions" orders by and date-filters on createdAt.
+  @@index([createdAt])
+  // "Active enrollments in a batch" (capacity checks) and fee-plan lookups.
+  @@index([batchId, status])
+  @@index([feePlanId])
   @@map("student_enrollments")
 }
 
@@ -835,6 +840,8 @@ model StudentFee {
   @@index([status])
   @@index([invoiceId])
   @@index([dueDate])
+  // Per-enrollment fee ledger filters by enrollment + status together.
+  @@index([enrollmentId, status])
   @@map("student_fees")
 }
 
