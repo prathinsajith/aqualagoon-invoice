@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { RefreshButton } from "@/components/refresh-button";
 import { PaymentMethodFormDialog } from "@/components/billing/payment-method-form-dialog";
 import { usePaymentMethods, usePaymentMethodMutations } from "@/hooks/queries/use-payment-methods";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -173,11 +174,14 @@ export function PaymentMethodsSection() {
         <p className="text-sm text-muted-foreground">
           Payment methods available to cashiers at checkout. Drag to reorder; inactive methods are hidden from billing.
         </p>
-        <Can permission="payment_method.create">
-          <Button size="sm" onClick={() => patchUi({ editing: null, form: true })}>
-            <IconPlus className="size-4" /> New method
-          </Button>
-        </Can>
+        <div className="flex items-center gap-3">
+          <RefreshButton queryKey={["payment-methods"]} />
+          <Can permission="payment_method.create">
+            <Button size="sm" onClick={() => patchUi({ editing: null, form: true })}>
+              <IconPlus className="size-4" /> New method
+            </Button>
+          </Can>
+        </div>
       </div>
 
       {isError ? (

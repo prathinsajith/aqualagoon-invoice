@@ -151,6 +151,9 @@ export class DashboardService {
       batchName: string;
       programName: string;
       joinedDate: Date;
+      billed: number;
+      paid: number;
+      balance: number;
     }[]
   > {
     const createdAt = this.dateFilter(range, true);
@@ -159,19 +162,31 @@ export class DashboardService {
       include: {
         student: { select: { id: true, firstName: true, lastName: true, photoUrl: true } },
         batch: { select: { name: true, program: { select: { name: true } } } },
+        studentFees: { select: { finalAmount: true, paidAmount: true } },
       },
       orderBy: { createdAt: "desc" },
       take: limit,
     });
-    return rows.map((e) => ({
-      id: e.id,
-      studentId: e.student.id,
-      studentName: `${e.student.firstName} ${e.student.lastName}`.trim(),
-      studentPhotoUrl: e.student.photoUrl,
-      batchName: e.batch.name,
-      programName: e.batch.program.name,
-      joinedDate: e.joinedDate,
-    }));
+    return rows.map((e) => {
+      let billed = 0;
+      let paid = 0;
+      for (const f of e.studentFees) {
+        billed += f.finalAmount.toNumber();
+        paid += f.paidAmount.toNumber();
+      }
+      return {
+        id: e.id,
+        studentId: e.student.id,
+        studentName: `${e.student.firstName} ${e.student.lastName}`.trim(),
+        studentPhotoUrl: e.student.photoUrl,
+        batchName: e.batch.name,
+        programName: e.batch.program.name,
+        joinedDate: e.joinedDate,
+        billed,
+        paid,
+        balance: Math.max(0, billed - paid),
+      };
+    });
   }
 
   /** Passes issued in the range, grouped by pass type (defaults to today; excludes cancelled). */

@@ -24,10 +24,16 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-background/95 backdrop-blur-xl lg:hidden"
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-50 lg:hidden",
+        // Glass surface with curved top edges and a soft lift off the page.
+        "rounded-t-[28px] border-t border-white/15 dark:border-white/10",
+        "bg-background/65 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/55",
+        "shadow-[0_-10px_40px_-12px_rgba(0,0,0,0.25)]",
+      )}
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="mx-auto flex max-w-screen-sm items-stretch justify-around">
+      <div className="mx-auto flex max-w-screen-sm items-stretch justify-around gap-1 px-2.5 pb-1.5 pt-2 sm:gap-2 sm:px-4">
         {items.map((item) => {
           const IconComponent = item.icon
             ? (TablerIcons as unknown as Record<string, Icon>)[item.icon]
@@ -38,13 +44,29 @@ export function BottomNav() {
             <Link
               key={item.title}
               href={item.url}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
+                "group relative flex flex-1 flex-col items-center gap-1 rounded-2xl px-1.5 py-2 text-[11px] font-medium",
+                "transition-all duration-200 active:scale-[0.92]",
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {IconComponent && <IconComponent className="size-[22px]" stroke={1.75} />}
-              <span className="leading-none">{item.title}</span>
+              {/* Glass pill behind the active item. */}
+              <span
+                className={cn(
+                  "pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset transition-all duration-200",
+                  isActive
+                    ? "bg-primary/12 ring-primary/25 shadow-sm"
+                    : "bg-transparent ring-transparent group-hover:bg-foreground/5 group-active:bg-foreground/10",
+                )}
+              />
+              {IconComponent && (
+                <IconComponent
+                  className="relative size-[22px] transition-transform duration-200 group-active:scale-110"
+                  stroke={isActive ? 2 : 1.75}
+                />
+              )}
+              <span className="relative leading-none">{item.title}</span>
             </Link>
           );
         })}

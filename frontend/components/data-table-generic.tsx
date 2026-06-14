@@ -144,21 +144,21 @@ export function DataTableGeneric<TData, TValue>({
     const end = Math.min((pageIndex + 1) * currentPageSize, totalCount)
 
     return (
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-3">
             {/* Premium Toolbar */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-1">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
                 {/* Search */}
                 {searchKey && (
                     <div className="flex flex-1 items-center gap-2 w-full sm:w-auto">
                         <div className="relative flex-1 sm:max-w-md">
-                            <IconSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60 pointer-events-none" />
+                            <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60 pointer-events-none" />
                             <Input
                                 placeholder={searchPlaceholder}
                                 value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
                                 onChange={(event) =>
                                     table.getColumn(searchKey)?.setFilterValue(event.target.value)
                                 }
-                                className="pl-10 h-11 bg-background border-border/40 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary/40 transition-all"
+                                className="pl-9 h-9 bg-background border-border/40 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary/40 transition-all"
                             />
                         </div>
                     </div>
@@ -168,7 +168,7 @@ export function DataTableGeneric<TData, TValue>({
                 {showColumnVisibility && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2 h-11 px-4 shadow-sm border-border/40 hover:bg-accent/50 transition-all">
+                            <Button variant="outline" size="sm" className="gap-2 h-9 px-3 shadow-sm border-border/40 hover:bg-accent/50 transition-all">
                                 <IconLayoutColumns className="size-4" />
                                 <span className="hidden sm:inline font-medium">View</span>
                                 <IconChevronDown className="size-3.5 opacity-50" />
@@ -201,13 +201,13 @@ export function DataTableGeneric<TData, TValue>({
                     <TableHeader className="table-header">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id} className="hover:bg-transparent border-b border-border">
-                                {onReorder && <TableHead className="w-10 pl-8" />}
+                                {onReorder && <TableHead className="w-8 pl-4" />}
                                 {headerGroup.headers.map((header) => {
                                     return (
                                         <TableHead
                                             key={header.id}
                                             colSpan={header.colSpan}
-                                            className="h-12 text-[11px] font-bold text-muted-foreground uppercase tracking-wider first:pl-8 last:pr-8"
+                                            className="h-9 text-[11px] font-bold text-muted-foreground uppercase tracking-wider first:pl-4 last:pr-4"
                                         >
                                             {header.isPlaceholder ? null : (
                                                 <div
@@ -278,12 +278,12 @@ export function DataTableGeneric<TData, TValue>({
                                     onDrop={onReorder ? () => handleDrop(row.index) : undefined}
                                 >
                                     {onReorder && (
-                                        <TableCell className="w-10 pl-8 text-muted-foreground/50">
+                                        <TableCell className="w-8 pl-4 text-muted-foreground/50">
                                             <IconGripVertical className="size-4 cursor-grab active:cursor-grabbing" />
                                         </TableCell>
                                     )}
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id} className="py-3 px-6 first:pl-8 last:pr-8">
+                                        <TableCell key={cell.id} className="py-2 px-4 first:pl-4 last:pr-4">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}
@@ -293,7 +293,7 @@ export function DataTableGeneric<TData, TValue>({
                             <TableRow className="border-0 hover:bg-transparent">
                                 <TableCell
                                     colSpan={columns.length + (onReorder ? 1 : 0)}
-                                    className="h-40 text-center text-muted-foreground"
+                                    className="h-32 text-center text-muted-foreground"
                                 >
                                     <div className="flex flex-col items-center justify-center gap-3">
                                         <div className="size-12 rounded-full bg-muted/40 flex items-center justify-center">
@@ -313,7 +313,7 @@ export function DataTableGeneric<TData, TValue>({
 
             {/* Premium Pagination */}
             {showPagination && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-1">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1">
                     <div className="text-muted-foreground hidden flex-1 text-sm lg:flex items-center gap-2">
                         {table.getFilteredSelectedRowModel().rows.length > 0 ? (
                             <div className="flex items-center gap-2.5 text-sm font-medium">
@@ -329,8 +329,8 @@ export function DataTableGeneric<TData, TValue>({
                             </span>
                         )}
                     </div>
-                    <div className="flex w-full sm:w-auto items-center gap-6 justify-between sm:justify-end">
-                        <div className="flex items-center gap-2.5">
+                    <div className="flex w-full sm:w-auto items-center gap-4 justify-between sm:justify-end">
+                        <div className="flex items-center gap-2">
                             <Label htmlFor="rows-per-page" className="text-xs font-medium text-muted-foreground/70 whitespace-nowrap">
                                 Rows
                             </Label>
@@ -340,7 +340,7 @@ export function DataTableGeneric<TData, TValue>({
                                     table.setPageSize(Number(value))
                                 }}
                             >
-                                <SelectTrigger size="sm" className="w-16 h-9 shadow-sm border-border/40" id="rows-per-page">
+                                <SelectTrigger size="sm" className="w-16 h-8 shadow-sm border-border/40" id="rows-per-page">
                                     <SelectValue placeholder={table.getState().pagination.pageSize} />
                                 </SelectTrigger>
                                 <SelectContent side="top">
@@ -360,7 +360,7 @@ export function DataTableGeneric<TData, TValue>({
                         <div className="flex items-center gap-1">
                             <Button
                                 variant="outline"
-                                className="hidden h-9 w-9 p-0 lg:flex shadow-sm border-border/40 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                                className="hidden h-8 w-8 p-0 lg:flex shadow-sm border-border/40 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                                 onClick={() => table.setPageIndex(0)}
                                 disabled={!table.getCanPreviousPage()}
                             >
@@ -369,7 +369,7 @@ export function DataTableGeneric<TData, TValue>({
                             </Button>
                             <Button
                                 variant="outline"
-                                className="h-9 w-9 p-0 shadow-sm border-border/40 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                                className="h-8 w-8 p-0 shadow-sm border-border/40 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                                 onClick={() => table.previousPage()}
                                 disabled={!table.getCanPreviousPage()}
                             >
@@ -378,7 +378,7 @@ export function DataTableGeneric<TData, TValue>({
                             </Button>
                             <Button
                                 variant="outline"
-                                className="h-9 w-9 p-0 shadow-sm border-border/40 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                                className="h-8 w-8 p-0 shadow-sm border-border/40 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                                 onClick={() => table.nextPage()}
                                 disabled={!table.getCanNextPage()}
                             >
@@ -387,7 +387,7 @@ export function DataTableGeneric<TData, TValue>({
                             </Button>
                             <Button
                                 variant="outline"
-                                className="hidden h-9 w-9 p-0 lg:flex shadow-sm border-border/40 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+                                className="hidden h-8 w-8 p-0 lg:flex shadow-sm border-border/40 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                                 disabled={!table.getCanNextPage()}
                             >

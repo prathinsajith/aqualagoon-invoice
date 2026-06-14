@@ -19,6 +19,34 @@ const MODULE = "enrollments";
 export class EnrollmentsService {
   constructor(private readonly prisma: PrismaClient) {}
 
+  /** Days a student has consumed = attendance marked PRESENT or LATE in the batch. */
+  private async countAttended(studentId: string, batchId: string): Promise<number> {
+    return this.prisma.attendance.count({
+      where: { studentId, batchId, status: { in: ["PRESENT", "LATE"] } },
+    });
+  }
+
+  /**
+   * Attended-day counts for a page of enrollments in a single grouped query,
+   * keyed by `studentId|batchId`. Avoids an N+1 across the list.
+   */
+  private async attendedMap(
+    rows: { studentId: string; batchId: string }[],
+  ): Promise<Map<string, number>> {
+    const pairs = [
+      ...new Map(
+        rows.map((r) => [`${r.studentId}|${r.batchId}`, { studentId: r.studentId, batchId: r.batchId }]),
+      ).values(),
+    ];
+    if (pairs.length === 0) return new Map();
+    const grouped = await this.prisma.attendance.groupBy({
+      by: ["studentId", "batchId"],
+      where: { status: { in: ["PRESENT", "LATE"] }, OR: pairs },
+      _count: { _all: true },
+    });
+    return new Map(grouped.map((g) => [`${g.studentId}|${g.batchId}`, g._count._all]));
+  }
+
   async list(
     query: ListEnrollmentsQuery,
   ): Promise<{ data: EnrollmentDto[]; meta: { pagination: PaginationMeta } }> {
@@ -47,8 +75,9 @@ export class EnrollmentsService {
       }),
       this.prisma.studentEnrollment.count({ where }),
     ]);
+    const attended = await this.attendedMap(rows);
     return {
-      data: rows.map(toEnrollmentDto),
+      data: rows.map((r) => toEnrollmentDto(r, attended.get(`${r.studentId}|${r.batchId}`) ?? 0)),
       meta: { pagination: buildPaginationMeta(query.page, query.limit, total) },
     };
   }
@@ -59,7 +88,7 @@ export class EnrollmentsService {
       include: enrollmentInclude,
     });
     if (!enrollment) throw NotFound("Enrollment not found");
-    return toEnrollmentDto(enrollment);
+    return toEnrollmentDto(enrollment, await this.countAttended(enrollment.studentId, enrollment.batchId));
   }
 
   async create(input: CreateEnrollmentInput, actor: ActorContext): Promise<EnrollmentDto> {

@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getUserColumns } from "./columns";
 import { UserFormDialog } from "./user-form-dialog";
 import { UserViewDialog } from "./user-view-dialog";
@@ -62,7 +63,7 @@ interface UserDialogs {
 
 const INITIAL_USER_DIALOGS: UserDialogs = { form: false, editing: null, viewing: null, pending: null };
 
-function UsersContent() {
+export function UsersContent() {
   const { can } = usePermissions();
   const currentUserId = useAuthStore((s) => s.user?.id);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
@@ -210,7 +211,7 @@ function UsersContent() {
           Show archived
         </label>
 
-        <div className="sm:ml-auto">
+        <div className="flex items-center gap-3 sm:ml-auto">
           <DateRangeFilter
             value={rangeValue}
             onChange={(v) => {
@@ -218,6 +219,7 @@ function UsersContent() {
               resetToFirstPage();
             }}
           />
+          <RefreshButton queryKey={["users"]} />
         </div>
       </div>
 

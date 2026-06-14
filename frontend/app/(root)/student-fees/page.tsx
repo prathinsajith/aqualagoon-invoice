@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useReducer, useState } from "react";
 import type { PaginationState } from "@tanstack/react-table";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 
@@ -19,9 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getFeeLedgerColumns } from "./columns";
 import { GenerateFeeDialog } from "./generate-fee-dialog";
 import { CollectFeeDialog } from "./collect-fee-dialog";
+import { PaymentHistoryDialog } from "./payment-history-dialog";
 import { useStudentFeeLedger, useBatches } from "@/hooks/queries/use-training";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -36,14 +38,35 @@ const STATUS_OPTIONS: { value: FeeLedgerStatus; label: string }[] = [
   { value: "NO_FEE", label: "No fee yet" },
 ];
 
+interface FeeFilters {
+  search: string;
+  status: string;
+  batch: string;
+}
+const INITIAL_FILTERS: FeeFilters = { search: "", status: "all", batch: "all" };
+
+interface FeeDialogs {
+  collecting: FeeLedgerRow | null;
+  viewingHistory: FeeLedgerRow | null;
+  generate: boolean;
+}
+const INITIAL_DIALOGS: FeeDialogs = { collecting: null, viewingHistory: null, generate: false };
+
 export function StudentFeesContent() {
   const { can } = usePermissions();
   const canCollect = can("billing.create");
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
-  const [searchInput, setSearchInput] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [batchFilter, setBatchFilter] = useState("all");
-  const [collecting, setCollecting] = useState<FeeLedgerRow | null>(null);
+  // Group related state in reducers so one logical update is a single render.
+  const [filters, patchFilters] = useReducer(
+    (state: FeeFilters, patch: Partial<FeeFilters>) => ({ ...state, ...patch }),
+    INITIAL_FILTERS,
+  );
+  const [dialogs, patchDialogs] = useReducer(
+    (state: FeeDialogs, patch: Partial<FeeDialogs>) => ({ ...state, ...patch }),
+    INITIAL_DIALOGS,
+  );
+  const { search: searchInput, status: statusFilter, batch: batchFilter } = filters;
+  const { collecting, viewingHistory, generate: generateOpen } = dialogs;
 
   const search = useDebounce(searchInput, 400);
 
@@ -64,12 +87,15 @@ export function StudentFeesContent() {
   const { data: batchesData } = useBatches({ page: 1, limit: 100, status: "ACTIVE" });
   const batches = batchesData?.data ?? [];
 
-  const [generateOpen, setGenerateOpen] = useState(false);
-
   const resetToFirstPage = () => setPagination((p) => ({ ...p, pageIndex: 0 }));
 
   const columns = useMemo(
-    () => getFeeLedgerColumns({ onCollect: setCollecting, canCollect }),
+    () =>
+      getFeeLedgerColumns({
+        onCollect: (row) => patchDialogs({ collecting: row }),
+        onHistory: (row) => patchDialogs({ viewingHistory: row }),
+        canCollect,
+      }),
     [canCollect],
   );
 
@@ -80,7 +106,7 @@ export function StudentFeesContent() {
         description="What every enrolled student has been billed and paid. Fees are collected at admission or the POS — use “Generate fee” for an outstanding or extra charge."
       >
         <Can permission="student_fee.create">
-          <Button onClick={() => setGenerateOpen(true)}>
+          <Button onClick={() => patchDialogs({ generate: true })}>
             <IconPlus className="size-4" /> Generate fee
           </Button>
         </Can>
@@ -92,7 +118,7 @@ export function StudentFeesContent() {
           <Input
             value={searchInput}
             onChange={(e) => {
-              setSearchInput(e.target.value);
+              patchFilters({ search: e.target.value });
               resetToFirstPage();
             }}
             placeholder="Search by student name…"
@@ -103,7 +129,7 @@ export function StudentFeesContent() {
         <Select
           value={batchFilter}
           onValueChange={(v) => {
-            setBatchFilter(v);
+            patchFilters({ batch: v });
             resetToFirstPage();
           }}
         >
@@ -123,7 +149,7 @@ export function StudentFeesContent() {
         <Select
           value={statusFilter}
           onValueChange={(v) => {
-            setStatusFilter(v);
+            patchFilters({ status: v });
             resetToFirstPage();
           }}
         >
@@ -139,6 +165,8 @@ export function StudentFeesContent() {
             ))}
           </SelectContent>
         </Select>
+
+        <RefreshButton queryKey={["student-fees"]} className="sm:ml-auto" />
       </div>
 
       {isError ? (
@@ -162,13 +190,23 @@ export function StudentFeesContent() {
         />
       )}
 
-      <GenerateFeeDialog open={generateOpen} onOpenChange={setGenerateOpen} />
+      {generateOpen && (
+        <GenerateFeeDialog open onOpenChange={(o) => !o && patchDialogs({ generate: false })} />
+      )}
       {collecting && (
         <CollectFeeDialog
           open={!!collecting}
-          onOpenChange={(o) => !o && setCollecting(null)}
+          onOpenChange={(o) => !o && patchDialogs({ collecting: null })}
           enrollmentId={collecting.enrollmentId}
           studentName={collecting.studentName}
+        />
+      )}
+      {viewingHistory && (
+        <PaymentHistoryDialog
+          open={!!viewingHistory}
+          onOpenChange={(o) => !o && patchDialogs({ viewingHistory: null })}
+          enrollmentId={viewingHistory.enrollmentId}
+          studentName={viewingHistory.studentName}
         />
       )}
     </div>

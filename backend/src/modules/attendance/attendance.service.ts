@@ -67,6 +67,7 @@ export class AttendanceService {
     await this.assertBatchExists(input.batchId);
 
     const attendanceDate = toDateOnly(input.attendanceDate);
+    await this.assertNotHoliday(attendanceDate);
     const row = await this.prisma.attendance.upsert({
       where: {
         studentId_batchId_attendanceDate: {
@@ -106,6 +107,7 @@ export class AttendanceService {
     await this.assertBatchExists(input.batchId);
 
     const attendanceDate = toDateOnly(input.attendanceDate);
+    await this.assertNotHoliday(attendanceDate);
     await this.prisma.$transaction(
       input.records.map((record) =>
         this.prisma.attendance.upsert({
@@ -226,6 +228,20 @@ export class AttendanceService {
       select: { id: true },
     });
     if (!batch) throw BadRequest("Batch not found");
+  }
+
+  /** Rejects marking attendance on a company holiday (weekly off or a holiday date). */
+  private async assertNotHoliday(date: Date): Promise<void> {
+    const iso = date.toISOString().slice(0, 10);
+    const [company, holiday] = await Promise.all([
+      this.prisma.companySetting.findFirst({ select: { weeklyOffDays: true } }),
+      this.prisma.holiday.findUnique({ where: { date: iso } }),
+    ]);
+    const weeklyOff = company?.weeklyOffDays ?? [];
+    const dow = new Date(`${iso}T00:00:00Z`).getUTCDay();
+    if (holiday || weeklyOff.includes(dow)) {
+      throw BadRequest("It's a company holiday on this date — attendance isn't taken.");
+    }
   }
 
   private async audit(

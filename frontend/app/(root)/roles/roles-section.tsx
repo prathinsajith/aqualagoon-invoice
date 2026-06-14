@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getRoleColumns } from "./columns";
 import { RoleFormDialog } from "./role-form-dialog";
 import { RoleViewDialog } from "./role-view-dialog";
@@ -94,14 +95,18 @@ export function RolesSection() {
         </Can>
       </div>
 
-      <div className="relative w-full sm:max-w-xs">
-        <IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
-        <Input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search roles…"
-          className="pl-9"
-        />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-xs">
+          <IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search roles…"
+            className="pl-9"
+          />
+        </div>
+
+        <RefreshButton queryKey={["roles"]} className="sm:ml-auto" />
       </div>
 
       {isError ? (

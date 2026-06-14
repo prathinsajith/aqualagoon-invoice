@@ -34,6 +34,27 @@ function resolveLogo(url: string | null): string | undefined {
   return url.startsWith("http") ? url : `${env.apiUrl}${url}`;
 }
 
+/** A titled group of form fields, separated by a subtle rule. */
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-4 border-t border-border/60 pt-6 first:border-0 first:pt-0">
+      <div>
+        <h3 className="text-sm font-semibold">{title}</h3>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 /** One label/value line in the saved-profile summary. */
 function SavedRow({ label, value }: { label: string; value: string | null | undefined }) {
   return (
@@ -190,135 +211,143 @@ function CompanyForm() {
           <CardDescription>Contact information and branding for your organization.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Company name</Label>
-              <Input id="name" {...register("name")} />
-              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="tagline">Tagline</Label>
-              <Input id="tagline" placeholder="Swimming Pool & Kids Water Park" {...register("tagline")} />
-              {errors.tagline && <p className="text-xs text-destructive">{errors.tagline.message}</p>}
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <Section title="Identity" description="The name and tagline shown across the app and emails.">
               <div className="space-y-1.5">
-                <Label htmlFor="email">Contact email</Label>
-                <Input id="email" type="email" {...register("email")} />
-                {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+                <Label htmlFor="name">Company name</Label>
+                <Input id="name" {...register("name")} />
+                {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" {...register("phone")} />
-                {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+                <Label htmlFor="tagline">Tagline</Label>
+                <Input id="tagline" placeholder="Swimming Pool & Kids Water Park" {...register("tagline")} />
+                {errors.tagline && <p className="text-xs text-destructive">{errors.tagline.message}</p>}
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="website">Website</Label>
-              <Input id="website" placeholder="https://…" {...register("website")} />
-              {errors.website && <p className="text-xs text-destructive">{errors.website.message}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="address">Address</Label>
-              <Textarea id="address" rows={2} {...register("address")} />
-              {errors.address && <p className="text-xs text-destructive">{errors.address.message}</p>}
-            </div>
+            </Section>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="userCodePrefix">User code prefix</Label>
-                <Input
-                  id="userCodePrefix"
-                  className="uppercase"
-                  placeholder="USR"
-                  {...register("userCodePrefix")}
-                />
-                <p className="text-xs text-muted-foreground">
-                  New users get codes like{" "}
-                  <span className="font-medium">{(watch("userCodePrefix") || "USR").toUpperCase()}-A1B2C3</span>.
-                </p>
-                {errors.userCodePrefix && (
-                  <p className="text-xs text-destructive">{errors.userCodePrefix.message}</p>
-                )}
+            <Section title="Localization" description="Currency and date display used everywhere in the app.">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select
+                    value={watch("currency") ?? company?.currency ?? ""}
+                    onValueChange={(v) => setValue("currency", v as CompanySchema["currency"], { shouldDirty: true })}
+                  >
+                    <SelectTrigger id="currency" className="w-full">
+                      <SelectValue placeholder="Select a currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.currency && (
+                    <p className="text-xs text-destructive">{errors.currency.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="dateFormat">Date format</Label>
+                  <Select
+                    value={dateFormat ?? company?.dateFormat ?? ""}
+                    onValueChange={(v) => setValue("dateFormat", v, { shouldDirty: true })}
+                  >
+                    <SelectTrigger id="dateFormat" className="w-full">
+                      <SelectValue placeholder="Select a date format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DATE_FORMATS.map((f) => (
+                        <SelectItem key={f} value={f}>
+                          {f}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dateFormat">Date format</Label>
-                <Select
-                  value={dateFormat ?? company?.dateFormat ?? ""}
-                  onValueChange={(v) => setValue("dateFormat", v, { shouldDirty: true })}
-                >
-                  <SelectTrigger id="dateFormat" className="w-full">
-                    <SelectValue placeholder="Select a date format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DATE_FORMATS.map((f) => (
-                      <SelectItem key={f} value={f}>
-                        {f}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            </Section>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="invoicePrefix">Invoice prefix</Label>
-                <Input
-                  id="invoicePrefix"
-                  className="uppercase"
-                  placeholder="INV"
-                  {...register("invoicePrefix")}
-                />
-                <p className="text-xs text-muted-foreground">
-                  e.g. <span className="font-medium">{(watch("invoicePrefix") || "INV").toUpperCase()}-2026-000001</span>
-                </p>
-                {errors.invoicePrefix && (
-                  <p className="text-xs text-destructive">{errors.invoicePrefix.message}</p>
-                )}
+            <Section title="Contact" description="How customers and receipts reach your organization.">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Contact email</Label>
+                  <Input id="email" type="email" {...register("email")} />
+                  {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input id="phone" {...register("phone")} />
+                  {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+                </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="passPrefix">Pass prefix</Label>
-                <Input
-                  id="passPrefix"
-                  className="uppercase"
-                  placeholder="PASS"
-                  {...register("passPrefix")}
-                />
-                <p className="text-xs text-muted-foreground">
-                  e.g. <span className="font-medium">{(watch("passPrefix") || "PASS").toUpperCase()}-2026-000001</span>
-                </p>
-                {errors.passPrefix && (
-                  <p className="text-xs text-destructive">{errors.passPrefix.message}</p>
-                )}
+                <Label htmlFor="website">Website</Label>
+                <Input id="website" placeholder="https://…" {...register("website")} />
+                {errors.website && <p className="text-xs text-destructive">{errors.website.message}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="currency">Currency</Label>
-                <Select
-                  value={watch("currency") ?? company?.currency ?? ""}
-                  onValueChange={(v) => setValue("currency", v as CompanySchema["currency"], { shouldDirty: true })}
-                >
-                  <SelectTrigger id="currency" className="w-full">
-                    <SelectValue placeholder="Select a currency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CURRENCIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Used for all prices and totals across the app.
-                </p>
-                {errors.currency && (
-                  <p className="text-xs text-destructive">{errors.currency.message}</p>
-                )}
+                <Label htmlFor="address">Address</Label>
+                <Textarea id="address" rows={2} {...register("address")} />
+                {errors.address && <p className="text-xs text-destructive">{errors.address.message}</p>}
               </div>
-            </div>
+            </Section>
 
-            <div className="flex justify-end pt-2">
+            <Section
+              title="ID numbering"
+              description="Prefixes for auto-generated user codes, invoices and passes."
+            >
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="userCodePrefix">User code prefix</Label>
+                  <Input
+                    id="userCodePrefix"
+                    className="uppercase"
+                    placeholder="USR"
+                    {...register("userCodePrefix")}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    e.g. <span className="font-medium">{(watch("userCodePrefix") || "USR").toUpperCase()}-A1B2C3</span>
+                  </p>
+                  {errors.userCodePrefix && (
+                    <p className="text-xs text-destructive">{errors.userCodePrefix.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="invoicePrefix">Invoice prefix</Label>
+                  <Input
+                    id="invoicePrefix"
+                    className="uppercase"
+                    placeholder="INV"
+                    {...register("invoicePrefix")}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    e.g. <span className="font-medium">{(watch("invoicePrefix") || "INV").toUpperCase()}-2026-000001</span>
+                  </p>
+                  {errors.invoicePrefix && (
+                    <p className="text-xs text-destructive">{errors.invoicePrefix.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="passPrefix">Pass prefix</Label>
+                  <Input
+                    id="passPrefix"
+                    className="uppercase"
+                    placeholder="PASS"
+                    {...register("passPrefix")}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    e.g. <span className="font-medium">{(watch("passPrefix") || "PASS").toUpperCase()}-2026-000001</span>
+                  </p>
+                  {errors.passPrefix && (
+                    <p className="text-xs text-destructive">{errors.passPrefix.message}</p>
+                  )}
+                </div>
+              </div>
+            </Section>
+
+            <div className="flex justify-end border-t border-border/60 pt-5">
               <Button type="submit" disabled={update.isPending || !isDirty}>
                 {update.isPending ? <Spinner /> : "Save changes"}
               </Button>

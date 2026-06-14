@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getPassColumns } from "./columns";
 import { PassViewDialog } from "./pass-view-dialog";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
@@ -176,7 +177,7 @@ export function PassesContent() {
           </SelectContent>
         </Select>
 
-        <div className="sm:ml-auto">
+        <div className="flex items-center gap-3 sm:ml-auto">
           <DateRangeFilter
             value={rangeValue}
             onChange={(v) => {
@@ -185,6 +186,7 @@ export function PassesContent() {
             }}
             disabled={expiryActive}
           />
+          <RefreshButton queryKey={["passes"]} />
         </div>
       </div>
 

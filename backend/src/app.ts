@@ -26,6 +26,7 @@ import { rolesRoutes } from "./modules/roles/roles.routes.js";
 import { permissionsRoutes } from "./modules/permissions/permissions.routes.js";
 import { profileRoutes } from "./modules/profile/profile.routes.js";
 import { companyRoutes } from "./modules/company/company.routes.js";
+import { holidaysRoutes } from "./modules/holidays/holidays.routes.js";
 import { auditLogsRoutes } from "./modules/audit-logs/audit-logs.routes.js";
 import { productCategoriesRoutes } from "./modules/product-categories/product-categories.routes.js";
 import { productsRoutes } from "./modules/products/products.routes.js";
@@ -150,6 +151,7 @@ export async function buildApp() {
   await app.register(permissionsRoutes, { prefix: "/api" });
   await app.register(profileRoutes, { prefix: "/api" });
   await app.register(companyRoutes, { prefix: "/api" });
+  await app.register(holidaysRoutes, { prefix: "/api" });
   await app.register(auditLogsRoutes, { prefix: "/api" });
   await app.register(productCategoriesRoutes, { prefix: "/api" });
   await app.register(productsRoutes, { prefix: "/api" });

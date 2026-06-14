@@ -7,6 +7,7 @@ import {
   IconHelpCircle,
   IconUser,
   IconBuildingStore,
+  IconHistory,
   IconSun,
   IconMoon,
   IconDeviceDesktop,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Can } from "@/components/permission-gate";
+import { usePermissions } from "@/hooks/usePermissions";
 import { fullName, useAuthStore, type User } from "@/stores/auth-store";
 import { env } from "@/lib/env";
 import { avatarColor } from "@/lib/avatar";
@@ -74,6 +76,7 @@ function ThemeSwitcher() {
 
 export function UserAvatarDialog({ user }: { user: User | null }) {
   const logout = useAuthStore((state) => state.logout);
+  const { isAdmin } = usePermissions();
 
   const name = fullName(user) || "User";
   const initials = user
@@ -153,6 +156,14 @@ export function UserAvatarDialog({ user }: { user: User | null }) {
               </Link>
             </DropdownMenuItem>
           </Can>
+          {isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link href="/audit-logs" className="cursor-pointer gap-2.5 py-2">
+                <IconHistory className="size-4 text-muted-foreground" />
+                Audit Logs
+              </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem asChild>
             <Link href="/help" className="cursor-pointer gap-2.5 py-2">
               <IconHelpCircle className="size-4 text-muted-foreground" />

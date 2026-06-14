@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DatePicker, DATE_PICKER_FUTURE_END, DATE_PICKER_PAST_START } from "@/components/ui/date-picker";
 import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -52,21 +52,16 @@ export function GenerateFeeDialog({ open, onOpenChange }: GenerateFeeDialogProps
   const feePlans = feePlansData?.data ?? [];
 
   const {
-    register,
     handleSubmit,
-    reset,
     control,
     formState: { isSubmitting },
   } = useForm<FeeFormValues>({
     defaultValues: { amount: undefined, discountAmount: 0, dueDate: "" },
   });
 
-  useEffect(() => {
-    if (!open) return;
-    setEnrollmentId("");
-    setFeePlanId("");
-    reset({ amount: undefined, discountAmount: 0, dueDate: "" });
-  }, [open, reset]);
+  // No reset effect needed: the parent mounts this dialog only while open
+  // (`{generateOpen && <GenerateFeeDialog … />}`), so every open is a fresh
+  // mount starting from these defaults.
 
   const onSubmit = async (values: FeeFormValues) => {
     if (!enrollmentId) {
@@ -185,7 +180,20 @@ export function GenerateFeeDialog({ open, onOpenChange }: GenerateFeeDialogProps
             <Label htmlFor="dueDate">
               Due date <span className="font-normal text-muted-foreground">(optional)</span>
             </Label>
-            <Input id="dueDate" type="date" {...register("dueDate")} />
+            <Controller
+              control={control}
+              name="dueDate"
+              render={({ field }) => (
+                <DatePicker
+                  id="dueDate"
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  placeholder="Select due date"
+                  startMonth={DATE_PICKER_PAST_START}
+                  endMonth={DATE_PICKER_FUTURE_END}
+                />
+              )}
+            />
           </div>
 
           <DialogFooter>

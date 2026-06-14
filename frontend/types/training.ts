@@ -14,6 +14,7 @@ interface PersonRef {
     id: string;
     firstName: string;
     lastName: string;
+    photoUrl?: string | null;
 }
 
 export interface TrainingType {
@@ -52,6 +53,7 @@ export interface FeePlan {
     program: Ref;
     name: string;
     durationType: TrainingDurationType;
+    durationDays: number;
     amount: number;
     description: string | null;
     status: ProductStatus;
@@ -88,8 +90,12 @@ export interface StudentEnrollment {
     id: string;
     student: PersonRef;
     batch: { id: string; name: string; program: Ref };
-    feePlan: { id: string; name: string; amount: number } | null;
+    feePlan: { id: string; name: string; amount: number; durationDays: number } | null;
     joinedDate: string;
+    /** Sessions consumed so far (days marked present/late). Null when no fee plan. */
+    attendedDays: number | null;
+    /** Sessions left in the plan = durationDays − attendedDays. Null when no fee plan. */
+    daysRemaining: number | null;
     status: EnrollmentStatus;
     createdAt: string;
 }
@@ -129,6 +135,17 @@ export interface FeeLedgerRow {
     paid: number;
     balance: number;
     status: FeeLedgerStatus;
+}
+
+/** One payment received against an enrollment's training fees. */
+export interface FeePaymentHistoryRow {
+    invoiceId: string;
+    invoiceNo: string;
+    date: string;
+    amount: number;
+    method: string | null;
+    feeName: string;
+    cancelled: boolean;
 }
 
 export interface StudentFee {

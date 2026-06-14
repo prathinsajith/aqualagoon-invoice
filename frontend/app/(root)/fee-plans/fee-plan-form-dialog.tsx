@@ -62,6 +62,7 @@ export function FeePlanFormDialog({ open, onOpenChange, feePlan }: FeePlanFormDi
       trainingProgramId: "",
       name: "",
       durationType: "MONTH",
+      durationDays: 30,
       amount: 0,
       description: "",
       status: "ACTIVE",
@@ -74,6 +75,7 @@ export function FeePlanFormDialog({ open, onOpenChange, feePlan }: FeePlanFormDi
       trainingProgramId: feePlan?.program.id ?? "",
       name: feePlan?.name ?? "",
       durationType: feePlan?.durationType ?? "MONTH",
+      durationDays: feePlan?.durationDays ?? 30,
       amount: feePlan?.amount ?? 0,
       description: feePlan?.description ?? "",
       status: feePlan?.status ?? "ACTIVE",
@@ -89,6 +91,7 @@ export function FeePlanFormDialog({ open, onOpenChange, feePlan }: FeePlanFormDi
       trainingProgramId: values.trainingProgramId,
       name: values.name,
       durationType: values.durationType,
+      durationDays: values.durationDays,
       amount: values.amount,
       description: values.description || null,
       status: values.status,
@@ -196,6 +199,27 @@ export function FeePlanFormDialog({ open, onOpenChange, feePlan }: FeePlanFormDi
                 )}
               />
               {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="durationDays">Validity (days)</Label>
+              <Controller
+                control={control}
+                name="durationDays"
+                render={({ field }) => (
+                  <NumberInput
+                    id="durationDays"
+                    min={1}
+                    step={1}
+                    value={field.value}
+                    onChange={field.onChange}
+                    invalid={!!errors.durationDays}
+                  />
+                )}
+              />
+              {errors.durationDays && (
+                <p className="text-xs text-destructive">{errors.durationDays.message}</p>
+              )}
             </div>
 
             <div className="space-y-1.5">

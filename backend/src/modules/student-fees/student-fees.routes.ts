@@ -5,6 +5,8 @@ import { StudentFeesService } from "./student-fees.service.js";
 import { createStudentFeesController } from "./student-fees.controller.js";
 import {
   createStudentFeeBody,
+  feeHistoryQuery,
+  feeHistoryResponse,
   feeLedgerQuery,
   feeLedgerRowSchema,
   listStudentFeesQuery,
@@ -47,6 +49,21 @@ export async function studentFeesRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     controller.ledger,
+  );
+
+  r.get(
+    "/student-fees/history",
+    {
+      preHandler: [app.authenticate, app.requirePermission("student_fee.view")],
+      schema: {
+        tags,
+        summary: "Payment history for one enrollment (newest first)",
+        security,
+        querystring: feeHistoryQuery,
+        response: { 200: feeHistoryResponse, ...commonErrors },
+      },
+    },
+    controller.history,
   );
 
   r.get(

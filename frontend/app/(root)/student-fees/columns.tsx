@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { IconCash } from "@tabler/icons-react";
+import { IconCash, IconHistory } from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ const STATUS_LABELS: Record<FeeLedgerStatus, string> = {
   NO_FEE: "No fee",
 };
 
-export function FeeLedgerStatusBadge({ status }: { status: FeeLedgerStatus }) {
+function FeeLedgerStatusBadge({ status }: { status: FeeLedgerStatus }) {
   return (
     <Badge variant="outline" className={cn("font-medium", STATUS_STYLES[status])}>
       {STATUS_LABELS[status]}
@@ -35,9 +35,11 @@ export function FeeLedgerStatusBadge({ status }: { status: FeeLedgerStatus }) {
 
 export function getFeeLedgerColumns({
   onCollect,
+  onHistory,
   canCollect,
 }: {
   onCollect: (row: FeeLedgerRow) => void;
+  onHistory: (row: FeeLedgerRow) => void;
   canCollect: boolean;
 }): ColumnDef<FeeLedgerRow>[] {
   return [
@@ -86,16 +88,23 @@ export function getFeeLedgerColumns({
     },
     {
       id: "actions",
-      header: "",
+      header: () => <div className="text-right">Actions</div>,
       enableHiding: false,
       cell: ({ row }) => {
         const owes = row.original.balance > 0;
-        if (!canCollect || !owes) return null;
+        const hasPaid = row.original.paid > 0;
         return (
-          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-            <Button size="sm" variant="outline" onClick={() => onCollect(row.original)}>
-              <IconCash className="size-4" /> Collect
-            </Button>
+          <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+            {hasPaid && (
+              <Button size="sm" variant="ghost" onClick={() => onHistory(row.original)}>
+                <IconHistory className="size-4" /> History
+              </Button>
+            )}
+            {canCollect && owes && (
+              <Button size="sm" variant="outline" onClick={() => onCollect(row.original)}>
+                <IconCash className="size-4" /> Collect
+              </Button>
+            )}
           </div>
         );
       },

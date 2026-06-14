@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getFeePlanColumns } from "./columns";
 import { FeePlanFormDialog } from "./fee-plan-form-dialog";
 import { FeePlanViewDialog } from "./fee-plan-view-dialog";
@@ -157,6 +158,8 @@ export function FeePlansContent() {
             <SelectItem value="INACTIVE">Inactive</SelectItem>
           </SelectContent>
         </Select>
+
+        <RefreshButton queryKey={["fee-plans"]} className="sm:ml-auto" />
       </div>
 
       {isError ? (

@@ -61,6 +61,7 @@ export function FeePlanViewDialog({
                 value={feePlan.durationType.charAt(0) + feePlan.durationType.slice(1).toLowerCase()}
               />
               <Field label="Amount" value={formatMoney(feePlan.amount)} />
+              <Field label="Validity" value={`${feePlan.durationDays} days`} />
             </div>
 
             <Field

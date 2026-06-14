@@ -99,26 +99,32 @@ export function EnrollDialog({ open, onOpenChange }: EnrollDialogProps) {
   const { create } = useEnrollmentMutations();
 
   const { data: batchesData } = useBatches({ page: 1, limit: 100, status: "ACTIVE" });
-  const batches = batchesData?.data ?? [];
+  const batches = useMemo(() => batchesData?.data ?? [], [batchesData]);
 
   const { data: feePlansData } = useFeePlans({ page: 1, limit: 100, status: "ACTIVE" });
-  const feePlans = feePlansData?.data ?? [];
+  const feePlans = useMemo(() => feePlansData?.data ?? [], [feePlansData]);
 
   const { data: methodsData } = usePaymentMethods({ isActive: true, limit: 100 });
   const methods = methodsData?.data ?? [];
   const selectedMethodId = paymentMethodId || methods[0]?.id || "";
 
-  useEffect(() => {
-    if (!open) return;
-    setStudent(null);
-    setBatchId("");
-    setFeePlanId("");
-    setCollectNow(true);
-    setPaymentMethodId("");
-    setDiscount(undefined);
-    setPayNow(undefined);
-    setDone(null);
-  }, [open]);
+  // Reset every field to defaults when the dialog (re)opens — done during render
+  // with a prev-prop comparison (not an effect) so there's no extra commit with
+  // stale values. See react.dev "adjusting some state when a prop changes".
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setStudent(null);
+      setBatchId("");
+      setFeePlanId("");
+      setCollectNow(true);
+      setPaymentMethodId("");
+      setDiscount(undefined);
+      setPayNow(undefined);
+      setDone(null);
+    }
+  }
 
   // The program backing the chosen batch, used to narrow the fee-plan list.
   const selectedBatch = useMemo(
@@ -134,7 +140,9 @@ export function EnrollDialog({ open, onOpenChange }: EnrollDialogProps) {
   }, [feePlans, selectedBatch]);
 
   useEffect(() => {
+    // Clear a stale fee-plan selection when the chosen batch narrows the list.
     if (feePlanId && !filteredFeePlans.some((p) => p.id === feePlanId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFeePlanId("");
     }
   }, [filteredFeePlans, feePlanId]);

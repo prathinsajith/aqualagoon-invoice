@@ -15,6 +15,7 @@ export const companySchema = z.object({
   passPrefix: z.string(),
   currency: z.string(),
   dateFormat: z.string(),
+  weeklyOffDays: z.array(z.number().int()),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -48,6 +49,8 @@ export const updateCompanyBody = z
     passPrefix: prefixField,
     currency: z.enum(CURRENCIES),
     dateFormat: z.enum(DATE_FORMATS),
+    // Weekly off days (0=Sun … 6=Sat). Specific holidays live in the Holiday table.
+    weeklyOffDays: z.array(z.number().int().min(0).max(6)).max(7),
   })
   .partial();
 

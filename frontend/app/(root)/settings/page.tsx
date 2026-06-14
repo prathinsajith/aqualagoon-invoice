@@ -9,7 +9,9 @@ import {
   IconStairsUp,
   IconReceipt2,
   IconCalendarEvent,
+  IconCalendarOff,
   IconTicket,
+  IconUsers,
   IconUsersGroup,
 } from "@tabler/icons-react";
 
@@ -19,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RoleAccessMatrix } from "@/components/rbac/role-access-matrix";
 import { usePermissions } from "@/hooks/usePermissions";
 import { RolesSection } from "../roles/roles-section";
+import { UsersContent } from "../users/page";
 import { ProductsContent } from "../products/page";
 import { CategoriesContent } from "../product-categories/page";
 import { PassTypesContent } from "../pass-types/page";
@@ -27,6 +30,7 @@ import { TrainingProgramsContent } from "../training-programs/page";
 import { FeePlansContent } from "../fee-plans/page";
 import { BatchesContent } from "../batches/page";
 import { PaymentMethodsSection } from "./payment-methods-section";
+import { HolidaysSection } from "./holidays-section";
 
 const TAB_TRIGGER =
   "h-auto w-full flex-none justify-start gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary data-[state=active]:shadow-none";
@@ -35,6 +39,7 @@ const RAIL_LABEL = "px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-
 
 export default function SettingsPage() {
   const { can } = usePermissions();
+  const canUsers = can("user.view");
   const canManage = can("setting.manage");
   const canCategories = can("product_category.view");
   const canProducts = can("product.view");
@@ -44,6 +49,7 @@ export default function SettingsPage() {
   const canFeePlans = can("fee_plan.view");
   const canBatches = can("batch.view");
   const canPaymentMethods = can("payment_method.view");
+  const canHolidays = can("setting.view");
   const hasCatalog = canCategories || canProducts || canPassTypes;
   const hasTraining = canTrainingTypes || canTrainingPrograms || canFeePlans || canBatches;
 
@@ -61,8 +67,13 @@ export default function SettingsPage() {
           className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8"
         >
           {/* Left rail: grouped nav inside a card */}
-          <TabsList className="h-auto w-full shrink-0 flex-row flex-wrap gap-1 self-start rounded-xl border bg-card p-2 shadow-sm lg:sticky lg:top-6 lg:w-60 lg:flex-col lg:flex-nowrap lg:items-stretch">
+          <TabsList className="h-auto w-full shrink-0 flex-row flex-wrap gap-1 self-start rounded-xl bg-card p-2 shadow-md ring-1 ring-black/5 lg:sticky lg:top-6 lg:w-60 lg:flex-col lg:flex-nowrap lg:items-stretch dark:ring-white/10">
             <p className={`hidden lg:block ${RAIL_LABEL}`}>Access control</p>
+            {canUsers && (
+              <TabsTrigger value="users" className={TAB_TRIGGER}>
+                <IconUsers className="size-4" /> Users
+              </TabsTrigger>
+            )}
             <TabsTrigger value="roles" className={TAB_TRIGGER}>
               <IconKey className="size-4" /> Roles &amp; permissions
             </TabsTrigger>
@@ -117,10 +128,23 @@ export default function SettingsPage() {
                 <IconCreditCard className="size-4" /> Payment methods
               </TabsTrigger>
             )}
+
+            {canHolidays && <p className={`mt-2 hidden lg:block ${RAIL_LABEL}`}>Attendance</p>}
+            {canHolidays && (
+              <TabsTrigger value="holidays" className={TAB_TRIGGER}>
+                <IconCalendarOff className="size-4" /> Holidays
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Right: content */}
           <div className="min-w-0 flex-1">
+            {canUsers && (
+              <TabsContent value="users" className="mt-0">
+                <UsersContent />
+              </TabsContent>
+            )}
+
             <TabsContent value="roles" className="mt-0">
               <RolesSection />
             </TabsContent>
@@ -176,6 +200,12 @@ export default function SettingsPage() {
             {canPaymentMethods && (
               <TabsContent value="payment-methods" className="mt-0">
                 <PaymentMethodsSection />
+              </TabsContent>
+            )}
+
+            {canHolidays && (
+              <TabsContent value="holidays" className="mt-0">
+                <HolidaysSection />
               </TabsContent>
             )}
           </div>

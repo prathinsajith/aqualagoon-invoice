@@ -54,6 +54,13 @@ export function getFeePlanColumns({
       cell: ({ row }) => <span className="text-sm">{formatMoney(row.original.amount)}</span>,
     },
     {
+      accessorKey: "durationDays",
+      header: "Validity",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">{row.original.durationDays} days</span>
+      ),
+    },
+    {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => <ProductStatusBadge status={row.original.status} />,

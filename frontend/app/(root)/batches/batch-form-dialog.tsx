@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker, DATE_PICKER_FUTURE_END, DATE_PICKER_PAST_START } from "@/components/ui/date-picker";
 import { NumberInput } from "@/components/ui/number-input";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -209,7 +210,14 @@ export function BatchFormDialog({ open, onOpenChange, batch }: BatchFormDialogPr
 
             <div className="space-y-1.5">
               <Label htmlFor="startDate">Start date</Label>
-              <Input id="startDate" type="date" {...register("startDate")} />
+              <DatePicker
+                id="startDate"
+                value={watch("startDate") || ""}
+                onChange={(v) => setValue("startDate", v, { shouldValidate: true })}
+                placeholder="Select start date"
+                startMonth={DATE_PICKER_PAST_START}
+                endMonth={DATE_PICKER_FUTURE_END}
+              />
               {errors.startDate && (
                 <p className="text-xs text-destructive">{errors.startDate.message}</p>
               )}
@@ -217,7 +225,14 @@ export function BatchFormDialog({ open, onOpenChange, batch }: BatchFormDialogPr
 
             <div className="space-y-1.5">
               <Label htmlFor="endDate">End date</Label>
-              <Input id="endDate" type="date" {...register("endDate")} />
+              <DatePicker
+                id="endDate"
+                value={watch("endDate") || ""}
+                onChange={(v) => setValue("endDate", v, { shouldValidate: true })}
+                placeholder="Select end date"
+                startMonth={DATE_PICKER_PAST_START}
+                endMonth={DATE_PICKER_FUTURE_END}
+              />
               {errors.endDate && (
                 <p className="text-xs text-destructive">{errors.endDate.message}</p>
               )}

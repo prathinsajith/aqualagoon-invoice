@@ -15,6 +15,7 @@ export interface CompanyPayload {
     passPrefix?: string;
     currency?: string;
     dateFormat?: string;
+    weeklyOffDays?: number[];
 }
 
 export const CompanyService = {

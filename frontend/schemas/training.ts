@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { productStatusEnum } from "@/schemas/product";
 
-export const durationTypeEnum = z.enum(["MONTH", "QUARTER", "YEAR", "CUSTOM"]);
-export const batchStatusEnum = z.enum(["ACTIVE", "COMPLETED", "CANCELLED"]);
+const durationTypeEnum = z.enum(["MONTH", "QUARTER", "YEAR", "CUSTOM"]);
+const batchStatusEnum = z.enum(["ACTIVE", "COMPLETED", "CANCELLED"]);
 
 const optionalText = z.string().trim().max(1000).optional().or(z.literal(""));
 const requiredAmount = z.number({ message: "Amount is required" }).min(0, "Cannot be negative");
@@ -35,6 +35,7 @@ export const feePlanFormSchema = z.object({
     trainingProgramId: z.string().min(1, "Program is required"),
     name: z.string().trim().min(2, "Name is required").max(120),
     durationType: durationTypeEnum,
+    durationDays: z.number().int().min(1, "At least 1 day").max(3650),
     amount: requiredAmount,
     description: optionalText,
     status: productStatusEnum,

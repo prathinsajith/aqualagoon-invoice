@@ -20,6 +20,7 @@ export function toCompanyDto(row: CompanySetting): CompanyDto {
     passPrefix: row.passPrefix,
     currency: row.currency,
     dateFormat: row.dateFormat,
+    weeklyOffDays: row.weeklyOffDays,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

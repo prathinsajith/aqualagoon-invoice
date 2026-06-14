@@ -51,6 +51,8 @@ export function PosScreen({
   );
   const { customer, holderName, paymentMethodId, paidAmount, payOpen } = sale;
   const [completed, setCompleted] = useState<CompletedSale | null>(null);
+  // Surfaced on the customer field when Charge is pressed without one selected.
+  const [customerError, setCustomerError] = useState(false);
 
   const { data: catalog, isLoading: catalogLoading } = useQuery({
     // Keyed on the customer too: their outstanding training fees join the catalog.
@@ -192,7 +194,12 @@ export function PosScreen({
     }
   };
 
-  const openPayment = () =>
+  const openPayment = () => {
+    if (!customer) {
+      setCustomerError(true);
+      toast.error("Please select a customer before charging.");
+      return;
+    }
     patchSale({
       // Default the paid amount to the exact total for a fast checkout.
       paidAmount: paidAmount && paidAmount > 0 ? paidAmount : totals.total,
@@ -203,6 +210,7 @@ export function PosScreen({
           : holderName,
       payOpen: true,
     });
+  };
 
   return (
     <div
@@ -223,7 +231,11 @@ export function PosScreen({
         cart={cart}
         totals={totals}
         customer={customer}
-        onCustomer={(c) => patchSale({ customer: c })}
+        customerInvalid={customerError}
+        onCustomer={(c) => {
+          patchSale({ customer: c });
+          if (c) setCustomerError(false);
+        }}
         onClear={clearCart}
         onQty={setQty}
         onDiscount={setDiscount}

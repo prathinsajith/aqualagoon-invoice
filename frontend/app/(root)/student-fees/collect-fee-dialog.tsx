@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useReducer } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { IconPrinter } from "@tabler/icons-react";
+import { IconBluetooth, IconCircleCheck, IconPrinter } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import {
@@ -29,11 +29,33 @@ import { useStudentFees } from "@/hooks/queries/use-training";
 import { usePaymentMethods } from "@/hooks/queries/use-payment-methods";
 import { BillingService } from "@/services/billing-service";
 import { printReceipt } from "@/lib/print-receipt";
+import { printReceiptThermal, isThermalPrintingSupported } from "@/lib/thermal-printer";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { Receipt } from "@/types/billing";
+
+/** The printable result shown after a fee is collected. */
+interface CollectedReceipt {
+  invoiceNo: string;
+  studentName: string;
+  amount: number;
+  remaining: number;
+  receipt: Receipt;
+}
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+interface CollectForm {
+  feeId: string;
+  amount: number | undefined;
+  methodId: string;
+}
+interface CollectStatus {
+  submitting: boolean;
+  thermalPrinting: boolean;
+  done: CollectedReceipt | null;
+}
 
 /** Collects a payment against an enrollment's outstanding training fee(s). */
 export function CollectFeeDialog({
@@ -63,17 +85,44 @@ export function CollectFeeDialog({
   const { data: methodsData } = usePaymentMethods({ isActive: true, limit: 100 });
   const methods = methodsData?.data ?? [];
 
-  const [feeId, setFeeId] = useState("");
-  const [amount, setAmount] = useState<number | undefined>(undefined);
-  const [methodId, setMethodId] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  // Grouped in reducers so one logical update is a single render. No reset
+  // effect needed: the parent mounts this dialog only while a row is selected
+  // (`{collecting && <CollectFeeDialog … />}`), so every open is a fresh mount.
+  const [form, patchForm] = useReducer(
+    (s: CollectForm, p: Partial<CollectForm>) => ({ ...s, ...p }),
+    { feeId: "", amount: undefined, methodId: "" },
+  );
+  const [status, patchStatus] = useReducer(
+    (s: CollectStatus, p: Partial<CollectStatus>) => ({ ...s, ...p }),
+    { submitting: false, thermalPrinting: false, done: null },
+  );
+  const { feeId, amount, methodId } = form;
+  // `done` is set after a successful collection so the bill can be printed.
+  const { submitting, thermalPrinting, done } = status;
 
-  useEffect(() => {
-    if (!open) return;
-    setFeeId("");
-    setAmount(undefined);
-    setMethodId("");
-  }, [open]);
+  /** Print the collected bill to a Bluetooth thermal printer (ESC/POS). */
+  const handleThermal = async () => {
+    if (!done) return;
+    if (!isThermalPrintingSupported()) {
+      toast.error(
+        "Bluetooth printing needs Chrome/Edge or Android Chrome. On iPhone/iPad use “Print bill” instead.",
+      );
+      return;
+    }
+    patchStatus({ thermalPrinting: true });
+    try {
+      await printReceiptThermal(done.receipt);
+      toast.success("Sent to printer");
+    } catch (err) {
+      // User cancelled the device chooser — not an error.
+      if (err instanceof DOMException && (err.name === "NotFoundError" || err.name === "AbortError")) {
+        return;
+      }
+      toast.error(err instanceof Error ? err.message : getApiErrorMessage(err));
+    } finally {
+      patchStatus({ thermalPrinting: false });
+    }
+  };
 
   const selectedMethodId = methodId || methods[0]?.id || "";
   const selectedFee = outstanding.find((f) => f.id === feeId) ?? outstanding[0] ?? null;
@@ -86,7 +135,7 @@ export function CollectFeeDialog({
     if (!selectedMethodId) return toast.error("Select a payment method");
     if (payAmount <= 0) return toast.error("Enter an amount to collect");
 
-    setSubmitting(true);
+    patchStatus({ submitting: true });
     try {
       const invoice = await BillingService.payFee(selectedFee.id, {
         amount: payAmount,
@@ -97,12 +146,19 @@ export function CollectFeeDialog({
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       const receipt = await BillingService.receipt(invoice.id);
       toast.success(`Collected ${formatMoney(payAmount)} · invoice ${invoice.invoiceNo}`);
-      printReceipt(receipt);
-      onOpenChange(false);
+      patchStatus({
+        done: {
+          invoiceNo: invoice.invoiceNo,
+          studentName,
+          amount: payAmount,
+          remaining,
+          receipt,
+        },
+      });
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Failed to collect payment"));
     } finally {
-      setSubmitting(false);
+      patchStatus({ submitting: false });
     }
   };
 
@@ -110,11 +166,31 @@ export function CollectFeeDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Collect fee</DialogTitle>
-          <DialogDescription>Take a payment from {studentName} and print the bill.</DialogDescription>
+          <DialogTitle>{done ? "Payment collected" : "Collect fee"}</DialogTitle>
+          <DialogDescription>
+            {done
+              ? "The fee has been collected — print the bill below."
+              : `Take a payment from ${studentName} and print the bill.`}
+          </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
+        {done ? (
+          <div className="flex flex-col items-center gap-1.5 rounded-xl border bg-muted/30 p-5 text-center">
+            <span className="mb-1 grid size-12 place-items-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300">
+              <IconCircleCheck className="size-7" />
+            </span>
+            <p className="text-sm">
+              <span className="font-semibold">{done.studentName}</span>
+            </p>
+            <p className="font-mono text-xs text-muted-foreground">{done.invoiceNo}</p>
+            <p className="text-2xl font-bold tracking-tight">{formatMoney(done.amount)} paid</p>
+            {done.remaining > 0 && (
+              <p className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                Balance {formatMoney(done.remaining)} pending
+              </p>
+            )}
+          </div>
+        ) : isLoading ? (
           <div className="grid h-32 place-items-center">
             <Spinner className="size-7" />
           </div>
@@ -127,7 +203,7 @@ export function CollectFeeDialog({
             {outstanding.length > 1 && (
               <div className="space-y-1.5">
                 <Label>Fee</Label>
-                <Select value={selectedFee?.id ?? ""} onValueChange={setFeeId}>
+                <Select value={selectedFee?.id ?? ""} onValueChange={(v) => patchForm({ feeId: v })}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -150,7 +226,7 @@ export function CollectFeeDialog({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Payment method</Label>
-                <Select value={selectedMethodId} onValueChange={setMethodId}>
+                <Select value={selectedMethodId} onValueChange={(v) => patchForm({ methodId: v })}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
@@ -168,7 +244,7 @@ export function CollectFeeDialog({
                 <NumberInput
                   id="collect-amt"
                   value={amount ?? balance}
-                  onChange={setAmount}
+                  onChange={(v) => patchForm({ amount: v })}
                   min={0}
                   max={balance}
                   decimals
@@ -186,20 +262,36 @@ export function CollectFeeDialog({
         )}
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={onCollect}
-            disabled={submitting || outstanding.length === 0 || payAmount <= 0}
-          >
-            {submitting ? <Spinner /> : (
-              <>
-                <IconPrinter className="size-4" /> Collect {formatMoney(payAmount)}
-              </>
-            )}
-          </Button>
+          {done ? (
+            <>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Done
+              </Button>
+              <Button type="button" variant="outline" onClick={() => printReceipt(done.receipt)}>
+                <IconPrinter className="size-4" /> Print bill
+              </Button>
+              <Button type="button" onClick={handleThermal} disabled={thermalPrinting}>
+                {thermalPrinting ? <Spinner /> : <IconBluetooth className="size-4" />} Thermal printer
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={onCollect}
+                disabled={submitting || outstanding.length === 0 || payAmount <= 0}
+              >
+                {submitting ? <Spinner /> : (
+                  <>
+                    <IconPrinter className="size-4" /> Collect {formatMoney(payAmount)}
+                  </>
+                )}
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

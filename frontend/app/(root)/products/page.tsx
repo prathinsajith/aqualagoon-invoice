@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getProductColumns } from "./columns";
 import { ProductFormDialog } from "./product-form-dialog";
 import { ProductViewDialog } from "./product-view-dialog";
@@ -189,6 +190,8 @@ export function ProductsContent() {
           />
           Show archived
         </label>
+
+        <RefreshButton queryKey={["products"]} className="sm:ml-auto" />
       </div>
 
       {isError ? (

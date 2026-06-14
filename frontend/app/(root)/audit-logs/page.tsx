@@ -5,7 +5,7 @@ import type { ColumnDef, PaginationState } from "@tanstack/react-table";
 import { IconSearch } from "@tabler/icons-react";
 
 import { PageHeader } from "@/components/rbac/page-header";
-import { PermissionPage } from "@/components/rbac/permission-page";
+import { AdminPage } from "@/components/rbac/admin-page";
 import { DataTableGeneric } from "@/components/data-table-generic";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { useAuditLogs } from "@/hooks/queries/use-audit-logs";
 import { useDebounce } from "@/hooks/use-debounce";
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -141,6 +142,8 @@ function AuditLogsContent() {
             ))}
           </SelectContent>
         </Select>
+
+        <RefreshButton queryKey={["audit-logs"]} className="sm:ml-auto" />
       </div>
 
       {isError ? (
@@ -176,8 +179,8 @@ function AuditLogsContent() {
 
 export default function AuditLogsPage() {
   return (
-    <PermissionPage permission="audit.view">
+    <AdminPage>
       <AuditLogsContent />
-    </PermissionPage>
+    </AdminPage>
   );
 }

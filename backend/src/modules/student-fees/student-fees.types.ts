@@ -2,6 +2,8 @@ import type { z } from "zod";
 import { Prisma } from "../../generated/prisma/client.js";
 import type {
   createStudentFeeBody,
+  feeHistoryQuery,
+  feeHistoryRowSchema,
   feeLedgerQuery,
   feeLedgerRowSchema,
   listStudentFeesQuery,
@@ -13,6 +15,8 @@ export type CreateStudentFeeInput = z.infer<typeof createStudentFeeBody>;
 export type ListStudentFeesQuery = z.infer<typeof listStudentFeesQuery>;
 export type FeeLedgerQuery = z.infer<typeof feeLedgerQuery>;
 export type FeeLedgerRow = z.infer<typeof feeLedgerRowSchema>;
+export type FeeHistoryQuery = z.infer<typeof feeHistoryQuery>;
+export type FeeHistoryRow = z.infer<typeof feeHistoryRowSchema>;
 
 export const studentFeeInclude = {
   student: { select: { id: true, firstName: true, lastName: true } },

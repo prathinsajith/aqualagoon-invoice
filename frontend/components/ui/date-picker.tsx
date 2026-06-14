@@ -16,7 +16,17 @@ interface DatePickerProps {
   placeholder?: string;
   id?: string;
   disabled?: boolean;
+  /** Earliest selectable month. Defaults to Jan 1940 (good for dates of birth). */
+  startMonth?: Date;
+  /** Latest selectable month. Defaults to the current month (no future dates). */
+  endMonth?: Date;
+  className?: string;
 }
+
+/** Ten years ahead — a sensible upper bound for forward-looking pickers. */
+const TEN_YEARS_AHEAD = new Date(new Date().getFullYear() + 10, 11);
+/** Five years back — a sensible lower bound for forward-looking pickers. */
+const FIVE_YEARS_BACK = new Date(new Date().getFullYear() - 5, 0);
 
 /** shadcn date picker: a Popover + Calendar, controlled by a `yyyy-MM-dd` string. */
 export function DatePicker({
@@ -25,6 +35,9 @@ export function DatePicker({
   placeholder = "Select date",
   id,
   disabled,
+  startMonth = new Date(1940, 0),
+  endMonth = new Date(),
+  className,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -42,6 +55,7 @@ export function DatePicker({
           className={cn(
             "w-full justify-start gap-2 font-normal",
             !selected && "text-muted-foreground",
+            className,
           )}
         >
           <IconCalendar className="size-4 opacity-70" />
@@ -54,8 +68,8 @@ export function DatePicker({
           selected={selected}
           defaultMonth={selected}
           captionLayout="dropdown"
-          startMonth={new Date(1940, 0)}
-          endMonth={new Date()}
+          startMonth={startMonth}
+          endMonth={endMonth}
           onSelect={(date) => {
             onChange(date ? format(date, "yyyy-MM-dd") : "");
             setOpen(false);
@@ -66,3 +80,6 @@ export function DatePicker({
     </Popover>
   );
 }
+
+/** Range bounds for forward-looking pickers (batch dates, due dates, attendance). */
+export { TEN_YEARS_AHEAD as DATE_PICKER_FUTURE_END, FIVE_YEARS_BACK as DATE_PICKER_PAST_START };

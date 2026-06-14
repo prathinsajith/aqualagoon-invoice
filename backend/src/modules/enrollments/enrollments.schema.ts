@@ -12,6 +12,7 @@ const studentRefSchema = z.object({
   id: z.string(),
   firstName: z.string(),
   lastName: z.string(),
+  photoUrl: z.string().nullable(),
 });
 
 const programRefSchema = z.object({
@@ -29,6 +30,7 @@ const feePlanRefSchema = z.object({
   id: z.string(),
   name: z.string(),
   amount: z.number(),
+  durationDays: z.number().int(),
 });
 
 export const enrollmentSchema = z.object({
@@ -37,6 +39,8 @@ export const enrollmentSchema = z.object({
   batch: batchRefSchema,
   feePlan: feePlanRefSchema.nullable(),
   joinedDate: z.date(),
+  attendedDays: z.number().int().nullable(),
+  daysRemaining: z.number().int().nullable(),
   status: enrollmentStatusSchema,
   createdAt: z.date(),
 });

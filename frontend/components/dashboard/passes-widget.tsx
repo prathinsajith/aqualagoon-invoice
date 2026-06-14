@@ -54,7 +54,7 @@ export function PassesIssuedCard({
         </p>
       ) : (
         <>
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-foreground/10">
             {passes.map((p) => (
               <div key={p.passTypeId} className="flex items-center justify-between gap-3 py-2.5">
                 <div className="flex min-w-0 items-center gap-2">
@@ -69,7 +69,7 @@ export function PassesIssuedCard({
               </div>
             ))}
           </div>
-          <div className="mt-2 flex items-center justify-between border-t-2 border-border pt-3">
+          <div className="mt-2 flex items-center justify-between border-t-2 border-foreground/20 pt-3">
             <span className="text-sm font-bold">
               Total · {totalCount} {totalCount === 1 ? "pass" : "passes"}
             </span>
@@ -110,7 +110,7 @@ export function TopPassBuyersCard({
       iconClassName="bg-amber-50 text-amber-500 dark:bg-amber-900/30 dark:text-amber-300"
       title="Top pass buyers"
       caption={`${periodLabel.toLowerCase()} · top 5`}
-      contentClassName="space-y-1"
+      contentClassName="divide-y divide-foreground/10"
     >
       {buyersLoading ? (
         <div className="grid h-24 place-items-center">

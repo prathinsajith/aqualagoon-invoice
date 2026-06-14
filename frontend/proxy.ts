@@ -56,6 +56,7 @@ export const config = {
     "/training-programs/:path*",
     "/fee-plans/:path*",
     "/batches/:path*",
+    "/students/:path*",
     "/enrollments/:path*",
     "/attendance/:path*",
     "/student-fees/:path*",

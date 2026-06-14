@@ -25,8 +25,8 @@ const SYSTEM_ROLES: { name: string; description: string }[] = [
   { name: "Guest", description: "Limited, read-only access." },
 ];
 
-const ADMIN_EMAIL = process.env["SEED_ADMIN_EMAIL"] ?? "admin@aqualagoon.com";
-const ADMIN_PASSWORD = process.env["SEED_ADMIN_PASSWORD"] ?? "Admin@12345";
+const ADMIN_EMAIL = process.env["SEED_ADMIN_EMAIL"] ?? "sprathin007@gmail.com";
+const ADMIN_PASSWORD = process.env["SEED_ADMIN_PASSWORD"] ?? "Aqua@2026";
 
 async function main(): Promise<void> {
   const adapter = new PrismaPg({ connectionString: process.env["DATABASE_URL"]! });
@@ -243,6 +243,8 @@ async function main(): Promise<void> {
               trainingProgramId: program.id,
               name: fp.name,
               durationType: fp.durationType,
+              // Session-pack size: a month grants 30 sessions, a quarter 90.
+              durationDays: fp.durationType === "QUARTER" ? 90 : 30,
               amount: fp.amount,
               status: "ACTIVE" as const,
             })),

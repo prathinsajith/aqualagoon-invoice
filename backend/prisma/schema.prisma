@@ -229,12 +229,23 @@ model CompanySetting {
   dateFormat     String @default("DD/MM/YYYY") @map("date_format")
   // Weekly off days (0=Sunday … 6=Saturday). Attendance isn't taken on these.
   weeklyOffDays  Int[]  @default([0]) @map("weekly_off_days")
-  // Specific holiday dates as "YYYY-MM-DD" strings. Attendance isn't taken on these.
-  holidayDates   String[] @default([]) @map("holiday_dates")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("company_settings")
+}
+
+// A specific calendar holiday. Attendance isn't taken on these dates (in
+// addition to the weekly off days configured on CompanySetting).
+model Holiday {
+  id        String   @id @default(uuid())
+  // Calendar date as "YYYY-MM-DD" (timezone-free, unique).
+  date      String   @unique
+  name      String?
+  createdBy String?  @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("holidays")
 }
 
 // ---------------------------------------------------------------------------

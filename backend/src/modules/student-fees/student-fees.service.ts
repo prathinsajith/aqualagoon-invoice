@@ -9,6 +9,7 @@ import { StudentFeesRepository } from "./student-fees.repository.js";
 import { toStudentFeeDto } from "./student-fees.types.js";
 import type {
   CreateStudentFeeInput,
+  FeeHistoryRow,
   FeeLedgerQuery,
   FeeLedgerRow,
   ListStudentFeesQuery,
@@ -122,6 +123,60 @@ export class StudentFeesService {
       data: filtered,
       meta: { pagination: buildPaginationMeta(query.page, query.limit, total) },
     };
+  }
+
+  /**
+   * Payment history for one enrollment: every payment received against any of
+   * its training fees, newest first. Each fee payment is its own invoice, so we
+   * resolve the enrollment's fees → the invoices that charged them → their
+   * payments. Lets the desk see exactly when and how a student paid.
+   */
+  async paymentHistory(enrollmentId: string): Promise<FeeHistoryRow[]> {
+    const fees = await this.prisma.studentFee.findMany({
+      where: { enrollmentId },
+      select: { id: true },
+    });
+    if (fees.length === 0) return [];
+    const feeIds = fees.map((f) => f.id);
+
+    const items = await this.prisma.invoiceItem.findMany({
+      where: { itemType: "TRAINING", itemId: { in: feeIds } },
+      select: {
+        itemId: true,
+        itemName: true,
+        invoice: {
+          select: {
+            id: true,
+            invoiceNo: true,
+            status: true,
+            payments: {
+              select: {
+                amount: true,
+                paymentDate: true,
+                paymentMethod: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const rows: FeeHistoryRow[] = [];
+    for (const item of items) {
+      for (const p of item.invoice.payments) {
+        rows.push({
+          invoiceId: item.invoice.id,
+          invoiceNo: item.invoice.invoiceNo,
+          date: p.paymentDate,
+          amount: p.amount.toNumber(),
+          method: p.paymentMethod?.name ?? null,
+          feeName: item.itemName,
+          cancelled: item.invoice.status === "CANCELLED",
+        });
+      }
+    }
+    rows.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return rows;
   }
 
   async create(input: CreateStudentFeeInput, actor: ActorContext): Promise<StudentFeeDto> {

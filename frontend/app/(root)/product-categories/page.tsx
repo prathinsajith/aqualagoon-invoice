@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getCategoryColumns } from "./columns";
 import { CategoryFormDialog } from "./category-form-dialog";
 import { CategoryViewDialog } from "./category-view-dialog";
@@ -129,6 +130,8 @@ export function CategoriesContent() {
             <SelectItem value="INACTIVE">Inactive</SelectItem>
           </SelectContent>
         </Select>
+
+        <RefreshButton queryKey={["product-categories"]} className="sm:ml-auto" />
       </div>
 
       {isError ? (

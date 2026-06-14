@@ -11,6 +11,7 @@ export interface PersistFeePlanInput {
   trainingProgramId: string;
   name: string;
   durationType: DurationType;
+  durationDays: number;
   amount: number;
   description?: string | null;
   status: Status;
@@ -21,6 +22,7 @@ export interface UpdateFeePlanData {
   trainingProgramId?: string;
   name?: string;
   durationType?: DurationType;
+  durationDays?: number;
   amount?: number;
   description?: string | null;
   status?: Status;
@@ -83,6 +85,7 @@ export class FeePlansRepository {
         trainingProgramId: input.trainingProgramId,
         name: input.name,
         durationType: input.durationType,
+        durationDays: input.durationDays,
         amount: new Prisma.Decimal(input.amount),
         description: input.description ?? null,
         status: input.status,

@@ -25,6 +25,7 @@ export function toFeePlanDto(p: FeePlanWithRelations): FeePlanDto {
     program: { id: p.program.id, name: p.program.name },
     name: p.name,
     durationType: p.durationType,
+    durationDays: p.durationDays,
     amount: p.amount.toNumber(),
     description: p.description,
     status: p.status,

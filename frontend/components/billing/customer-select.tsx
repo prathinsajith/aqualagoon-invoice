@@ -37,10 +37,12 @@ export function CustomerSelect({
   value,
   onChange,
   className,
+  invalid,
 }: {
   value: ManagedUser | null;
   onChange: (user: ManagedUser | null) => void;
   className?: string;
+  invalid?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
@@ -64,6 +66,7 @@ export function CustomerSelect({
             type="button"
             className={cn(
               "flex h-10 w-full items-center gap-2 rounded-lg border border-input bg-gray-50/50 px-3 text-left text-sm shadow-xs transition-colors hover:bg-muted/40 dark:bg-input/30",
+              invalid && "border-destructive ring-[3px] ring-destructive/20",
               className,
             )}
           >
@@ -73,8 +76,13 @@ export function CustomerSelect({
               <IconUser className="size-4 shrink-0 text-muted-foreground" />
             )}
 
-            <span className="min-w-0 flex-1 truncate font-medium">
-              {value ? `${value.firstName} ${value.lastName}` : "Walk-in customer"}
+            <span
+              className={cn(
+                "min-w-0 flex-1 truncate font-medium",
+                !value && "text-muted-foreground",
+              )}
+            >
+              {value ? `${value.firstName} ${value.lastName}` : "Select customer"}
             </span>
 
             {value?.roles[0] && (
@@ -114,20 +122,6 @@ export function CustomerSelect({
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto p-1">
-            <button
-              type="button"
-              onClick={() => select(null)}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-muted",
-                !value && "bg-muted",
-              )}
-            >
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
-                <IconUser className="size-5" />
-              </span>
-              <span className="text-sm text-muted-foreground">Walk-in (no customer)</span>
-            </button>
-
             {isFetching && users.length === 0 ? (
               <div className="grid h-20 place-items-center">
                 <Spinner className="size-5" />

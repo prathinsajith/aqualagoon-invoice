@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  IconMinus,
-  IconPlus,
   IconReceipt,
   IconSchool,
   IconShoppingCart,
@@ -33,6 +31,7 @@ export function PosCartPanel({
   cart,
   totals,
   customer,
+  customerInvalid,
   onCustomer,
   onClear,
   onQty,
@@ -43,6 +42,7 @@ export function PosCartPanel({
   cart: CartLine[];
   totals: CartTotals;
   customer: ManagedUser | null;
+  customerInvalid?: boolean;
   onCustomer: (customer: ManagedUser | null) => void;
   onClear: () => void;
   onQty: (key: string, qty: number) => void;
@@ -53,8 +53,13 @@ export function PosCartPanel({
   return (
     <div className="flex min-h-0 flex-col gap-4 lg:col-span-2">
       <div className="shrink-0 space-y-1.5">
-        <Label>Customer</Label>
-        <CustomerSelect value={customer} onChange={onCustomer} />
+        <Label>
+          Customer <span className="text-destructive">*</span>
+        </Label>
+        <CustomerSelect value={customer} onChange={onCustomer} invalid={customerInvalid} />
+        {customerInvalid && (
+          <p className="text-xs text-destructive">Please select a customer before charging.</p>
+        )}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
@@ -107,30 +112,24 @@ export function PosCartPanel({
                     </button>
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center rounded-md border">
-                      <button
-                        type="button"
-                        className="grid size-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40"
-                        disabled={single}
-                        onClick={() => onQty(key, line.quantity - 1)}
-                      >
-                        <IconMinus className="size-3.5" />
-                      </button>
-                      <span className="w-8 text-center text-sm font-medium">{line.quantity}</span>
-                      <button
-                        type="button"
-                        className="grid size-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40"
-                        disabled={single || (!pass && line.quantity >= (line.item.stockQuantity ?? 1))}
-                        onClick={() => onQty(key, line.quantity + 1)}
-                      >
-                        <IconPlus className="size-3.5" />
-                      </button>
-                    </div>
+                    <NumberInput
+                      // Typeable quantity with +/- steppers. `setQty` clamps the
+                      // result (passes min 1, products to stock, student passes
+                      // locked to 1), so an emptied field commits back to 1.
+                      value={line.quantity}
+                      onChange={(v) => onQty(key, v ?? 1)}
+                      min={1}
+                      max={pass ? undefined : (line.item.stockQuantity ?? 1)}
+                      disabled={single}
+                      className="h-9 w-36"
+                    />
                     {!pass && !training && (
                       <div className="flex items-center gap-1.5">
                         <Label className="text-[11px] text-muted-foreground">Disc</Label>
                         <NumberInput
-                          value={line.discountAmount}
+                          // Render a zero discount as an empty field (placeholder "0")
+                          // so it can be cleared and typed into without snapping back.
+                          value={line.discountAmount || undefined}
                           onChange={(v) => onDiscount(key, v ?? 0)}
                           min={0}
                           decimals

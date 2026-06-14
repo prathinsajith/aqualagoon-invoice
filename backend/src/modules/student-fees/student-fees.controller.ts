@@ -3,6 +3,7 @@ import type { ActorContext } from "../users/users.service.js";
 import type { StudentFeesService } from "./student-fees.service.js";
 import type {
   CreateStudentFeeInput,
+  FeeHistoryQuery,
   FeeLedgerQuery,
   ListStudentFeesQuery,
 } from "./student-fees.types.js";
@@ -23,6 +24,10 @@ export function createStudentFeesController(service: StudentFeesService) {
 
     ledger: async (request: FastifyRequest<{ Querystring: FeeLedgerQuery }>) => {
       return service.ledger(request.query);
+    },
+
+    history: async (request: FastifyRequest<{ Querystring: FeeHistoryQuery }>) => {
+      return { data: await service.paymentHistory(request.query.enrollmentId) };
     },
 
     getById: async (request: FastifyRequest<{ Params: IdParams }>) => {

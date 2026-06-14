@@ -198,6 +198,9 @@ export interface RecentEnrollment {
     batchName: string;
     programName: string;
     joinedDate: string;
+    billed: number;
+    paid: number;
+    balance: number;
 }
 
 export interface TopPassBuyer {

@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getEnrollmentColumns } from "./columns";
 import { EnrollDialog } from "./enroll-dialog";
 import { useEnrollments, useEnrollmentMutations, useBatches } from "@/hooks/queries/use-training";
@@ -150,6 +151,8 @@ export function EnrollmentsContent() {
             ))}
           </SelectContent>
         </Select>
+
+        <RefreshButton queryKey={["enrollments"]} className="sm:ml-auto" />
       </div>
 
       {isError ? (

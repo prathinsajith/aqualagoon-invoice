@@ -20,12 +20,6 @@ const baseUserFields = {
     roleIds: z.array(z.string()),
 };
 
-const createUserSchema = z.object({
-    ...baseUserFields,
-    password: z.string().min(8, "Password must be at least 8 characters").max(128),
-});
-export type CreateUserSchema = z.infer<typeof createUserSchema>;
-
 /** Self-service profile edit (no role/status/password — those live elsewhere). */
 export const profileSchema = z.object({
     firstName: z.string().trim().min(1, "First name is required").max(100),

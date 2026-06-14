@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getTrainingProgramColumns } from "./columns";
 import { TrainingProgramFormDialog } from "./training-program-form-dialog";
 import { TrainingProgramViewDialog } from "./training-program-view-dialog";
@@ -157,6 +158,8 @@ export function TrainingProgramsContent() {
             <SelectItem value="INACTIVE">Inactive</SelectItem>
           </SelectContent>
         </Select>
+
+        <RefreshButton queryKey={["training-programs"]} className="sm:ml-auto" />
       </div>
 
       {isError ? (

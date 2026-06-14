@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getInvoiceColumns } from "./columns";
 import { InvoiceViewDialog } from "./invoice-view-dialog";
 import { PosScreen } from "@/components/billing/pos-screen";
@@ -155,7 +156,7 @@ function InvoicesContent() {
           </SelectContent>
         </Select>
 
-        <div className="sm:ml-auto">
+        <div className="flex items-center gap-3 sm:ml-auto">
           <DateRangeFilter
             value={rangeValue}
             onChange={(v) => {
@@ -163,6 +164,7 @@ function InvoicesContent() {
               resetToFirstPage();
             }}
           />
+          <RefreshButton queryKey={invoiceKeys.all} />
         </div>
       </div>
 

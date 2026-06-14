@@ -66,6 +66,9 @@ export const recentEnrollmentsResponse = z.object({
       batchName: z.string(),
       programName: z.string(),
       joinedDate: z.date(),
+      billed: z.number(),
+      paid: z.number(),
+      balance: z.number(),
     }),
   ),
 });

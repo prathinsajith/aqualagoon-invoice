@@ -73,6 +73,7 @@ export interface Company {
     passPrefix: string;
     currency: string;
     dateFormat: string;
+    weeklyOffDays: number[];
     createdAt: string;
     updatedAt: string;
 }

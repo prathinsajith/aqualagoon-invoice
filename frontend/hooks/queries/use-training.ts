@@ -28,11 +28,10 @@ const list = <T,>(key: string, fn: (p: any) => Promise<T>) => (params: any) =>
 export const useTrainingTypes = list("training-types", TrainingTypeService.list);
 export function useTrainingTypeMutations() {
     const qc = useQueryClient();
-    const invalidate = () => qc.invalidateQueries({ queryKey: ["training-types"] });
     return {
-        create: useMutation({ mutationFn: (p: TrainingTypePayload) => TrainingTypeService.create(p), onSuccess: invalidate }),
-        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: Partial<TrainingTypePayload> }) => TrainingTypeService.update(id, payload), onSuccess: invalidate }),
-        remove: useMutation({ mutationFn: (id: string) => TrainingTypeService.remove(id), onSuccess: invalidate }),
+        create: useMutation({ mutationFn: (p: TrainingTypePayload) => TrainingTypeService.create(p), onSuccess: () => qc.invalidateQueries({ queryKey: ["training-types"] }) }),
+        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: Partial<TrainingTypePayload> }) => TrainingTypeService.update(id, payload), onSuccess: () => qc.invalidateQueries({ queryKey: ["training-types"] }) }),
+        remove: useMutation({ mutationFn: (id: string) => TrainingTypeService.remove(id), onSuccess: () => qc.invalidateQueries({ queryKey: ["training-types"] }) }),
     };
 }
 
@@ -40,11 +39,10 @@ export function useTrainingTypeMutations() {
 export const useTrainingPrograms = list("training-programs", TrainingProgramService.list);
 export function useTrainingProgramMutations() {
     const qc = useQueryClient();
-    const invalidate = () => qc.invalidateQueries({ queryKey: ["training-programs"] });
     return {
-        create: useMutation({ mutationFn: (p: TrainingProgramPayload) => TrainingProgramService.create(p), onSuccess: invalidate }),
-        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: Partial<TrainingProgramPayload> }) => TrainingProgramService.update(id, payload), onSuccess: invalidate }),
-        remove: useMutation({ mutationFn: (id: string) => TrainingProgramService.remove(id), onSuccess: invalidate }),
+        create: useMutation({ mutationFn: (p: TrainingProgramPayload) => TrainingProgramService.create(p), onSuccess: () => qc.invalidateQueries({ queryKey: ["training-programs"] }) }),
+        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: Partial<TrainingProgramPayload> }) => TrainingProgramService.update(id, payload), onSuccess: () => qc.invalidateQueries({ queryKey: ["training-programs"] }) }),
+        remove: useMutation({ mutationFn: (id: string) => TrainingProgramService.remove(id), onSuccess: () => qc.invalidateQueries({ queryKey: ["training-programs"] }) }),
     };
 }
 
@@ -52,11 +50,10 @@ export function useTrainingProgramMutations() {
 export const useFeePlans = list("fee-plans", FeePlanService.list);
 export function useFeePlanMutations() {
     const qc = useQueryClient();
-    const invalidate = () => qc.invalidateQueries({ queryKey: ["fee-plans"] });
     return {
-        create: useMutation({ mutationFn: (p: FeePlanPayload) => FeePlanService.create(p), onSuccess: invalidate }),
-        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: Partial<FeePlanPayload> }) => FeePlanService.update(id, payload), onSuccess: invalidate }),
-        remove: useMutation({ mutationFn: (id: string) => FeePlanService.remove(id), onSuccess: invalidate }),
+        create: useMutation({ mutationFn: (p: FeePlanPayload) => FeePlanService.create(p), onSuccess: () => qc.invalidateQueries({ queryKey: ["fee-plans"] }) }),
+        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: Partial<FeePlanPayload> }) => FeePlanService.update(id, payload), onSuccess: () => qc.invalidateQueries({ queryKey: ["fee-plans"] }) }),
+        remove: useMutation({ mutationFn: (id: string) => FeePlanService.remove(id), onSuccess: () => qc.invalidateQueries({ queryKey: ["fee-plans"] }) }),
     };
 }
 
@@ -64,11 +61,10 @@ export function useFeePlanMutations() {
 export const useBatches = list("batches", BatchService.list);
 export function useBatchMutations() {
     const qc = useQueryClient();
-    const invalidate = () => qc.invalidateQueries({ queryKey: ["batches"] });
     return {
-        create: useMutation({ mutationFn: (p: BatchPayload) => BatchService.create(p), onSuccess: invalidate }),
-        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: Partial<BatchPayload> }) => BatchService.update(id, payload), onSuccess: invalidate }),
-        remove: useMutation({ mutationFn: (id: string) => BatchService.remove(id), onSuccess: invalidate }),
+        create: useMutation({ mutationFn: (p: BatchPayload) => BatchService.create(p), onSuccess: () => qc.invalidateQueries({ queryKey: ["batches"] }) }),
+        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: Partial<BatchPayload> }) => BatchService.update(id, payload), onSuccess: () => qc.invalidateQueries({ queryKey: ["batches"] }) }),
+        remove: useMutation({ mutationFn: (id: string) => BatchService.remove(id), onSuccess: () => qc.invalidateQueries({ queryKey: ["batches"] }) }),
     };
 }
 
@@ -76,13 +72,9 @@ export function useBatchMutations() {
 export const useEnrollments = list("enrollments", EnrollmentService.list);
 export function useEnrollmentMutations() {
     const qc = useQueryClient();
-    const invalidate = () => {
-        qc.invalidateQueries({ queryKey: ["enrollments"] });
-        qc.invalidateQueries({ queryKey: ["batches"] });
-    };
     return {
-        create: useMutation({ mutationFn: (p: EnrollmentPayload) => EnrollmentService.create(p), onSuccess: invalidate }),
-        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: { status?: EnrollmentStatus; feePlanId?: string | null } }) => EnrollmentService.update(id, payload), onSuccess: invalidate }),
+        create: useMutation({ mutationFn: (p: EnrollmentPayload) => EnrollmentService.create(p), onSuccess: () => { qc.invalidateQueries({ queryKey: ["enrollments"] }); qc.invalidateQueries({ queryKey: ["batches"] }); } }),
+        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: { status?: EnrollmentStatus; feePlanId?: string | null } }) => EnrollmentService.update(id, payload), onSuccess: () => { qc.invalidateQueries({ queryKey: ["enrollments"] }); qc.invalidateQueries({ queryKey: ["batches"] }); } }),
     };
 }
 
@@ -93,11 +85,11 @@ export function useAttendanceSummary(params: { studentId?: string; batchId?: str
 }
 export function useAttendanceMutations() {
     const qc = useQueryClient();
-    const invalidate = () => qc.invalidateQueries({ queryKey: ["attendance"] });
+    // Marking attendance burns/credits session days, so enrollments (days left) refresh too.
     return {
-        mark: useMutation({ mutationFn: (p: MarkAttendancePayload) => AttendanceService.mark(p), onSuccess: invalidate }),
-        bulkMark: useMutation({ mutationFn: (p: Parameters<typeof AttendanceService.bulkMark>[0]) => AttendanceService.bulkMark(p), onSuccess: invalidate }),
-        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof AttendanceService.update>[1] }) => AttendanceService.update(id, payload), onSuccess: invalidate }),
+        mark: useMutation({ mutationFn: (p: MarkAttendancePayload) => AttendanceService.mark(p), onSuccess: () => { qc.invalidateQueries({ queryKey: ["attendance"] }); qc.invalidateQueries({ queryKey: ["enrollments"] }); } }),
+        bulkMark: useMutation({ mutationFn: (p: Parameters<typeof AttendanceService.bulkMark>[0]) => AttendanceService.bulkMark(p), onSuccess: () => { qc.invalidateQueries({ queryKey: ["attendance"] }); qc.invalidateQueries({ queryKey: ["enrollments"] }); } }),
+        update: useMutation({ mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof AttendanceService.update>[1] }) => AttendanceService.update(id, payload), onSuccess: () => { qc.invalidateQueries({ queryKey: ["attendance"] }); qc.invalidateQueries({ queryKey: ["enrollments"] }); } }),
     };
 }
 
@@ -111,10 +103,18 @@ export function useStudentFeeLedger(params: Parameters<typeof StudentFeeService.
         placeholderData: keepPreviousData,
     });
 }
+// Payment history for one enrollment. Keyed under "student-fees" so collecting
+// a fee invalidates it; only fetches when a row is open (enabled).
+export function useFeeHistory(enrollmentId: string | null, enabled = true) {
+    return useQuery({
+        queryKey: ["student-fees", "history", enrollmentId],
+        queryFn: () => StudentFeeService.history(enrollmentId!),
+        enabled: enabled && !!enrollmentId,
+    });
+}
 export function useStudentFeeMutations() {
     const qc = useQueryClient();
-    const invalidate = () => qc.invalidateQueries({ queryKey: ["student-fees"] });
     return {
-        create: useMutation({ mutationFn: (p: GenerateFeePayload) => StudentFeeService.create(p), onSuccess: invalidate }),
+        create: useMutation({ mutationFn: (p: GenerateFeePayload) => StudentFeeService.create(p), onSuccess: () => qc.invalidateQueries({ queryKey: ["student-fees"] }) }),
     };
 }

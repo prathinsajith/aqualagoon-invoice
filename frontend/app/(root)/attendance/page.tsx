@@ -1,16 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { IconCheck } from "@tabler/icons-react";
+import { useMemo, useReducer } from "react";
+import { IconCheck, IconCalendarOff } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/rbac/page-header";
 import { PermissionPage } from "@/components/rbac/permission-page";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DatePicker, DATE_PICKER_PAST_START } from "@/components/ui/date-picker";
+import { MonthPicker } from "@/components/ui/month-picker";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -28,6 +28,9 @@ import {
   useEnrollments,
 } from "@/hooks/queries/use-training";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useCompany } from "@/hooks/useCompany";
+import { useHolidays } from "@/hooks/queries/use-holidays";
+import { PersonAvatar } from "@/components/person-avatar";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 import type { Attendance, AttendanceStatus } from "@/types/training";
@@ -56,20 +59,49 @@ const STATUS_META: Record<
 interface Student {
   id: string;
   name: string;
+  photoUrl: string | null;
+  /** Days left on the student's fee plan (null = no plan / open-ended). */
+  daysRemaining: number | null;
+}
+
+/** True if the calendar date (YYYY-MM-DD) is a company holiday. */
+function makeHolidayCheck(weeklyOffDays: number[], holidayDates: string[]) {
+  return (iso: string) =>
+    holidayDates.includes(iso) ||
+    weeklyOffDays.includes(new Date(`${iso}T00:00:00Z`).getUTCDay());
 }
 
 /** Day number (1-31) of a stored @db.Date attendance value (midnight UTC). */
 const dayOf = (iso: string) => new Date(iso).getUTCDate();
 
-function AttendanceContent() {
+interface AttendanceControls {
+  batchId: string;
+  view: "day" | "month";
+  date: string;
+  month: string;
+  studentFilter: string;
+}
+
+export function AttendanceContent() {
   const { can } = usePermissions();
   const canMark = can("attendance.create");
+  const { data: company } = useCompany();
+  const { data: holidaysData } = useHolidays();
+  const holidayDates = useMemo(
+    () => (holidaysData ?? []).map((h) => h.date),
+    [holidaysData],
+  );
+  const isHoliday = useMemo(
+    () => makeHolidayCheck(company?.weeklyOffDays ?? [], holidayDates),
+    [company?.weeklyOffDays, holidayDates],
+  );
 
-  const [batchId, setBatchId] = useState("");
-  const [view, setView] = useState<"day" | "month">("day");
-  const [date, setDate] = useState(todayStr);
-  const [month, setMonth] = useState(thisMonthStr);
-  const [studentFilter, setStudentFilter] = useState("all");
+  // Grouped in a reducer so one logical update is a single render.
+  const [controls, patchControls] = useReducer(
+    (s: AttendanceControls, p: Partial<AttendanceControls>) => ({ ...s, ...p }),
+    { batchId: "", view: "day", date: todayStr(), month: thisMonthStr(), studentFilter: "all" },
+  );
+  const { batchId, view, date, month, studentFilter } = controls;
 
   const { data: batchesData, isLoading: batchesLoading } = useBatches({ page: 1, limit: 100, status: "ACTIVE" });
   const batches = batchesData?.data ?? [];
@@ -87,9 +119,11 @@ function AttendanceContent() {
       map.set(e.student.id, {
         id: e.student.id,
         name: `${e.student.firstName} ${e.student.lastName}`.trim(),
+        photoUrl: e.student.photoUrl ?? null,
+        daysRemaining: e.daysRemaining,
       });
     }
-    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+    return [...map.values()].toSorted((a, b) => a.name.localeCompare(b.name));
   }, [rosterData]);
   const visibleRoster = studentFilter === "all" ? roster : roster.filter((s) => s.id === studentFilter);
 
@@ -159,6 +193,8 @@ function AttendanceContent() {
   };
 
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  // Attendance isn't taken on company holidays (weekly off or a listed date).
+  const dayIsHoliday = isHoliday(date);
 
   return (
     <div className="space-y-6">
@@ -171,7 +207,7 @@ function AttendanceContent() {
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <div className="space-y-1.5">
           <Label>Batch</Label>
-          <Select value={batchId} onValueChange={setBatchId}>
+          <Select value={batchId} onValueChange={(v) => patchControls({ batchId: v })}>
             <SelectTrigger className="w-full sm:w-64">
               <SelectValue placeholder={batchesLoading ? "Loading…" : "Select a batch"} />
             </SelectTrigger>
@@ -189,7 +225,7 @@ function AttendanceContent() {
           <>
             <div className="space-y-1.5">
               <Label>Student</Label>
-              <Select value={studentFilter} onValueChange={setStudentFilter}>
+              <Select value={studentFilter} onValueChange={(v) => patchControls({ studentFilter: v })}>
                 <SelectTrigger className="w-full sm:w-52">
                   <SelectValue placeholder="All students" />
                 </SelectTrigger>
@@ -207,28 +243,23 @@ function AttendanceContent() {
             {view === "day" ? (
               <div className="space-y-1.5">
                 <Label htmlFor="att-date">Date</Label>
-                <Input
+                <DatePicker
                   id="att-date"
-                  type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(v) => v && patchControls({ date: v })}
+                  placeholder="Pick a date"
+                  startMonth={DATE_PICKER_PAST_START}
                   className="w-full sm:w-44"
                 />
               </div>
             ) : (
               <div className="space-y-1.5">
                 <Label htmlFor="att-month">Month</Label>
-                <Input
-                  id="att-month"
-                  type="month"
-                  value={month}
-                  onChange={(e) => setMonth(e.target.value)}
-                  className="w-full sm:w-44"
-                />
+                <MonthPicker id="att-month" value={month} onChange={(v) => patchControls({ month: v })} className="w-full sm:w-44" />
               </div>
             )}
 
-            <Tabs value={view} onValueChange={(v) => setView(v as "day" | "month")} className="sm:ml-auto">
+            <Tabs value={view} onValueChange={(v) => patchControls({ view: v as "day" | "month" })} className="sm:ml-auto">
               <TabsList>
                 <TabsTrigger value="day">Day</TabsTrigger>
                 <TabsTrigger value="month">Month</TabsTrigger>
@@ -256,7 +287,8 @@ function AttendanceContent() {
           dayByStudent={dayByStudent}
           summary={daySummary}
           summaryLoading={daySummaryLoading}
-          canMark={canMark}
+          canMark={canMark && !dayIsHoliday}
+          holiday={dayIsHoliday}
           onSet={setStatus}
           onMarkAll={markAllPresent}
           marking={bulkMark.isPending}
@@ -274,6 +306,7 @@ function DayView({
   summary,
   summaryLoading,
   canMark,
+  holiday,
   onSet,
   onMarkAll,
   marking,
@@ -283,31 +316,62 @@ function DayView({
   summary?: { present: number; absent: number; late: number; leave: number; percentage: number };
   summaryLoading: boolean;
   canMark: boolean;
+  holiday: boolean;
   onSet: (studentId: string, status: AttendanceStatus) => void;
   onMarkAll: () => void;
   marking: boolean;
 }) {
-  const tiles: { label: string; value: number | string | undefined; cls: string }[] = [
-    { label: "Present", value: summary?.present, cls: STATUS_META.PRESENT.dot },
-    { label: "Absent", value: summary?.absent, cls: STATUS_META.ABSENT.dot },
-    { label: "Late", value: summary?.late, cls: STATUS_META.LATE.dot },
-    { label: "Leave", value: summary?.leave, cls: STATUS_META.LEAVE.dot },
-    { label: "Attendance %", value: summary ? `${summary.percentage}%` : undefined, cls: "" },
+  const tiles: {
+    label: string;
+    value: number | string | undefined;
+    chip: string;
+    letter: string;
+    valueCls: string;
+  }[] = [
+    { label: "Present", value: summary?.present, chip: STATUS_META.PRESENT.cell, letter: "P", valueCls: STATUS_META.PRESENT.dot },
+    { label: "Absent", value: summary?.absent, chip: STATUS_META.ABSENT.cell, letter: "A", valueCls: STATUS_META.ABSENT.dot },
+    { label: "Late", value: summary?.late, chip: STATUS_META.LATE.cell, letter: "L", valueCls: STATUS_META.LATE.dot },
+    { label: "Leave", value: summary?.leave, chip: STATUS_META.LEAVE.cell, letter: "V", valueCls: STATUS_META.LEAVE.dot },
+    {
+      label: "Attendance %",
+      value: summary ? `${summary.percentage}%` : undefined,
+      chip: "bg-primary/10 text-primary",
+      letter: "%",
+      valueCls: "text-foreground",
+    },
   ];
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
         {tiles.map((t) => (
-          <Card key={t.label}>
-            <CardContent>
-              <p className="text-xs font-medium text-muted-foreground">{t.label}</p>
-              <p className={cn("mt-1 text-2xl font-bold", t.cls)}>
+          <div
+            key={t.label}
+            className="flex items-center gap-2.5 rounded-xl bg-card px-3 py-2.5 shadow-sm ring-1 ring-black/5 transition-shadow hover:shadow-md dark:ring-white/10"
+          >
+            <span
+              className={cn(
+                "grid size-9 shrink-0 place-items-center rounded-lg text-sm font-bold",
+                t.chip,
+              )}
+            >
+              {t.letter}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-[11px] font-medium text-muted-foreground">{t.label}</p>
+              <p className={cn("text-lg font-bold leading-tight", t.valueCls)}>
                 {summaryLoading ? "—" : (t.value ?? 0)}
               </p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
+
+      {holiday && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-medium text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+          <IconCalendarOff className="size-4 shrink-0" />
+          It&apos;s a company holiday — attendance isn&apos;t taken on this day.
+        </div>
+      )}
 
       {canMark && (
         <div className="flex justify-end">
@@ -317,32 +381,62 @@ function DayView({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border bg-card">
-        <div className="divide-y">
+      <div className="overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+        <div className="divide-y divide-foreground/[0.06]">
           {roster.map((s) => {
             const rec = dayByStudent.get(s.id);
             return (
-              <div key={s.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                <span className="truncate text-sm font-medium">{s.name}</span>
+              <div
+                key={s.id}
+                className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40"
+              >
+                <PersonAvatar
+                  name={s.name}
+                  photoUrl={s.photoUrl}
+                  seed={s.id}
+                  className="size-9 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{s.name}</p>
+                  {s.daysRemaining !== null && (
+                    <p
+                      className={cn(
+                        "text-xs",
+                        s.daysRemaining <= 0
+                          ? "font-medium text-destructive"
+                          : s.daysRemaining <= 5
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-muted-foreground",
+                      )}
+                    >
+                      {s.daysRemaining <= 0
+                        ? "Plan expired"
+                        : `${s.daysRemaining} day${s.daysRemaining === 1 ? "" : "s"} left`}
+                    </p>
+                  )}
+                </div>
                 {canMark ? (
                   <Select value={rec?.status ?? ""} onValueChange={(v) => onSet(s.id, v as AttendanceStatus)}>
-                    <SelectTrigger className="h-8 w-36">
+                    <SelectTrigger className="h-8 w-32 shrink-0">
                       <SelectValue placeholder="Not marked" />
                     </SelectTrigger>
                     <SelectContent>
                       {STATUSES.map((st) => (
                         <SelectItem key={st} value={st}>
-                          {STATUS_META[st].label}
+                          <span className="flex items-center gap-2">
+                            <span className={cn("size-2 rounded-full bg-current", STATUS_META[st].dot)} />
+                            {STATUS_META[st].label}
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 ) : rec ? (
-                  <span className={cn("rounded-md px-2 py-0.5 text-xs font-medium", STATUS_META[rec.status].cell)}>
+                  <span className={cn("shrink-0 rounded-md px-2 py-0.5 text-xs font-medium", STATUS_META[rec.status].cell)}>
                     {STATUS_META[rec.status].label}
                   </span>
                 ) : (
-                  <span className="text-xs text-muted-foreground">Not marked</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">Not marked</span>
                 )}
               </div>
             );

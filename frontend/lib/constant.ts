@@ -34,13 +34,7 @@ export const NAVBAR_DATA: {
         //     url: "/status",
         //     icon: 'IconAnalyze',
         // },
-        {
-            title: "Users",
-            url: "/users",
-            icon: 'IconUsers',
-            permission: 'user.view',
-        },
-        // Products & Categories now live under Settings (profile dropdown → Settings).
+        // Users, Products & Categories now live under Settings (profile dropdown → Settings).
         {
             // POS is launched as a full-screen "New sale" modal from the Invoices page.
             title: "Invoices",
@@ -56,30 +50,14 @@ export const NAVBAR_DATA: {
         },
         // Training management (types/programs/fee plans/batches live under Settings).
         {
-            title: "Enrollments",
-            url: "/enrollments",
-            icon: 'IconUserPlus',
+            // Unified student desk: enrollments + attendance + fees as tabs.
+            // Shown to anyone who can see enrollments (trainers/staff/admin).
+            title: "Students",
+            url: "/students",
+            icon: 'IconUsersGroup',
             permission: 'enrollment.view',
         },
-        {
-            title: "Attendance",
-            url: "/attendance",
-            icon: 'IconClipboardCheck',
-            permission: 'attendance.view',
-        },
-        {
-            title: "Student Fees",
-            url: "/student-fees",
-            icon: 'IconCash',
-            permission: 'student_fee.view',
-        },
-        // Roles management now lives under Settings (profile dropdown → Settings).
-        {
-            title: "Audit Logs",
-            url: "/audit-logs",
-            icon: 'IconHistory',
-            permission: 'audit.view',
-        },
+        // Audit Logs is admin-only and lives in the profile dropdown, not the header nav.
         // Hidden for now — uncomment to restore.
         // {
         //     title: "Analytics",

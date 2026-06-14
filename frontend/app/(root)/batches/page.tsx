@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getBatchColumns } from "./columns";
 import { BatchFormDialog } from "./batch-form-dialog";
 import { BatchViewDialog } from "./batch-view-dialog";
@@ -153,6 +154,8 @@ export function BatchesContent() {
             ))}
           </SelectContent>
         </Select>
+
+        <RefreshButton queryKey={["batches"]} className="sm:ml-auto" />
       </div>
 
       {isError ? (

@@ -9,6 +9,7 @@ import type {
     EnrollmentStatus,
     FeeLedgerRow,
     FeeLedgerStatus,
+    FeePaymentHistoryRow,
     FeePlan,
     StudentEnrollment,
     StudentFee,
@@ -69,6 +70,7 @@ export interface FeePlanPayload {
     trainingProgramId: string;
     name: string;
     durationType: TrainingDurationType;
+    durationDays: number;
     amount: number;
     description?: string | null;
     status?: ProductStatus;
@@ -168,6 +170,8 @@ export const StudentFeeService = {
         (await api.get("/api/student-fees", { params })).data,
     ledger: async (params: { page?: number; limit?: number; search?: string; status?: FeeLedgerStatus; batchId?: string; sortBy?: "createdAt" | "joinedDate"; sortOrder?: "asc" | "desc" }): Promise<Paginated<FeeLedgerRow>> =>
         (await api.get("/api/student-fees/ledger", { params })).data,
+    history: async (enrollmentId: string): Promise<FeePaymentHistoryRow[]> =>
+        (await api.get("/api/student-fees/history", { params: { enrollmentId } })).data.data,
     create: async (payload: GenerateFeePayload): Promise<StudentFee> =>
         (await api.post("/api/student-fees", payload)).data.data,
 };

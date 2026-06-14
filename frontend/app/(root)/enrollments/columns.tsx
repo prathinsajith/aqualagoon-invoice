@@ -43,6 +43,30 @@ function EnrollmentStatusBadge({ status }: { status: EnrollmentStatus }) {
   );
 }
 
+/** Session-pack days left: counts down as the student is marked present/late. */
+function DaysLeftCell({ enrollment }: { enrollment: StudentEnrollment }) {
+  const { daysRemaining, attendedDays, feePlan } = enrollment;
+  if (daysRemaining === null || !feePlan) {
+    return <span className="text-sm text-muted-foreground">—</span>;
+  }
+  const total = feePlan.durationDays;
+  const used = attendedDays ?? 0;
+  const tone =
+    daysRemaining <= 0
+      ? "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400"
+      : daysRemaining <= 5
+        ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+        : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400";
+  return (
+    <div className="flex flex-col gap-1">
+      <Badge variant="outline" className={cn("w-fit font-medium tabular-nums", "border-transparent", tone)}>
+        {daysRemaining <= 0 ? "Expired" : `${daysRemaining} day${daysRemaining === 1 ? "" : "s"} left`}
+      </Badge>
+      <span className="text-xs text-muted-foreground tabular-nums">{used}/{total} used</span>
+    </div>
+  );
+}
+
 interface ColumnHandlers {
   onChangeStatus: (enrollment: StudentEnrollment, status: EnrollmentStatus) => void;
   canUpdate: boolean;
@@ -90,6 +114,11 @@ export function getEnrollmentColumns({
           <DateText value={row.original.joinedDate} />
         </span>
       ),
+    },
+    {
+      id: "daysLeft",
+      header: "Days left",
+      cell: ({ row }) => <DaysLeftCell enrollment={row.original} />,
     },
     {
       accessorKey: "status",

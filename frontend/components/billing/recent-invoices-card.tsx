@@ -34,7 +34,7 @@ export function RecentInvoicesCard({ range }: { range: DateRange }) {
       iconClassName="bg-violet-50 text-violet-500 dark:bg-violet-900/30 dark:text-violet-300"
       title="Recent invoices"
       action={<ViewAllLink href="/invoices" />}
-      contentClassName="space-y-1"
+      contentClassName="divide-y divide-foreground/10"
     >
       {recentLoading ? (
         <div className="grid h-32 place-items-center">

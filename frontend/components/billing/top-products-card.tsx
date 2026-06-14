@@ -32,7 +32,7 @@ export function TopProductsCard({ range }: { range: DateRange }) {
       icon={IconTrophy}
       iconClassName="bg-amber-50 text-amber-500 dark:bg-amber-900/30 dark:text-amber-300"
       title="Top selling products"
-      contentClassName="space-y-1"
+      contentClassName="divide-y divide-foreground/10"
     >
       {topLoading ? (
         <div className="grid h-32 place-items-center">

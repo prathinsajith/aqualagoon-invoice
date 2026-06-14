@@ -76,3 +76,19 @@ export const feeLedgerQuery = paginationQuery.extend({
   status: ledgerStatusSchema.optional(),
   sortBy: z.enum(["createdAt", "joinedDate"]).default("createdAt"),
 });
+
+// --- Payment history (per enrollment) ---------------------------------------
+
+export const feeHistoryQuery = z.object({ enrollmentId: z.uuid() });
+
+export const feeHistoryRowSchema = z.object({
+  invoiceId: z.string(),
+  invoiceNo: z.string(),
+  date: z.date(),
+  amount: z.number(),
+  method: z.string().nullable(),
+  feeName: z.string(),
+  cancelled: z.boolean(),
+});
+
+export const feeHistoryResponse = z.object({ data: z.array(feeHistoryRowSchema) });

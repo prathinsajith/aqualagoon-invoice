@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { RefreshButton } from "@/components/refresh-button";
 import { getPassTypeColumns } from "./columns";
 import { PassTypeFormDialog } from "./pass-type-form-dialog";
 import { PassTypeViewDialog } from "./pass-type-view-dialog";
@@ -157,6 +158,8 @@ export function PassTypesContent() {
             <SelectItem value="INACTIVE">Inactive</SelectItem>
           </SelectContent>
         </Select>
+
+        <RefreshButton queryKey={["pass-types"]} className="sm:ml-auto" />
       </div>
 
       {isError ? (
