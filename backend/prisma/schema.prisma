@@ -90,6 +90,12 @@ model User {
   auditLogs     AuditLog[]
   recoveryCodes TwoFactorRecoveryCode[]
   userPasses    UserPass[]
+  // Training relations: as a trainer (batches) and as a student (enrollments,
+  // fees, attendance). All optional — most users are neither.
+  trainerBatches    TrainingBatch[]      @relation("BatchTrainer")
+  enrollments       StudentEnrollment[]
+  studentFees       StudentFee[]
+  attendanceRecords Attendance[]
 
   @@index([status])
   @@index([deletedAt])
@@ -221,6 +227,10 @@ model CompanySetting {
   currency       String @default("INR")
   // App-wide date display format (e.g. DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD).
   dateFormat     String @default("DD/MM/YYYY") @map("date_format")
+  // Weekly off days (0=Sunday … 6=Saturday). Attendance isn't taken on these.
+  weeklyOffDays  Int[]  @default([0]) @map("weekly_off_days")
+  // Specific holiday dates as "YYYY-MM-DD" strings. Attendance isn't taken on these.
+  holidayDates   String[] @default([]) @map("holiday_dates")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -374,9 +384,10 @@ model Invoice {
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
-  items      InvoiceItem[]
-  payments   Payment[]
-  userPasses UserPass[]
+  items       InvoiceItem[]
+  payments    Payment[]
+  userPasses  UserPass[]
+  studentFees StudentFee[]
 
   @@index([status])
   @@index([invoiceType])
@@ -609,4 +620,233 @@ model PassSequence {
   lastNumber Int @default(0) @map("last_number")
 
   @@map("pass_sequences")
+}
+
+// ---------------------------------------------------------------------------
+// Training management. Completely separate from passes/memberships: programs,
+// batches, student enrollment, attendance and fees. Training fees are sold
+// through the same invoice/POS flow via invoice_items.item_type = TRAINING.
+// The polymorphic schema supports any future program without a redesign.
+// ---------------------------------------------------------------------------
+
+enum TrainingDurationType {
+  MONTH
+  QUARTER
+  YEAR
+  CUSTOM
+}
+
+enum BatchStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+  PAUSED
+}
+
+enum StudentFeeStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  LEAVE
+}
+
+// A category of training, e.g. Swimming, Yoga, Zumba. Reuses ProductStatus
+// (ACTIVE/INACTIVE) for its lifecycle.
+model TrainingType {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  status      ProductStatus @default(ACTIVE)
+  createdBy   String?       @map("created_by")
+  updatedBy   String?       @map("updated_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  deletedAt   DateTime?     @map("deleted_at")
+
+  programs TrainingProgram[]
+
+  @@index([status])
+  @@index([deletedAt])
+  @@map("training_types")
+}
+
+// A specific program within a type, e.g. "Swimming Beginner". Carries a default
+// fee; concrete priced plans live in fee_plans.
+model TrainingProgram {
+  id             String               @id @default(uuid())
+  trainingTypeId String               @map("training_type_id")
+  name           String
+  description    String?
+  durationType   TrainingDurationType @map("duration_type")
+  durationValue  Int                  @map("duration_value")
+  defaultFee     Decimal              @default(0) @map("default_fee") @db.Decimal(12, 2)
+  status         ProductStatus        @default(ACTIVE)
+  createdBy      String?              @map("created_by")
+  updatedBy      String?              @map("updated_by")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  deletedAt      DateTime?            @map("deleted_at")
+
+  trainingType TrainingType    @relation(fields: [trainingTypeId], references: [id])
+  batches      TrainingBatch[]
+  feePlans     FeePlan[]
+
+  @@index([trainingTypeId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("training_programs")
+}
+
+// A priced, duration-based plan for a program, e.g. "Swimming Monthly ₹1500".
+model FeePlan {
+  id                String               @id @default(uuid())
+  trainingProgramId String               @map("training_program_id")
+  name              String
+  durationType      TrainingDurationType @map("duration_type")
+  // Validity window in days from the join date (e.g. 30). Drives "days remaining".
+  durationDays      Int                  @default(30) @map("duration_days")
+  amount            Decimal              @db.Decimal(12, 2)
+  description       String?
+  status            ProductStatus        @default(ACTIVE)
+  createdBy         String?              @map("created_by")
+  updatedBy         String?              @map("updated_by")
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+  deletedAt         DateTime?            @map("deleted_at")
+
+  program     TrainingProgram     @relation(fields: [trainingProgramId], references: [id])
+  enrollments StudentEnrollment[]
+  studentFees StudentFee[]
+
+  @@index([trainingProgramId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("fee_plans")
+}
+
+// A scheduled run of a program led by a trainer, with a daily time window and a
+// calendar date range. Capacity is enforced at enrollment time.
+model TrainingBatch {
+  id                String      @id @default(uuid())
+  trainingProgramId String      @map("training_program_id")
+  // Trainer is a User (role TRAINER). Nullable so a batch can exist unassigned.
+  trainerId         String?     @map("trainer_id")
+  name              String
+  // Daily window stored as "HH:mm" strings (timezone-free, schedule display).
+  startTime         String?     @map("start_time")
+  endTime           String?     @map("end_time")
+  startDate         DateTime?   @map("start_date")
+  endDate           DateTime?   @map("end_date")
+  capacity          Int         @default(0)
+  // Denormalized count of ACTIVE enrollments; kept in sync by the service.
+  currentStrength   Int         @default(0) @map("current_strength")
+  status            BatchStatus @default(ACTIVE)
+  createdBy         String?     @map("created_by")
+  updatedBy         String?     @map("updated_by")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  program     TrainingProgram     @relation(fields: [trainingProgramId], references: [id])
+  trainer     User?               @relation("BatchTrainer", fields: [trainerId], references: [id], onDelete: SetNull)
+  enrollments StudentEnrollment[]
+  attendance  Attendance[]
+
+  @@index([trainingProgramId])
+  @@index([trainerId])
+  @@index([status])
+  @@map("training_batches")
+}
+
+// A student's membership of a batch. A student may enroll in many programs;
+// duplicate ACTIVE enrollment in the same batch is prevented by the service.
+model StudentEnrollment {
+  id         String           @id @default(uuid())
+  studentId  String           @map("student_id")
+  batchId    String           @map("batch_id")
+  joinedDate DateTime         @default(now()) @map("joined_date")
+  feePlanId  String?          @map("fee_plan_id")
+  status     EnrollmentStatus @default(ACTIVE)
+  createdBy  String?          @map("created_by")
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  student     User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  batch       TrainingBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  feePlan     FeePlan?      @relation(fields: [feePlanId], references: [id], onDelete: SetNull)
+  studentFees StudentFee[]
+
+  @@index([studentId])
+  @@index([batchId])
+  @@index([status])
+  @@map("student_enrollments")
+}
+
+// A fee charge raised against a student/enrollment. Paid through the POS as a
+// TRAINING invoice item; invoiceId links the charge to the invoice that settled
+// it. Supports discounts and (future) partial payments.
+model StudentFee {
+  id             String           @id @default(uuid())
+  studentId      String           @map("student_id")
+  enrollmentId   String           @map("enrollment_id")
+  feePlanId      String?          @map("fee_plan_id")
+  amount         Decimal          @db.Decimal(12, 2)
+  discountAmount Decimal          @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  finalAmount    Decimal          @map("final_amount") @db.Decimal(12, 2)
+  paidAmount     Decimal          @default(0) @map("paid_amount") @db.Decimal(12, 2)
+  dueDate        DateTime?        @map("due_date")
+  status         StudentFeeStatus @default(PENDING)
+  // The invoice that settled this fee (null until paid via the POS/billing).
+  invoiceId      String?          @map("invoice_id")
+  createdBy      String?          @map("created_by")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  student    User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  enrollment StudentEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  feePlan    FeePlan?          @relation(fields: [feePlanId], references: [id], onDelete: SetNull)
+  invoice    Invoice?          @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([enrollmentId])
+  @@index([status])
+  @@index([invoiceId])
+  @@index([dueDate])
+  @@map("student_fees")
+}
+
+// A single attendance record for a student in a batch on a date. One row per
+// student/batch/date (manual marking today; QR/RFID/biometric can write the
+// same row in future without a schema change).
+model Attendance {
+  id             String           @id @default(uuid())
+  studentId      String           @map("student_id")
+  batchId        String           @map("batch_id")
+  attendanceDate DateTime         @map("attendance_date") @db.Date
+  checkIn        DateTime?        @map("check_in")
+  checkOut       DateTime?        @map("check_out")
+  status         AttendanceStatus @default(PRESENT)
+  markedBy       String?          @map("marked_by")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  student User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  batch   TrainingBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, batchId, attendanceDate])
+  @@index([batchId, attendanceDate])
+  @@index([studentId])
+  @@index([attendanceDate])
+  @@map("attendance")
 }

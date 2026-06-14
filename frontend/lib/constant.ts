@@ -54,6 +54,25 @@ export const NAVBAR_DATA: {
             icon: 'IconTicket',
             permission: 'pass.view',
         },
+        // Training management (types/programs/fee plans/batches live under Settings).
+        {
+            title: "Enrollments",
+            url: "/enrollments",
+            icon: 'IconUserPlus',
+            permission: 'enrollment.view',
+        },
+        {
+            title: "Attendance",
+            url: "/attendance",
+            icon: 'IconClipboardCheck',
+            permission: 'attendance.view',
+        },
+        {
+            title: "Student Fees",
+            url: "/student-fees",
+            icon: 'IconCash',
+            permission: 'student_fee.view',
+        },
         // Roles management now lives under Settings (profile dropdown → Settings).
         {
             title: "Audit Logs",

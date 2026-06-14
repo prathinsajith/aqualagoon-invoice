@@ -43,19 +43,21 @@ export function PaymentsReceivedCard({ range, periodLabel }: DashboardRangeProps
         </p>
       ) : (
         <>
-          <div className="divide-y">
+          <div className="divide-y divide-border">
             {payments.map((p) => (
               <div key={p.paymentMethodId} className="flex items-center justify-between gap-3 py-2.5">
                 <span className="truncate text-sm font-medium">{p.name}</span>
-                <span className="shrink-0 text-sm font-semibold tabular-nums">
+                <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
                   {formatMoney(p.amount)}
                 </span>
               </div>
             ))}
           </div>
-          <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-3">
-            <span className="text-sm font-semibold">Total received</span>
-            <span className="text-lg font-bold tabular-nums">{formatMoney(paymentsTotal)}</span>
+          <div className="mt-2 flex items-center justify-between border-t-2 border-border pt-3">
+            <span className="text-sm font-bold">Total received</span>
+            <span className="text-lg font-bold tabular-nums text-primary">
+              {formatMoney(paymentsTotal)}
+            </span>
           </div>
         </>
       )}

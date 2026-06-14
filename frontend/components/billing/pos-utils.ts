@@ -5,9 +5,11 @@ import type { ManagedUser } from "@/types/rbac";
 export const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 export const isPass = (item: CatalogItem) => item.itemType === "PASS";
-/** A student pass is an individual membership — only ever one per sale. */
+/** A training fee — a one-off charge for a specific student (quantity always 1). */
+export const isTraining = (item: CatalogItem) => item.itemType === "TRAINING";
+/** A student pass / training fee is individual — only ever one per sale. */
 export const isSingleQtyPass = (item: CatalogItem) =>
-  isPass(item) && item.passKind === "STUDENT";
+  (isPass(item) && item.passKind === "STUDENT") || isTraining(item);
 /** Stable cart-line identity for a catalog item (type + id). */
 export const lineKey = (item: CatalogItem) => `${item.itemType}:${item.id}`;
 
@@ -47,8 +49,9 @@ export interface CartTotals {
 
 export function lineTotals(line: CartLine) {
   const gross = round2(line.item.price * line.quantity);
-  // Passes carry no per-line discount and no tax (price is the net catalog price).
-  const discount = isPass(line.item) ? 0 : Math.min(line.discountAmount, gross);
+  // Passes and training fees carry no per-line discount and no tax (their price
+  // is already the net amount); only products take a line discount + tax.
+  const discount = isPass(line.item) || isTraining(line.item) ? 0 : Math.min(line.discountAmount, gross);
   const taxable = gross - discount;
   const tax = round2((taxable * line.item.taxPercentage) / 100);
   const total = round2(taxable + tax);

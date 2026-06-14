@@ -19,6 +19,7 @@ import {
 const SYSTEM_ROLES: { name: string; description: string }[] = [
   { name: "Admin", description: "Full access to every part of the system." },
   { name: "Staff", description: "Day-to-day operational staff." },
+  { name: "Trainer", description: "Training instructors — batches, students and attendance." },
   { name: "Coach", description: "Swimming coaches / trainers." },
   { name: "Student", description: "Enrolled students / members." },
   { name: "Guest", description: "Limited, read-only access." },
@@ -90,7 +91,7 @@ async function main(): Promise<void> {
     const allRoleNames = SYSTEM_ROLES.map((r) => r.name);
     const assignableDefaults: Record<string, string[]> = {
       Admin: allRoleNames,
-      Staff: ["Guest", "Student"],
+      Staff: ["Guest", "Student", "Trainer"],
       Coach: ["Guest", "Student"],
     };
     for (const [roleName, assignableNames] of Object.entries(assignableDefaults)) {
@@ -171,6 +172,98 @@ async function main(): Promise<void> {
         ],
       });
       console.log("✓ Seeded 6 sample pass types");
+    }
+
+    // 8. Sample training data (types → programs → fee plans → a batch) -------
+    if ((await prisma.trainingType.count()) === 0) {
+      const trainerRole = await prisma.role.findUnique({ where: { name: "Trainer" } });
+      // A demo trainer (idempotent on userCode/email).
+      const trainer = await prisma.user.upsert({
+        where: { email: "trainer@demo.aqualagoon.com" },
+        update: {},
+        create: {
+          userCode: "TRN-0001",
+          firstName: "Tara",
+          lastName: "Trainer",
+          email: "trainer@demo.aqualagoon.com",
+          passwordHash: await hashPassword("Demo@12345"),
+          status: "ACTIVE",
+        },
+      });
+      if (trainerRole) {
+        await prisma.userRole.upsert({
+          where: { userId_roleId: { userId: trainer.id, roleId: trainerRole.id } },
+          update: {},
+          create: { userId: trainer.id, roleId: trainerRole.id },
+        });
+      }
+
+      const seedProgramFees: {
+        type: string;
+        programs: { name: string; durationValue: number; defaultFee: string; plans: { name: string; durationType: "MONTH" | "QUARTER"; amount: string }[] }[];
+      }[] = [
+        {
+          type: "Swimming",
+          programs: [
+            { name: "Swimming Beginner", durationValue: 1, defaultFee: "1500", plans: [{ name: "Swimming Monthly", durationType: "MONTH", amount: "1500" }, { name: "Swimming Quarterly", durationType: "QUARTER", amount: "4000" }] },
+            { name: "Swimming Intermediate", durationValue: 1, defaultFee: "1800", plans: [{ name: "Swimming Monthly", durationType: "MONTH", amount: "1800" }] },
+          ],
+        },
+        {
+          type: "Yoga",
+          programs: [
+            { name: "Yoga Beginner", durationValue: 1, defaultFee: "1000", plans: [{ name: "Yoga Monthly", durationType: "MONTH", amount: "1000" }] },
+          ],
+        },
+        {
+          type: "Zumba",
+          programs: [
+            { name: "Zumba Morning", durationValue: 1, defaultFee: "1200", plans: [{ name: "Zumba Monthly", durationType: "MONTH", amount: "1200" }] },
+          ],
+        },
+      ];
+
+      let firstProgramId: string | null = null;
+      for (const t of seedProgramFees) {
+        const type = await prisma.trainingType.create({ data: { name: t.type, status: "ACTIVE" } });
+        for (const p of t.programs) {
+          const program = await prisma.trainingProgram.create({
+            data: {
+              trainingTypeId: type.id,
+              name: p.name,
+              durationType: "MONTH",
+              durationValue: p.durationValue,
+              defaultFee: p.defaultFee,
+              status: "ACTIVE",
+            },
+          });
+          firstProgramId ??= program.id;
+          await prisma.feePlan.createMany({
+            data: p.plans.map((fp) => ({
+              trainingProgramId: program.id,
+              name: fp.name,
+              durationType: fp.durationType,
+              amount: fp.amount,
+              status: "ACTIVE" as const,
+            })),
+          });
+        }
+      }
+
+      if (firstProgramId) {
+        await prisma.trainingBatch.create({
+          data: {
+            trainingProgramId: firstProgramId,
+            trainerId: trainer.id,
+            name: "Swimming Morning Batch",
+            startTime: "06:00",
+            endTime: "07:00",
+            capacity: 20,
+            status: "ACTIVE",
+          },
+        });
+      }
+      console.log("✓ Seeded sample training types, programs, fee plans, batch + demo trainer");
     }
 
     console.log("🌱 Seed complete.");

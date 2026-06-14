@@ -4,6 +4,7 @@ import type {
     LowStockProduct,
     PassTypeTotal,
     PaymentMethodTotal,
+    RecentEnrollment,
     RevenueBreakdown,
     SalesSummary,
     TopPassBuyer,
@@ -22,6 +23,13 @@ export const DashboardService = {
 
     revenueBreakdown: async (range?: DateRange): Promise<RevenueBreakdown> => {
         const res = await api.get("/api/dashboard/revenue-breakdown", { params: rangeParams(range) });
+        return res.data.data;
+    },
+
+    recentEnrollments: async (limit = 5, range?: DateRange): Promise<RecentEnrollment[]> => {
+        const res = await api.get("/api/dashboard/recent-enrollments", {
+            params: { limit, ...rangeParams(range) },
+        });
         return res.data.data;
     },
 

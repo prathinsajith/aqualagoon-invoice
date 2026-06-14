@@ -18,8 +18,29 @@ export function createBillingController(service: BillingService) {
       return reply.code(201).send({ data });
     },
 
-    catalog: async (request: FastifyRequest<{ Querystring: { search?: string; limit: number } }>) => {
-      return { data: await service.catalog(request.query.search, request.query.limit) };
+    payFee: async (
+      request: FastifyRequest<{ Params: IdParams; Body: { amount: number; paymentMethodId: string } }>,
+      reply: FastifyReply,
+    ) => {
+      const data = await service.payFee(
+        request.params.id,
+        request.body.amount,
+        request.body.paymentMethodId,
+        actorOf(request),
+      );
+      return reply.code(201).send({ data });
+    },
+
+    catalog: async (
+      request: FastifyRequest<{ Querystring: { search?: string; limit: number; customerId?: string } }>,
+    ) => {
+      return {
+        data: await service.catalog(
+          request.query.search,
+          request.query.limit,
+          request.query.customerId,
+        ),
+      };
     },
 
     listInvoices: async (request: FastifyRequest<{ Querystring: ListInvoicesQuery }>) => {

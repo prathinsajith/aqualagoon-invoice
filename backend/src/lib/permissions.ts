@@ -93,6 +93,46 @@ export const PERMISSIONS: PermissionDef[] = [
   def("pass", "cancel", "Cancel passes"),
   def("pass", "renew", "Renew passes"),
 
+  // Training types
+  def("training_type", "view", "View training types"),
+  def("training_type", "create", "Create training types"),
+  def("training_type", "update", "Update training types"),
+  def("training_type", "delete", "Delete training types"),
+
+  // Training programs
+  def("training_program", "view", "View training programs"),
+  def("training_program", "create", "Create training programs"),
+  def("training_program", "update", "Update training programs"),
+  def("training_program", "delete", "Delete training programs"),
+
+  // Fee plans
+  def("fee_plan", "view", "View fee plans"),
+  def("fee_plan", "create", "Create fee plans"),
+  def("fee_plan", "update", "Update fee plans"),
+  def("fee_plan", "delete", "Delete fee plans"),
+
+  // Training batches
+  def("batch", "view", "View training batches"),
+  def("batch", "create", "Create training batches"),
+  def("batch", "update", "Update training batches (incl. trainer assignment)"),
+  def("batch", "delete", "Delete training batches"),
+
+  // Student enrollments
+  def("enrollment", "view", "View enrollments"),
+  def("enrollment", "create", "Enroll students"),
+  def("enrollment", "update", "Update enrollments"),
+  def("enrollment", "delete", "Remove enrollments"),
+
+  // Attendance
+  def("attendance", "view", "View attendance"),
+  def("attendance", "create", "Mark attendance"),
+  def("attendance", "update", "Update attendance"),
+
+  // Student fees
+  def("student_fee", "view", "View student fees"),
+  def("student_fee", "create", "Generate student fees"),
+  def("student_fee", "update", "Update student fees"),
+
   // --- Future modules (seeded now so they are assignable as features land) ---
 
   def("ticket", "create", "Create tickets"),
@@ -128,6 +168,31 @@ export const ROLE_PERMISSION_DEFAULTS: Record<string, string[]> = {
     "ticket.create",
     "ticket.view",
     "ticket.sell",
+    // Training desk: full operational access (manage programs, enroll, attend, fees).
+    "training_type.view",
+    "training_program.view",
+    "fee_plan.view",
+    "batch.view",
+    "batch.create",
+    "batch.update",
+    "enrollment.view",
+    "enrollment.create",
+    "enrollment.update",
+    "attendance.view",
+    "attendance.create",
+    "attendance.update",
+    "student_fee.view",
+    "student_fee.create",
+  ],
+  // Trainers see their batches, students and attendance, and mark attendance.
+  Trainer: [
+    "training_type.view",
+    "training_program.view",
+    "batch.view",
+    "enrollment.view",
+    "attendance.view",
+    "attendance.create",
+    "attendance.update",
   ],
   Coach: ["user.view", "ticket.view"],
   Student: ["product.view", "ticket.view"],

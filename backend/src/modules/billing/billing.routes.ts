@@ -13,6 +13,8 @@ import {
   invoiceSchema,
   invoiceSummarySchema,
   listInvoicesQuery,
+  payFeeBody,
+  payFeeParams,
   receiptSchema,
 } from "./billing.schema.js";
 
@@ -52,6 +54,23 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     controller.checkout,
+  );
+
+  // --- Collect a training-fee payment (balance / instalment) ----------------
+  r.post(
+    "/billing/fees/:id/pay",
+    {
+      preHandler: [app.authenticate, app.requirePermission("billing.create")],
+      schema: {
+        tags: ["billing"],
+        summary: "Collect a payment against a student training fee (supports partial)",
+        security,
+        params: payFeeParams,
+        body: payFeeBody,
+        response: { 201: dataResponse(invoiceSchema), ...commonErrors },
+      },
+    },
+    controller.payFee,
   );
 
   // --- Invoices -------------------------------------------------------------

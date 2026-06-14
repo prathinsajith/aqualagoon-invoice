@@ -4,6 +4,7 @@ import {
   IconMinus,
   IconPlus,
   IconReceipt,
+  IconSchool,
   IconShoppingCart,
   IconTicket,
   IconTrash,
@@ -14,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import { CustomerSelect } from "@/components/billing/customer-select";
 import { formatMoney } from "@/lib/format";
-import { isPass, isSingleQtyPass, lineKey, lineTotals } from "./pos-utils";
+import { isPass, isSingleQtyPass, isTraining, lineKey, lineTotals } from "./pos-utils";
 import type { CartLine, CartTotals } from "./pos-utils";
 import type { ManagedUser } from "@/types/rbac";
 
@@ -81,6 +82,7 @@ export function PosCartPanel({
               const t = lineTotals(line);
               const key = lineKey(line.item);
               const pass = isPass(line.item);
+              const training = isTraining(line.item);
               const single = isSingleQtyPass(line.item);
               return (
                 <div key={key} className="space-y-2 px-4 py-3">
@@ -88,11 +90,12 @@ export function PosCartPanel({
                     <div className="min-w-0">
                       <p className="flex items-center gap-1.5 truncate text-sm font-medium">
                         {pass && <IconTicket className="size-3.5 shrink-0 text-primary" />}
+                        {training && <IconSchool className="size-3.5 shrink-0 text-emerald-500" />}
                         {line.item.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {formatMoney(line.item.price)}
-                        {pass ? " · pass" : ` · ${line.item.taxPercentage}% tax`}
+                        {training ? " · fee" : pass ? " · pass" : ` · ${line.item.taxPercentage}% tax`}
                       </p>
                     </div>
                     <button
@@ -123,7 +126,7 @@ export function PosCartPanel({
                         <IconPlus className="size-3.5" />
                       </button>
                     </div>
-                    {!pass && (
+                    {!pass && !training && (
                       <div className="flex items-center gap-1.5">
                         <Label className="text-[11px] text-muted-foreground">Disc</Label>
                         <NumberInput

@@ -53,8 +53,9 @@ export function PosScreen({
   const [completed, setCompleted] = useState<CompletedSale | null>(null);
 
   const { data: catalog, isLoading: catalogLoading } = useQuery({
-    queryKey: ["billing", "catalog", search],
-    queryFn: () => BillingService.catalog(search || undefined, 24),
+    // Keyed on the customer too: their outstanding training fees join the catalog.
+    queryKey: ["billing", "catalog", search, customer?.id ?? null],
+    queryFn: () => BillingService.catalog(search || undefined, 24, customer?.id),
     placeholderData: keepPreviousData,
   });
   const items = catalog ?? [];

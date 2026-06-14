@@ -34,6 +34,16 @@ function resolveLogo(url: string | null): string | undefined {
   return url.startsWith("http") ? url : `${env.apiUrl}${url}`;
 }
 
+/** One label/value line in the saved-profile summary. */
+function SavedRow({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className="shrink-0 text-xs text-muted-foreground">{label}</dt>
+      <dd className="truncate text-right text-xs font-medium">{value || "—"}</dd>
+    </div>
+  );
+}
+
 function CompanyForm() {
   const qc = useQueryClient();
   const [uploading, setUploading] = useState(false);
@@ -122,24 +132,56 @@ function CompanyForm() {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-      {/* Logo */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">Logo</CardTitle>
-          <CardDescription>Shown across the app and in emails.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ImageCropField
-            value={logo}
-            onCropped={onLogoCropped}
-            shape="square"
-            sizeClass="size-32"
-            changeLabel="Change logo"
-            busy={uploading}
-            fallback={<IconBuildingStore className="size-10 text-muted-foreground/50" />}
-          />
-        </CardContent>
-      </Card>
+      {/* Logo + saved-profile summary */}
+      <div className="space-y-6">
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base">Logo</CardTitle>
+            <CardDescription>Shown across the app and in emails.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ImageCropField
+              value={logo}
+              onCropped={onLogoCropped}
+              shape="square"
+              sizeClass="size-32"
+              changeLabel="Change logo"
+              busy={uploading}
+              fallback={<IconBuildingStore className="size-10 text-muted-foreground/50" />}
+            />
+          </CardContent>
+        </Card>
+
+        {company && (
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Saved profile</CardTitle>
+              <CardDescription>The details currently in use across the app.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm">
+              <p className="font-semibold leading-tight">{company.name}</p>
+              {company.tagline && (
+                <p className="mt-0.5 text-xs text-muted-foreground">{company.tagline}</p>
+              )}
+              <dl className="mt-4 space-y-2.5">
+                <SavedRow label="Email" value={company.email} />
+                <SavedRow label="Phone" value={company.phone} />
+                <SavedRow label="Website" value={company.website} />
+                <SavedRow label="Address" value={company.address} />
+                <div className="space-y-2.5 border-t border-border/70 pt-2.5">
+                  <SavedRow label="User code" value={`${company.userCodePrefix}-…`} />
+                  <SavedRow label="Invoice no." value={`${company.invoicePrefix}-…`} />
+                  <SavedRow label="Pass no." value={`${company.passPrefix}-…`} />
+                </div>
+                <div className="space-y-2.5 border-t border-border/70 pt-2.5">
+                  <SavedRow label="Currency" value={company.currency} />
+                  <SavedRow label="Date format" value={company.dateFormat} />
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Details */}
       <Card className="border-0 shadow-sm">

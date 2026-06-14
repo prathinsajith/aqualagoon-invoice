@@ -100,9 +100,9 @@ export interface CheckoutResult {
     passes: IssuedPass[];
 }
 
-/** A unified sellable catalog entry (product or pass) for the POS. */
+/** A unified sellable catalog entry (product, pass, or training fee) for the POS. */
 export interface CatalogItem {
-    itemType: "PRODUCT" | "PASS";
+    itemType: "PRODUCT" | "PASS" | "TRAINING";
     id: string;
     name: string;
     sku: string | null;
@@ -181,11 +181,23 @@ export interface PassTypeTotal {
     revenue: number;
 }
 
-/** Revenue split by what was sold — products vs passes — for a date range. */
+/** Revenue split by what was sold — products / passes / training — for a date range. */
 export interface RevenueBreakdown {
     product: number;
     pass: number;
+    training: number;
     total: number;
+}
+
+/** A recent student admission (enrollment) for the dashboard. */
+export interface RecentEnrollment {
+    id: string;
+    studentId: string;
+    studentName: string;
+    studentPhotoUrl: string | null;
+    batchName: string;
+    programName: string;
+    joinedDate: string;
 }
 
 export interface TopPassBuyer {

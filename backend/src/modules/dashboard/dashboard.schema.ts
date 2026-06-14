@@ -51,8 +51,23 @@ export const revenueBreakdownResponse = z.object({
   data: z.object({
     product: z.number(),
     pass: z.number(),
+    training: z.number(),
     total: z.number(),
   }),
+});
+
+export const recentEnrollmentsResponse = z.object({
+  data: z.array(
+    z.object({
+      id: z.string(),
+      studentId: z.string(),
+      studentName: z.string(),
+      studentPhotoUrl: z.string().nullable(),
+      batchName: z.string(),
+      programName: z.string(),
+      joinedDate: z.date(),
+    }),
+  ),
 });
 
 export const passesByTypeResponse = z.object({

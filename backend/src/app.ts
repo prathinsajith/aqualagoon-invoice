@@ -34,6 +34,13 @@ import { billingRoutes } from "./modules/billing/billing.routes.js";
 import { dashboardRoutes } from "./modules/dashboard/dashboard.routes.js";
 import { passTypesRoutes } from "./modules/pass-types/pass-types.routes.js";
 import { passesRoutes } from "./modules/passes/passes.routes.js";
+import { trainingTypesRoutes } from "./modules/training-types/training-types.routes.js";
+import { trainingProgramsRoutes } from "./modules/training-programs/training-programs.routes.js";
+import { feePlansRoutes } from "./modules/fee-plans/fee-plans.routes.js";
+import { batchesRoutes } from "./modules/batches/batches.routes.js";
+import { enrollmentsRoutes } from "./modules/enrollments/enrollments.routes.js";
+import { attendanceRoutes } from "./modules/attendance/attendance.routes.js";
+import { studentFeesRoutes } from "./modules/student-fees/student-fees.routes.js";
 
 /**
  * Builds and wires the Fastify application: Zod-backed validation and
@@ -151,6 +158,13 @@ export async function buildApp() {
   await app.register(dashboardRoutes, { prefix: "/api" });
   await app.register(passTypesRoutes, { prefix: "/api" });
   await app.register(passesRoutes, { prefix: "/api" });
+  await app.register(trainingTypesRoutes, { prefix: "/api" });
+  await app.register(trainingProgramsRoutes, { prefix: "/api" });
+  await app.register(feePlansRoutes, { prefix: "/api" });
+  await app.register(batchesRoutes, { prefix: "/api" });
+  await app.register(enrollmentsRoutes, { prefix: "/api" });
+  await app.register(attendanceRoutes, { prefix: "/api" });
+  await app.register(studentFeesRoutes, { prefix: "/api" });
 
   return app;
 }

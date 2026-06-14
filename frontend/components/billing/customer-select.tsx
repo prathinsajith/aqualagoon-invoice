@@ -99,9 +99,10 @@ export function CustomerSelect({
 
         <PopoverContent
           align="start"
-          className="w-[var(--radix-popover-trigger-width)] min-w-72 p-0"
+          collisionPadding={12}
+          className="flex max-h-[60vh] w-[var(--radix-popover-trigger-width)] min-w-72 flex-col overflow-hidden border p-0"
         >
-          <div className="relative border-b p-2">
+          <div className="relative shrink-0 border-b p-2">
             <IconSearch className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
             <Input
               autoFocus
@@ -112,7 +113,7 @@ export function CustomerSelect({
             />
           </div>
 
-          <div className="max-h-72 overflow-y-auto p-1">
+          <div className="min-h-0 flex-1 overflow-y-auto p-1">
             <button
               type="button"
               onClick={() => select(null)}
@@ -166,7 +167,7 @@ export function CustomerSelect({
           </div>
 
           <Can permission="user.create">
-            <div className="border-t p-1">
+            <div className="shrink-0 border-t p-1">
               <Button
                 variant="ghost"
                 size="sm"

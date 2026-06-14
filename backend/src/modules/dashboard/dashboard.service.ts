@@ -114,7 +114,9 @@ export class DashboardService {
    * totals keeps each stream isolated (product totals include their tax; passes
    * are untaxed), and `total` is their sum.
    */
-  async revenueBreakdown(range?: DateRange): Promise<{ product: number; pass: number; total: number }> {
+  async revenueBreakdown(
+    range?: DateRange,
+  ): Promise<{ product: number; pass: number; training: number; total: number }> {
     const createdAt = this.dateFilter(range, true);
     const rows = await this.prisma.invoiceItem.groupBy({
       by: ["itemType"],
@@ -126,12 +128,50 @@ export class DashboardService {
 
     let product = 0;
     let pass = 0;
+    let training = 0;
     for (const r of rows) {
       const amount = r._sum.totalAmount?.toNumber() ?? 0;
       if (r.itemType === "PRODUCT") product += amount;
       else if (r.itemType === "PASS") pass += amount;
+      else if (r.itemType === "TRAINING") training += amount;
     }
-    return { product, pass, total: product + pass };
+    return { product, pass, training, total: product + pass + training };
+  }
+
+  /** Most recent enrollments (admissions) in the range (defaults to today). */
+  async recentEnrollments(
+    limit: number,
+    range?: DateRange,
+  ): Promise<
+    {
+      id: string;
+      studentId: string;
+      studentName: string;
+      studentPhotoUrl: string | null;
+      batchName: string;
+      programName: string;
+      joinedDate: Date;
+    }[]
+  > {
+    const createdAt = this.dateFilter(range, true);
+    const rows = await this.prisma.studentEnrollment.findMany({
+      where: { ...(createdAt ? { createdAt } : {}), status: { not: "DROPPED" } },
+      include: {
+        student: { select: { id: true, firstName: true, lastName: true, photoUrl: true } },
+        batch: { select: { name: true, program: { select: { name: true } } } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+    return rows.map((e) => ({
+      id: e.id,
+      studentId: e.student.id,
+      studentName: `${e.student.firstName} ${e.student.lastName}`.trim(),
+      studentPhotoUrl: e.student.photoUrl,
+      batchName: e.batch.name,
+      programName: e.batch.program.name,
+      joinedDate: e.joinedDate,
+    }));
   }
 
   /** Passes issued in the range, grouped by pass type (defaults to today; excludes cancelled). */

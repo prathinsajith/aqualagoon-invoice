@@ -54,15 +54,26 @@ export class BillingService {
       });
       if (!method) throw BadRequest("Selected payment method is not available");
 
-      // 2. Load the products and pass types being sold.
+      // 2. Load the products, pass types and student fees being sold.
       const productIds = input.items.filter((i) => i.itemType === "PRODUCT").map((i) => i.id);
       const passTypeIds = input.items.filter((i) => i.itemType === "PASS").map((i) => i.id);
-      const [products, passTypes] = await Promise.all([
+      const feeIds = input.items.filter((i) => i.itemType === "TRAINING").map((i) => i.id);
+      const [products, passTypes, fees] = await Promise.all([
         tx.product.findMany({ where: { id: { in: productIds }, deletedAt: null, status: "ACTIVE" } }),
         tx.passType.findMany({ where: { id: { in: passTypeIds }, deletedAt: null, status: "ACTIVE" } }),
+        tx.studentFee.findMany({
+          where: { id: { in: feeIds } },
+          include: {
+            feePlan: { select: { name: true } },
+            enrollment: { select: { batch: { select: { program: { select: { name: true } } } } } },
+          },
+        }),
       ]);
       const productById = new Map(products.map((p) => [p.id, p]));
       const passTypeById = new Map(passTypes.map((p) => [p.id, p]));
+      const feeById = new Map(fees.map((f) => [f.id, f]));
+      // Fees settled by this sale — marked PAID after the invoice is written.
+      const feeOps: { id: string; name: string }[] = [];
 
       // 3. Build line items and roll up totals (Decimal math throughout).
       let subtotal = new D(0);
@@ -73,7 +84,28 @@ export class BillingService {
       const passOps: { passType: (typeof passTypes)[number]; quantity: number; original: Prisma.Decimal; discount: Prisma.Decimal; net: Prisma.Decimal }[] = [];
 
       for (const item of input.items) {
-        if (item.itemType === "PRODUCT") {
+        if (item.itemType === "TRAINING") {
+          const fee = feeById.get(item.id);
+          if (!fee) throw BadRequest("One or more training fees are unavailable");
+          if (fee.status === "PAID") throw BadRequest("This training fee is already paid");
+          // Charge the outstanding balance (the POS clears the fee in full);
+          // training fees are untaxed and always quantity 1.
+          const net = fee.finalAmount.sub(fee.paidAmount);
+          if (net.lessThanOrEqualTo(0)) throw BadRequest("This training fee has no balance due");
+          const name = fee.feePlan?.name ?? fee.enrollment.batch.program.name ?? "Training fee";
+          subtotal = subtotal.add(net);
+          itemRows.push({
+            itemType: "TRAINING",
+            itemId: fee.id,
+            itemName: name,
+            quantity: 1,
+            unitPrice: net,
+            discountAmount: new D(0),
+            taxAmount: new D(0),
+            totalAmount: net,
+          });
+          feeOps.push({ id: fee.id, name });
+        } else if (item.itemType === "PRODUCT") {
           const product = productById.get(item.id);
           if (!product) throw BadRequest("One or more products are unavailable or inactive");
           if (product.stockQuantity < item.quantity) {
@@ -166,8 +198,13 @@ export class BillingService {
         update: { lastNumber: { increment: 1 } },
       });
       const invoiceNo = `${invoicePrefix}-${year}-${String(seq.lastNumber).padStart(6, "0")}`;
+      // Classify the invoice by which streams it contains; more than one → MIXED.
+      const hasProduct = stockOps.length > 0;
+      const hasPass = passOps.length > 0;
+      const hasTraining = feeOps.length > 0;
+      const streamCount = [hasProduct, hasPass, hasTraining].filter(Boolean).length;
       const invoiceType =
-        stockOps.length > 0 && passOps.length > 0 ? "MIXED" : passOps.length > 0 ? "PASS" : "PRODUCT";
+        streamCount > 1 ? "MIXED" : hasPass ? "PASS" : hasTraining ? "TRAINING" : "PRODUCT";
 
       // 6. Invoice + items.
       const invoice = await tx.invoice.create({
@@ -284,11 +321,20 @@ export class BillingService {
         }
       }
 
+      // 10. Settle training fees — mark PAID and link to this invoice.
+      for (const op of feeOps) {
+        const fee = feeById.get(op.id)!;
+        await tx.studentFee.update({
+          where: { id: op.id },
+          data: { status: "PAID", paidAmount: fee.finalAmount, invoiceId: invoice.id },
+        });
+      }
+
       const full = await tx.invoice.findUniqueOrThrow({
         where: { id: invoice.id },
         include: invoiceInclude,
       });
-      return { invoice: full, change: change.toNumber(), passes };
+      return { invoice: full, change: change.toNumber(), passes, feeOps };
     });
 
     const dto = toInvoiceDto(result.invoice);
@@ -322,12 +368,26 @@ export class BillingService {
         ipAddress: actor.ip,
       });
     }
+    for (const f of result.feeOps) {
+      await writeAudit(this.prisma, {
+        userId: actor.userId,
+        action: AuditAction.FEE_PAID,
+        module: MODULE,
+        recordId: f.id,
+        newData: { fee: f.name, invoiceNo: dto.invoiceNo },
+        ipAddress: actor.ip,
+      });
+    }
 
     return { invoice: dto, change: result.change, passes: result.passes };
   }
 
   /** Unified POS catalog: active products + active pass types matching `search`. */
-  async catalog(search: string | undefined, limit: number): Promise<CatalogItemDto[]> {
+  async catalog(
+    search: string | undefined,
+    limit: number,
+    customerId?: string,
+  ): Promise<CatalogItemDto[]> {
     const nameFilter = search
       ? { contains: search, mode: "insensitive" as const }
       : undefined;
@@ -385,7 +445,48 @@ export class BillingService {
       };
     });
 
-    return [...productItems, ...passItems].slice(0, limit);
+    // Outstanding training fees for the selected customer — sold as TRAINING
+    // line items. Only when a customer is chosen (fees are per-student).
+    let feeItems: CatalogItemDto[] = [];
+    if (customerId) {
+      const fees = await this.prisma.studentFee.findMany({
+        where: {
+          studentId: customerId,
+          status: { in: ["PENDING", "PARTIAL", "OVERDUE"] },
+        },
+        include: {
+          feePlan: { select: { name: true } },
+          enrollment: { select: { batch: { select: { program: { select: { name: true } } } } } },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+      feeItems = fees
+        // The POS collects the outstanding balance, not the original total.
+        .map((f) => ({ f, balance: f.finalAmount.sub(f.paidAmount) }))
+        .filter(({ balance }) => balance.greaterThan(0))
+        .map(({ f, balance }) => {
+          const label = f.feePlan?.name ?? f.enrollment.batch.program.name ?? "Training fee";
+          const partial = f.paidAmount.greaterThan(0);
+          return {
+            itemType: "TRAINING" as const,
+            id: f.id,
+            name: label,
+            sku: null,
+            price: balance.toNumber(),
+            taxPercentage: 0,
+            stockQuantity: null,
+            subtitle: partial
+              ? `Balance due${f.dueDate ? ` · ${f.dueDate.toISOString().slice(0, 10)}` : ""}`
+              : f.dueDate
+                ? `Fee · due ${f.dueDate.toISOString().slice(0, 10)}`
+                : "Training fee",
+            imageUrl: null,
+            passKind: null,
+          };
+        });
+    }
+
+    return [...feeItems, ...productItems, ...passItems].slice(0, limit + feeItems.length);
   }
 
   async list(
@@ -473,6 +574,30 @@ export class BillingService {
         data: { status: "CANCELLED" },
       });
 
+      // Reverse training-fee payments this invoice collected: subtract exactly
+      // what each line paid (supports partial payments), recompute status, and
+      // unlink the fee if it pointed at this invoice.
+      for (const item of existing.items) {
+        if (item.itemType !== "TRAINING") continue;
+        const fee = await tx.studentFee.findUnique({ where: { id: item.itemId } });
+        if (!fee) continue;
+        const paid = fee.paidAmount.sub(item.totalAmount);
+        const newPaid = paid.lessThan(0) ? new D(0) : paid;
+        const status = newPaid.greaterThanOrEqualTo(fee.finalAmount)
+          ? "PAID"
+          : newPaid.greaterThan(0)
+            ? "PARTIAL"
+            : "PENDING";
+        await tx.studentFee.update({
+          where: { id: fee.id },
+          data: {
+            paidAmount: newPaid,
+            status,
+            invoiceId: fee.invoiceId === id ? null : fee.invoiceId,
+          },
+        });
+      }
+
       return tx.invoice.findUniqueOrThrow({ where: { id }, include: invoiceInclude });
     });
 
@@ -484,6 +609,126 @@ export class BillingService {
       recordId: id,
       oldData: { status: existing.status },
       newData: { status: dto.status, reason: reason ?? null },
+      ipAddress: actor.ip,
+    });
+    return dto;
+  }
+
+  /**
+   * Collects a payment against a single training fee — supports paying the
+   * balance in instalments. Creates a paid TRAINING invoice for `amount`, bumps
+   * the fee's paidAmount, recomputes its status (PARTIAL until fully paid), and
+   * returns the invoice so the desk can print a bill.
+   */
+  async payFee(
+    feeId: string,
+    amount: number,
+    paymentMethodId: string,
+    actor: ActorContext,
+  ): Promise<InvoiceDto> {
+    const amt = new D(amount).toDecimalPlaces(2);
+    if (amt.lessThanOrEqualTo(0)) throw BadRequest("Payment amount must be greater than zero");
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const method = await tx.paymentMethod.findFirst({
+        where: { id: paymentMethodId, deletedAt: null, isActive: true },
+      });
+      if (!method) throw BadRequest("Selected payment method is not available");
+
+      const fee = await tx.studentFee.findUnique({
+        where: { id: feeId },
+        include: {
+          feePlan: { select: { name: true } },
+          enrollment: {
+            select: { studentId: true, batch: { select: { program: { select: { name: true } } } } },
+          },
+        },
+      });
+      if (!fee) throw NotFound("Student fee not found");
+      const balance = fee.finalAmount.sub(fee.paidAmount);
+      if (balance.lessThanOrEqualTo(0)) throw BadRequest("This fee is already fully paid");
+      if (amt.greaterThan(balance)) {
+        throw BadRequest(`Amount exceeds the balance due (${balance.toFixed(2)})`);
+      }
+
+      const name = fee.feePlan?.name ?? fee.enrollment.batch.program.name ?? "Training fee";
+      const year = new Date().getFullYear();
+      const company = await tx.companySetting.findFirst({ select: { invoicePrefix: true } });
+      const prefix = company?.invoicePrefix || "INV";
+      const seq = await tx.invoiceSequence.upsert({
+        where: { year },
+        create: { year, lastNumber: 1 },
+        update: { lastNumber: { increment: 1 } },
+      });
+      const invoiceNo = `${prefix}-${year}-${String(seq.lastNumber).padStart(6, "0")}`;
+
+      const invoice = await tx.invoice.create({
+        data: {
+          invoiceNo,
+          customerId: fee.enrollment.studentId,
+          invoiceType: "TRAINING",
+          subtotal: amt,
+          discountAmount: new D(0),
+          taxAmount: new D(0),
+          totalAmount: amt,
+          paidAmount: amt,
+          balanceAmount: new D(0),
+          status: "PAID",
+          createdBy: actor.userId,
+          items: {
+            create: [
+              {
+                itemType: "TRAINING",
+                itemId: fee.id,
+                itemName: name,
+                quantity: 1,
+                unitPrice: amt,
+                discountAmount: new D(0),
+                taxAmount: new D(0),
+                totalAmount: amt,
+              },
+            ],
+          },
+        },
+      });
+      await tx.payment.create({
+        data: {
+          invoiceId: invoice.id,
+          paymentMethodId: method.id,
+          amount: amt,
+          receivedBy: actor.userId,
+        },
+      });
+
+      const newPaid = fee.paidAmount.add(amt);
+      const status = newPaid.greaterThanOrEqualTo(fee.finalAmount) ? "PAID" : "PARTIAL";
+      await tx.studentFee.update({
+        where: { id: fee.id },
+        data: { paidAmount: newPaid, status, invoiceId: invoice.id },
+      });
+
+      const full = await tx.invoice.findUniqueOrThrow({
+        where: { id: invoice.id },
+        include: invoiceInclude,
+      });
+      return { invoice: full, feeName: name };
+    });
+
+    const dto = toInvoiceDto(result.invoice);
+    await writeAudit(this.prisma, {
+      userId: actor.userId,
+      action: AuditAction.PAYMENT_RECEIVED,
+      module: MODULE,
+      recordId: dto.id,
+      newData: { invoiceNo: dto.invoiceNo, amount: amt.toNumber(), paymentMethodId },
+      ipAddress: actor.ip,
+    });
+    await writeAudit(this.prisma, {
+      userId: actor.userId,
+      action: AuditAction.FEE_PAID,
+      module: MODULE,
+      recordId: feeId,
+      newData: { fee: result.feeName, amount: amt.toNumber(), invoiceNo: dto.invoiceNo },
       ipAddress: actor.ip,
     });
     return dto;

@@ -5,6 +5,10 @@ import {
   IconCreditCard,
   IconKey,
   IconPackage,
+  IconSchool,
+  IconStairsUp,
+  IconReceipt2,
+  IconCalendarEvent,
   IconTicket,
   IconUsersGroup,
 } from "@tabler/icons-react";
@@ -18,6 +22,10 @@ import { RolesSection } from "../roles/roles-section";
 import { ProductsContent } from "../products/page";
 import { CategoriesContent } from "../product-categories/page";
 import { PassTypesContent } from "../pass-types/page";
+import { TrainingTypesContent } from "../training-types/page";
+import { TrainingProgramsContent } from "../training-programs/page";
+import { FeePlansContent } from "../fee-plans/page";
+import { BatchesContent } from "../batches/page";
 import { PaymentMethodsSection } from "./payment-methods-section";
 
 const TAB_TRIGGER =
@@ -31,8 +39,13 @@ export default function SettingsPage() {
   const canCategories = can("product_category.view");
   const canProducts = can("product.view");
   const canPassTypes = can("pass_type.view");
+  const canTrainingTypes = can("training_type.view");
+  const canTrainingPrograms = can("training_program.view");
+  const canFeePlans = can("fee_plan.view");
+  const canBatches = can("batch.view");
   const canPaymentMethods = can("payment_method.view");
   const hasCatalog = canCategories || canProducts || canPassTypes;
+  const hasTraining = canTrainingTypes || canTrainingPrograms || canFeePlans || canBatches;
 
   return (
     <PermissionPage permission="role.view">
@@ -76,6 +89,28 @@ export default function SettingsPage() {
               </TabsTrigger>
             )}
 
+            {hasTraining && <p className={`mt-2 hidden lg:block ${RAIL_LABEL}`}>Training</p>}
+            {canTrainingTypes && (
+              <TabsTrigger value="training-types" className={TAB_TRIGGER}>
+                <IconSchool className="size-4" /> Training types
+              </TabsTrigger>
+            )}
+            {canTrainingPrograms && (
+              <TabsTrigger value="training-programs" className={TAB_TRIGGER}>
+                <IconStairsUp className="size-4" /> Training programs
+              </TabsTrigger>
+            )}
+            {canFeePlans && (
+              <TabsTrigger value="fee-plans" className={TAB_TRIGGER}>
+                <IconReceipt2 className="size-4" /> Fee plans
+              </TabsTrigger>
+            )}
+            {canBatches && (
+              <TabsTrigger value="batches" className={TAB_TRIGGER}>
+                <IconCalendarEvent className="size-4" /> Batches
+              </TabsTrigger>
+            )}
+
             {canPaymentMethods && <p className={`mt-2 hidden lg:block ${RAIL_LABEL}`}>Billing</p>}
             {canPaymentMethods && (
               <TabsTrigger value="payment-methods" className={TAB_TRIGGER}>
@@ -111,6 +146,30 @@ export default function SettingsPage() {
             {canPassTypes && (
               <TabsContent value="pass-types" className="mt-0">
                 <PassTypesContent />
+              </TabsContent>
+            )}
+
+            {canTrainingTypes && (
+              <TabsContent value="training-types" className="mt-0">
+                <TrainingTypesContent />
+              </TabsContent>
+            )}
+
+            {canTrainingPrograms && (
+              <TabsContent value="training-programs" className="mt-0">
+                <TrainingProgramsContent />
+              </TabsContent>
+            )}
+
+            {canFeePlans && (
+              <TabsContent value="fee-plans" className="mt-0">
+                <FeePlansContent />
+              </TabsContent>
+            )}
+
+            {canBatches && (
+              <TabsContent value="batches" className="mt-0">
+                <BatchesContent />
               </TabsContent>
             )}
 

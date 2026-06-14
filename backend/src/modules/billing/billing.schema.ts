@@ -23,12 +23,13 @@ export const invoiceItemTypeSchema = z.enum([
 
 const money = z.number().min(0, "Cannot be negative");
 
-/** A sellable line: a PRODUCT or a PASS, referenced by its id. */
+/** A sellable line: a PRODUCT, a PASS, or a TRAINING fee, referenced by its id. */
 export const checkoutItemSchema = z.object({
-  itemType: z.enum(["PRODUCT", "PASS"]),
+  itemType: z.enum(["PRODUCT", "PASS", "TRAINING"]),
+  // PRODUCT → product id, PASS → pass-type id, TRAINING → student-fee id.
   id: z.uuid(),
   quantity: z.number().int().positive("Quantity must be at least 1"),
-  // Optional per-line discount (products only; ignored for passes).
+  // Optional per-line discount (products only; ignored for passes & fees).
   discountAmount: money.default(0),
 });
 
@@ -48,9 +49,9 @@ export const checkoutBody = z.object({
   }),
 });
 
-/** Unified sellable catalog entry (product or pass) for POS search. */
+/** Unified sellable catalog entry (product, pass, or training fee) for POS search. */
 export const catalogItemSchema = z.object({
-  itemType: z.enum(["PRODUCT", "PASS"]),
+  itemType: z.enum(["PRODUCT", "PASS", "TRAINING"]),
   id: z.string(),
   name: z.string(),
   sku: z.string().nullable(),
@@ -66,9 +67,20 @@ export const catalogItemSchema = z.object({
 
 export const catalogResponse = z.object({ data: z.array(catalogItemSchema) });
 
+// --- Pay a training fee (balance / instalment) ------------------------------
+
+export const payFeeParams = z.object({ id: z.uuid() });
+export const payFeeBody = z.object({
+  amount: money.positive("Amount must be greater than zero"),
+  paymentMethodId: z.uuid(),
+});
+
 export const catalogQuery = z.object({
   search: z.string().trim().min(1).optional(),
   limit: z.coerce.number().int().positive().max(50).default(24),
+  // When set, the selected customer's outstanding training fees are included as
+  // TRAINING catalog items so the cashier can charge them at the POS.
+  customerId: z.uuid().optional(),
 });
 
 // --- DTOs -------------------------------------------------------------------

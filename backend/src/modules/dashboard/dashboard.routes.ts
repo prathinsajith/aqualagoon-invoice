@@ -9,6 +9,7 @@ import {
   passesByTypeResponse,
   paymentsByMethodResponse,
   rangeQuery,
+  recentEnrollmentsResponse,
   recentInvoicesResponse,
   revenueBreakdownResponse,
   salesSummaryResponse,
@@ -131,6 +132,23 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request) => ({
       data: await service.topPassBuyers(request.query.limit, request.query),
+    }),
+  );
+
+  r.get(
+    "/dashboard/recent-enrollments",
+    {
+      preHandler: [app.authenticate, app.requirePermission("dashboard.view")],
+      schema: {
+        tags,
+        summary: "Most recent student admissions for a date range (default today)",
+        security,
+        querystring: limitRangeQuery,
+        response: { 200: recentEnrollmentsResponse, ...commonErrors },
+      },
+    },
+    async (request) => ({
+      data: await service.recentEnrollments(request.query.limit, request.query),
     }),
   );
 

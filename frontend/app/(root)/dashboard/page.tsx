@@ -6,8 +6,7 @@ import {
   IconUsers,
   IconUserCheck,
   IconCoin,
-  IconAlertTriangle,
-  IconPackageOff,
+  IconSchool,
   IconTriangle,
   IconTriangleInverted,
   IconShoppingCart,
@@ -18,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { UserStatusBadge } from "@/components/rbac/status-badge";
 import { PersonAvatar } from "@/components/person-avatar";
+import { DateText } from "@/components/date-text";
 import {
   PaymentsReceivedCard,
   TopProductsCard,
@@ -143,8 +143,8 @@ function DashboardContent() {
   const companyName = company?.name || "Aqua Lagoon";
 
   const canUsers = can("user.view");
-  const canProducts = can("product.view");
   const canBilling = can("billing.view");
+  const canEnrollments = can("enrollment.view");
 
   const [rangeValue, setRangeValue] = useState<RangeValue>({ preset: "today" });
   const range = useMemo(() => resolveRangeValue(rangeValue), [rangeValue]);
@@ -166,10 +166,10 @@ function DashboardContent() {
     queryFn: () => UserService.list({ limit: 5, sortBy: "createdAt", sortOrder: "desc" }),
     enabled: canUsers,
   });
-  const { data: lowStockData, isLoading: lowStockLoading } = useQuery({
-    queryKey: ["dashboard", "low-stock"],
-    queryFn: () => DashboardService.lowStock(50),
-    enabled: canProducts,
+  const { data: recentAdmissionsData, isLoading: recentAdmissionsLoading } = useQuery({
+    queryKey: ["dashboard", "recent-enrollments", range.from.toISOString(), range.to.toISOString()],
+    queryFn: () => DashboardService.recentEnrollments(8, range),
+    enabled: canEnrollments,
   });
   const { data: salesSummaryData, isLoading: salesSummaryLoading } = useQuery({
     queryKey: ["dashboard", "sales-summary", range.from.toISOString(), range.to.toISOString()],
@@ -204,12 +204,12 @@ function DashboardContent() {
       icon: IconTicket,
       tint: "bg-violet-50 text-violet-400 dark:bg-violet-900/30 dark:text-violet-300",
     },
-    canProducts && {
-      label: "Low Stock",
-      value: lowStockData?.length,
-      loading: lowStockLoading,
-      icon: IconAlertTriangle,
-      tint: "bg-amber-50 text-amber-500 dark:bg-amber-900/30 dark:text-amber-300",
+    canBilling && {
+      label: "Admissions",
+      valueText: formatMoney(revenueBreakdownData?.training ?? 0),
+      loading: revenueBreakdownLoading,
+      icon: IconSchool,
+      tint: "bg-emerald-50 text-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-300",
     },
   ].filter(Boolean) as {
     label: string;
@@ -221,7 +221,7 @@ function DashboardContent() {
   }[];
 
   const recentUsers = recentUsersData?.data ?? [];
-  const lowStock = lowStockData ?? [];
+  const recentAdmissions = recentAdmissionsData ?? [];
   const hasCards = canUsers || stats.length > 0;
 
   return (
@@ -308,54 +308,46 @@ function DashboardContent() {
           </SectionCard>
         )}
 
-        {/* Low stock alerts */}
-        {canProducts && (
+        {/* New admissions taken in this period (defaults to today) */}
+        {canEnrollments && (
           <SectionCard
-            icon={IconAlertTriangle}
-            iconClassName="bg-rose-50 text-rose-500 dark:bg-rose-900/30 dark:text-rose-300"
-            title="Low stock"
-            action={<ViewAllLink href="/products" />}
+            icon={IconSchool}
+            iconClassName="bg-emerald-50 text-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-300"
+            title={isToday ? "New admissions today" : "New admissions"}
+            action={<ViewAllLink href="/enrollments" />}
             contentClassName="space-y-1"
           >
-            {lowStockLoading ? (
+            {recentAdmissionsLoading ? (
               <div className="grid h-32 place-items-center">
                 <Spinner className="size-6" />
               </div>
-            ) : lowStock.length === 0 ? (
+            ) : recentAdmissions.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                Stock levels look healthy.
+                No admissions {isToday ? "today" : "in this period"} yet.
               </p>
             ) : (
-              lowStock.slice(0, 5).map((p) => {
-                const out = p.stockQuantity <= 0;
-                return (
-                  <div
-                    key={p.id}
-                    className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/60"
-                  >
-                    <span
-                      className={cn(
-                        "flex size-9 shrink-0 items-center justify-center rounded-full",
-                        out
-                          ? "bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400"
-                          : "bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400",
-                      )}
-                    >
-                      {out ? (
-                        <IconPackageOff className="size-4" />
-                      ) : (
-                        <IconAlertTriangle className="size-4" />
-                      )}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{p.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {out ? "Out of stock" : `${p.stockQuantity} left · min ${p.minimumStock}`}
-                      </p>
-                    </div>
+              recentAdmissions.map((e) => (
+                <div
+                  key={e.id}
+                  className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/60"
+                >
+                  <PersonAvatar
+                    name={e.studentName}
+                    photoUrl={e.studentPhotoUrl}
+                    seed={e.studentId}
+                    className="size-9"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{e.studentName}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {e.programName} · {e.batchName}
+                    </p>
                   </div>
-                );
-              })
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    <DateText value={e.joinedDate} />
+                  </span>
+                </div>
+              ))
             )}
           </SectionCard>
         )}

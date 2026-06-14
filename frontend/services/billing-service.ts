@@ -9,12 +9,12 @@ import type {
     Receipt,
 } from "@/types/billing";
 
-/** A sellable line in a checkout: a PRODUCT or a PASS, referenced by its id. */
+/** A sellable line: a PRODUCT, a PASS, or a TRAINING fee, referenced by its id. */
 export interface CheckoutLine {
-    itemType: "PRODUCT" | "PASS";
+    itemType: "PRODUCT" | "PASS" | "TRAINING";
     id: string;
     quantity: number;
-    /** Per-line discount (products only; ignored for passes). */
+    /** Per-line discount (products only; ignored for passes & fees). */
     discountAmount?: number;
 }
 
@@ -45,14 +45,25 @@ export interface InvoiceListParams {
 }
 
 export const BillingService = {
-    /** Unified POS catalog search — returns sellable products AND active passes. */
-    catalog: async (search?: string, limit = 24): Promise<CatalogItem[]> => {
-        const res = await api.get("/api/billing/items", { params: { search: search || undefined, limit } });
+    /**
+     * Unified POS catalog — sellable products + active passes, plus the selected
+     * customer's outstanding training fees when `customerId` is provided.
+     */
+    catalog: async (search?: string, limit = 24, customerId?: string | null): Promise<CatalogItem[]> => {
+        const res = await api.get("/api/billing/items", {
+            params: { search: search || undefined, limit, customerId: customerId || undefined },
+        });
         return res.data.data;
     },
 
     checkout: async (payload: CheckoutPayload): Promise<CheckoutResult> => {
         const res = await api.post("/api/billing/checkout", payload);
+        return res.data.data;
+    },
+
+    /** Collect a payment against a training fee (supports partial / balance). */
+    payFee: async (feeId: string, payload: { amount: number; paymentMethodId: string }): Promise<Invoice> => {
+        const res = await api.post(`/api/billing/fees/${feeId}/pay`, payload);
         return res.data.data;
     },
 

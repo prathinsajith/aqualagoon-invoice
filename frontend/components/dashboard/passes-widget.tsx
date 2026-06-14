@@ -54,7 +54,7 @@ export function PassesIssuedCard({
         </p>
       ) : (
         <>
-          <div className="divide-y">
+          <div className="divide-y divide-border">
             {passes.map((p) => (
               <div key={p.passTypeId} className="flex items-center justify-between gap-3 py-2.5">
                 <div className="flex min-w-0 items-center gap-2">
@@ -63,17 +63,19 @@ export function PassesIssuedCard({
                     {p.count}
                   </span>
                 </div>
-                <span className="shrink-0 text-sm font-semibold tabular-nums">
+                <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
                   {formatMoney(p.revenue)}
                 </span>
               </div>
             ))}
           </div>
-          <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-3">
-            <span className="text-sm font-semibold">
+          <div className="mt-2 flex items-center justify-between border-t-2 border-border pt-3">
+            <span className="text-sm font-bold">
               Total · {totalCount} {totalCount === 1 ? "pass" : "passes"}
             </span>
-            <span className="text-lg font-bold tabular-nums">{formatMoney(totalRevenue)}</span>
+            <span className="text-lg font-bold tabular-nums text-primary">
+              {formatMoney(totalRevenue)}
+            </span>
           </div>
         </>
       )}

@@ -52,6 +52,13 @@ export const config = {
     "/invoices/:path*",
     "/passes/:path*",
     "/pass-types/:path*",
+    "/training-types/:path*",
+    "/training-programs/:path*",
+    "/fee-plans/:path*",
+    "/batches/:path*",
+    "/enrollments/:path*",
+    "/attendance/:path*",
+    "/student-fees/:path*",
     "/audit-logs/:path*",
   ],
 };
