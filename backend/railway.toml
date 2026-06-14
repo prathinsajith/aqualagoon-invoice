@@ -1,0 +1,33 @@
+# Railway deploy config — Aqua Lagoon API (Fastify 5 + Prisma 7, ESM).
+#
+# Setup in Railway:
+#   1. New service → deploy from this repo.
+#   2. Service → Settings → Root Directory = "backend"  (so this file is used).
+#   3. Add a Postgres database to the project.
+#   4. Set the variables below (Service → Variables).
+#
+# Required variables:
+#   DATABASE_URL       = ${{Postgres.DATABASE_URL}}   # reference the Railway Postgres
+#   JWT_ACCESS_SECRET  = <random 32+ char string>
+#   JWT_REFRESH_SECRET = <random 32+ char string>
+#   CORS_ORIGIN        = https://<your-frontend-domain>   # the admin app's URL
+#   FRONTEND_URL       = https://<your-frontend-domain>
+#   NODE_ENV           = production
+# Optional: email (RESEND/SMTP), AWS S3 uploads — see .env.example.
+# PORT is injected by Railway automatically; the server already binds it.
+
+[build]
+builder = "NIXPACKS"
+# `--prod=false` keeps devDependencies (prisma CLI, typescript) even when
+# NODE_ENV=production, so `prisma generate` + `tsc` can run. `--frozen-lockfile`
+# makes the install reproducible.
+buildCommand = "pnpm install --prod=false --frozen-lockfile && pnpm build"
+
+[deploy]
+# Apply pending migrations (idempotent — only runs what's outstanding), then boot.
+startCommand = "pnpm prisma:deploy && pnpm start"
+# Liveness probe — does not touch the DB, so transient DB blips won't restart-loop.
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
