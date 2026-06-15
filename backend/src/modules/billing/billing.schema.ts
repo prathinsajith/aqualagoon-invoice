@@ -172,6 +172,7 @@ export const receiptSchema = z.object({
       address: z.string().nullable(),
       phone: z.string().nullable(),
       email: z.string().nullable(),
+      logoUrl: z.string().nullable(),
     }),
     invoiceNo: z.string(),
     invoiceDate: z.date(),

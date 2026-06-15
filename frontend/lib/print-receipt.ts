@@ -1,5 +1,6 @@
 import type { Receipt } from "@/types/billing";
 import { formatMoney } from "@/lib/format";
+import { resolveMediaUrl } from "@/lib/media";
 
 const esc = (s: string): string =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -25,12 +26,15 @@ export function printReceipt(receipt: Receipt): void {
         .map((p) => `<div class="row"><span>${esc(p.methodName)}</span><span>${formatMoney(p.amount)}</span></div>`)
         .join("");
 
+    const logoUrl = resolveMediaUrl(receipt.company.logoUrl);
+
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(receipt.invoiceNo)}</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: ui-monospace, Menlo, Consolas, monospace; color: #111; margin: 0; padding: 16px; }
   .receipt { max-width: 320px; margin: 0 auto; font-size: 12px; }
   .center { text-align: center; }
+  .logo { max-width: 160px; max-height: 80px; width: auto; height: auto; margin: 0 auto 6px; display: block; object-fit: contain; }
   .brand { font-size: 15px; font-weight: 700; text-transform: uppercase; }
   .muted { font-size: 11px; }
   .sep { border-top: 1px dashed #888; margin: 10px 0; }
@@ -43,6 +47,7 @@ export function printReceipt(receipt: Receipt): void {
 </style></head>
 <body><div class="receipt">
   <div class="center">
+    ${logoUrl ? `<img class="logo" src="${esc(logoUrl)}" alt="${esc(receipt.company.name)}" />` : ""}
     <div class="brand">${esc(receipt.company.name)}</div>
     ${receipt.company.tagline ? `<div class="muted">${esc(receipt.company.tagline)}</div>` : ""}
     ${receipt.company.phone ? `<div class="muted">${esc(receipt.company.phone)}</div>` : ""}

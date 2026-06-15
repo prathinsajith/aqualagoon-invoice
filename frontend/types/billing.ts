@@ -123,6 +123,7 @@ export interface Receipt {
         address: string | null;
         phone: string | null;
         email: string | null;
+        logoUrl: string | null;
     };
     invoiceNo: string;
     invoiceDate: string;

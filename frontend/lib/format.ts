@@ -40,3 +40,15 @@ export function formatMoney(value: number): string {
         maximumFractionDigits: 2,
     });
 }
+
+/**
+ * Formats a number with grouping + 2 decimals but **no currency symbol** (e.g.
+ * 1234.5 → "1,234.50"). Forced to en-US grouping so separators stay ASCII
+ * regardless of the device locale.
+ */
+export function formatAmount(value: number): string {
+    return value.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+}

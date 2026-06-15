@@ -786,6 +786,7 @@ export class BillingService {
         address: company?.address ?? null,
         phone: company?.phone ?? null,
         email: company?.email ?? null,
+        logoUrl: company?.logoUrl ?? null,
       },
       invoiceNo: dto.invoiceNo,
       invoiceDate: invoice.createdAt,
