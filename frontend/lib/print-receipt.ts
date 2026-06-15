@@ -72,7 +72,12 @@ export function printReceipt(receipt: Receipt): void {
   ${payments}
   <p class="center muted" style="margin-top:14px">Thank you for your visit!</p>
 </div>
-<script>window.onload = function(){ window.print(); setTimeout(function(){ window.close(); }, 300); };</script>
+<script>
+  var printed = false;
+  function go(){ if(printed) return; printed = true; window.print(); setTimeout(function(){ window.close(); }, 300); }
+  window.onload = go;            // fires once the logo image has loaded
+  setTimeout(go, 1500);         // safety: print anyway if the logo is slow/unreachable
+</script>
 </body></html>`;
 
     const w = window.open("", "_blank", "width=400,height=640");

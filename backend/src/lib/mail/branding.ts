@@ -10,7 +10,7 @@ export interface MailBranding {
 }
 
 const FALLBACK_NAME = "Aqua Lagoon";
-const FALLBACK_TAGLINE = "Swimming Pool & Kids Water Park";
+const FALLBACK_TAGLINE = "Swimming Pool";
 const FALLBACK_LOGO = `${env.FRONTEND_URL}/aqua-lagoon-logo.jpg`;
 
 /**

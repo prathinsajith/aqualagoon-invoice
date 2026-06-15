@@ -217,7 +217,7 @@ function CompanyForm() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="tagline">Tagline</Label>
-                <Input id="tagline" placeholder="Swimming Pool & Kids Water Park" {...register("tagline")} />
+                <Input id="tagline" placeholder="Swimming Pool" {...register("tagline")} />
                 {errors.tagline && <p className="text-xs text-destructive">{errors.tagline.message}</p>}
               </div>
             </Section>
