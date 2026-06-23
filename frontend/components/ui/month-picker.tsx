@@ -57,7 +57,7 @@ export function MonthPicker({ value, onChange, id, disabled, className }: MonthP
           {label}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-3" align="start">
+      <PopoverContent className="w-64 max-w-[calc(100vw-1.5rem)] p-3" align="start">
         <div className="mb-3 flex items-center justify-between">
           <Button
             type="button"

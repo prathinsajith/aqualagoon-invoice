@@ -108,7 +108,7 @@ export function CustomerSelect({
         <PopoverContent
           align="start"
           collisionPadding={12}
-          className="flex max-h-[60vh] w-[var(--radix-popover-trigger-width)] min-w-72 flex-col overflow-hidden border p-0"
+          className="flex max-h-[60vh] w-[var(--radix-popover-trigger-width)] min-w-72 max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden border p-0"
         >
           <div className="relative shrink-0 border-b p-2">
             <IconSearch className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />

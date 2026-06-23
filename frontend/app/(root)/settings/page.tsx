@@ -1,7 +1,10 @@
 "use client";
 
+import { Fragment, useState, type ComponentType, type ReactNode } from "react";
 import {
   IconCategory,
+  IconCheck,
+  IconChevronDown,
   IconCreditCard,
   IconKey,
   IconPackage,
@@ -17,9 +20,19 @@ import {
 
 import { PageHeader } from "@/components/rbac/page-header";
 import { PermissionPage } from "@/components/rbac/permission-page";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RoleAccessMatrix } from "@/components/rbac/role-access-matrix";
 import { usePermissions } from "@/hooks/usePermissions";
+import { cn } from "@/lib/utils";
 import { RolesSection } from "../roles/roles-section";
 import { UsersContent } from "../users/page";
 import { ProductsContent } from "../products/page";
@@ -33,25 +46,126 @@ import { PaymentMethodsSection } from "./payment-methods-section";
 import { HolidaysSection } from "./holidays-section";
 
 const TAB_TRIGGER =
-  "h-auto w-full flex-none justify-start gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary data-[state=active]:shadow-none";
+  "h-auto w-full justify-start gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[state=active]:bg-primary/10 data-[state=active]:font-semibold data-[state=active]:text-primary data-[state=active]:shadow-none";
 
 const RAIL_LABEL = "px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70";
 
+interface Section {
+  value: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  node: ReactNode;
+}
+interface Group {
+  label: string;
+  sections: Section[];
+}
+
 export default function SettingsPage() {
   const { can } = usePermissions();
-  const canUsers = can("user.view");
-  const canManage = can("setting.manage");
-  const canCategories = can("product_category.view");
-  const canProducts = can("product.view");
-  const canPassTypes = can("pass_type.view");
-  const canTrainingTypes = can("training_type.view");
-  const canTrainingPrograms = can("training_program.view");
-  const canFeePlans = can("fee_plan.view");
-  const canBatches = can("batch.view");
-  const canPaymentMethods = can("payment_method.view");
-  const canHolidays = can("setting.view");
-  const hasCatalog = canCategories || canProducts || canPassTypes;
-  const hasTraining = canTrainingTypes || canTrainingPrograms || canFeePlans || canBatches;
+  const [tab, setTab] = useState("roles");
+
+  // Build the nav data once (permission-gated), then drive BOTH the mobile
+  // dropdown and the desktop rail from it — no duplicated markup.
+  const groups: Group[] = (
+    [
+      {
+        label: "Access control",
+        sections: [
+          can("user.view") && {
+            value: "users",
+            label: "Users",
+            icon: IconUsers,
+            node: <UsersContent />,
+          },
+          { value: "roles", label: "Roles & permissions", icon: IconKey, node: <RolesSection /> },
+          can("setting.manage") && {
+            value: "access",
+            label: "User access rules",
+            icon: IconUsersGroup,
+            node: <RoleAccessMatrix />,
+          },
+        ].filter(Boolean) as Section[],
+      },
+      {
+        label: "Catalog",
+        sections: [
+          can("product_category.view") && {
+            value: "categories",
+            label: "Product categories",
+            icon: IconCategory,
+            node: <CategoriesContent />,
+          },
+          can("product.view") && {
+            value: "products",
+            label: "Products",
+            icon: IconPackage,
+            node: <ProductsContent />,
+          },
+          can("pass_type.view") && {
+            value: "pass-types",
+            label: "Pass types",
+            icon: IconTicket,
+            node: <PassTypesContent />,
+          },
+        ].filter(Boolean) as Section[],
+      },
+      {
+        label: "Training",
+        sections: [
+          can("training_type.view") && {
+            value: "training-types",
+            label: "Training types",
+            icon: IconSchool,
+            node: <TrainingTypesContent />,
+          },
+          can("training_program.view") && {
+            value: "training-programs",
+            label: "Training programs",
+            icon: IconStairsUp,
+            node: <TrainingProgramsContent />,
+          },
+          can("fee_plan.view") && {
+            value: "fee-plans",
+            label: "Fee plans",
+            icon: IconReceipt2,
+            node: <FeePlansContent />,
+          },
+          can("batch.view") && {
+            value: "batches",
+            label: "Batches",
+            icon: IconCalendarEvent,
+            node: <BatchesContent />,
+          },
+        ].filter(Boolean) as Section[],
+      },
+      {
+        label: "Billing",
+        sections: [
+          can("payment_method.view") && {
+            value: "payment-methods",
+            label: "Payment methods",
+            icon: IconCreditCard,
+            node: <PaymentMethodsSection />,
+          },
+        ].filter(Boolean) as Section[],
+      },
+      {
+        label: "Attendance",
+        sections: [
+          can("setting.view") && {
+            value: "holidays",
+            label: "Holidays",
+            icon: IconCalendarOff,
+            node: <HolidaysSection />,
+          },
+        ].filter(Boolean) as Section[],
+      },
+    ] as Group[]
+  ).filter((g) => g.sections.length > 0);
+
+  const sections = groups.flatMap((g) => g.sections);
+  const active = sections.find((s) => s.value === tab) ?? sections[0];
 
   return (
     <PermissionPage permission="role.view">
@@ -62,152 +176,77 @@ export default function SettingsPage() {
         />
 
         <Tabs
-          defaultValue="roles"
+          value={tab}
+          onValueChange={setTab}
           orientation="vertical"
-          className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8"
+          className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-8"
         >
-          {/* Left rail: grouped nav inside a card */}
-          <TabsList className="h-auto w-full shrink-0 flex-row flex-wrap gap-1 self-start rounded-xl bg-card p-2 shadow-md ring-1 ring-black/5 lg:sticky lg:top-6 lg:w-60 lg:flex-col lg:flex-nowrap lg:items-stretch dark:ring-white/10">
-            <p className={`hidden lg:block ${RAIL_LABEL}`}>Access control</p>
-            {canUsers && (
-              <TabsTrigger value="users" className={TAB_TRIGGER}>
-                <IconUsers className="size-4" /> Users
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="roles" className={TAB_TRIGGER}>
-              <IconKey className="size-4" /> Roles &amp; permissions
-            </TabsTrigger>
-            {canManage && (
-              <TabsTrigger value="access" className={TAB_TRIGGER}>
-                <IconUsersGroup className="size-4" /> User access rules
-              </TabsTrigger>
-            )}
+          {/* Mobile / tablet: compact section picker that opens a grouped vertical menu */}
+          <div className="lg:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="h-auto w-full justify-between gap-2 rounded-xl bg-card px-3 py-2.5 shadow-sm"
+                >
+                  <span className="flex min-w-0 items-center gap-2.5 font-medium">
+                    {active && <active.icon className="size-4 shrink-0 text-primary" />}
+                    <span className="truncate">{active?.label}</span>
+                  </span>
+                  <IconChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="max-h-[65vh] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
+              >
+                {groups.map((group, gi) => (
+                  <Fragment key={group.label}>
+                    {gi > 0 && <DropdownMenuSeparator />}
+                    <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                      {group.label}
+                    </DropdownMenuLabel>
+                    {group.sections.map((s) => (
+                      <DropdownMenuItem
+                        key={s.value}
+                        onSelect={() => setTab(s.value)}
+                        className={cn(
+                          "gap-2.5",
+                          tab === s.value && "bg-primary/10 font-medium text-primary focus:bg-primary/10 focus:text-primary",
+                        )}
+                      >
+                        <s.icon className="size-4" />
+                        <span className="flex-1">{s.label}</span>
+                        {tab === s.value && <IconCheck className="size-4" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </Fragment>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-            {hasCatalog && <p className={`mt-2 hidden lg:block ${RAIL_LABEL}`}>Catalog</p>}
-            {canCategories && (
-              <TabsTrigger value="categories" className={TAB_TRIGGER}>
-                <IconCategory className="size-4" /> Product categories
-              </TabsTrigger>
-            )}
-            {canProducts && (
-              <TabsTrigger value="products" className={TAB_TRIGGER}>
-                <IconPackage className="size-4" /> Products
-              </TabsTrigger>
-            )}
-            {canPassTypes && (
-              <TabsTrigger value="pass-types" className={TAB_TRIGGER}>
-                <IconTicket className="size-4" /> Pass types
-              </TabsTrigger>
-            )}
-
-            {hasTraining && <p className={`mt-2 hidden lg:block ${RAIL_LABEL}`}>Training</p>}
-            {canTrainingTypes && (
-              <TabsTrigger value="training-types" className={TAB_TRIGGER}>
-                <IconSchool className="size-4" /> Training types
-              </TabsTrigger>
-            )}
-            {canTrainingPrograms && (
-              <TabsTrigger value="training-programs" className={TAB_TRIGGER}>
-                <IconStairsUp className="size-4" /> Training programs
-              </TabsTrigger>
-            )}
-            {canFeePlans && (
-              <TabsTrigger value="fee-plans" className={TAB_TRIGGER}>
-                <IconReceipt2 className="size-4" /> Fee plans
-              </TabsTrigger>
-            )}
-            {canBatches && (
-              <TabsTrigger value="batches" className={TAB_TRIGGER}>
-                <IconCalendarEvent className="size-4" /> Batches
-              </TabsTrigger>
-            )}
-
-            {canPaymentMethods && <p className={`mt-2 hidden lg:block ${RAIL_LABEL}`}>Billing</p>}
-            {canPaymentMethods && (
-              <TabsTrigger value="payment-methods" className={TAB_TRIGGER}>
-                <IconCreditCard className="size-4" /> Payment methods
-              </TabsTrigger>
-            )}
-
-            {canHolidays && <p className={`mt-2 hidden lg:block ${RAIL_LABEL}`}>Attendance</p>}
-            {canHolidays && (
-              <TabsTrigger value="holidays" className={TAB_TRIGGER}>
-                <IconCalendarOff className="size-4" /> Holidays
-              </TabsTrigger>
-            )}
+          {/* Desktop: sticky grouped vertical rail */}
+          <TabsList className="hidden h-auto w-60 shrink-0 flex-col items-stretch gap-1 self-start rounded-xl bg-card p-2 shadow-md ring-1 ring-black/5 lg:sticky lg:top-6 lg:flex dark:ring-white/10">
+            {groups.map((group, gi) => (
+              <Fragment key={group.label}>
+                <p className={cn(RAIL_LABEL, gi > 0 && "mt-2")}>{group.label}</p>
+                {group.sections.map((s) => (
+                  <TabsTrigger key={s.value} value={s.value} className={TAB_TRIGGER}>
+                    <s.icon className="size-4" /> {s.label}
+                  </TabsTrigger>
+                ))}
+              </Fragment>
+            ))}
           </TabsList>
 
-          {/* Right: content */}
+          {/* Content */}
           <div className="min-w-0 flex-1">
-            {canUsers && (
-              <TabsContent value="users" className="mt-0">
-                <UsersContent />
+            {sections.map((s) => (
+              <TabsContent key={s.value} value={s.value} className="mt-0">
+                {s.node}
               </TabsContent>
-            )}
-
-            <TabsContent value="roles" className="mt-0">
-              <RolesSection />
-            </TabsContent>
-
-            {canManage && (
-              <TabsContent value="access" className="mt-0">
-                <RoleAccessMatrix />
-              </TabsContent>
-            )}
-
-            {canCategories && (
-              <TabsContent value="categories" className="mt-0">
-                <CategoriesContent />
-              </TabsContent>
-            )}
-
-            {canProducts && (
-              <TabsContent value="products" className="mt-0">
-                <ProductsContent />
-              </TabsContent>
-            )}
-
-            {canPassTypes && (
-              <TabsContent value="pass-types" className="mt-0">
-                <PassTypesContent />
-              </TabsContent>
-            )}
-
-            {canTrainingTypes && (
-              <TabsContent value="training-types" className="mt-0">
-                <TrainingTypesContent />
-              </TabsContent>
-            )}
-
-            {canTrainingPrograms && (
-              <TabsContent value="training-programs" className="mt-0">
-                <TrainingProgramsContent />
-              </TabsContent>
-            )}
-
-            {canFeePlans && (
-              <TabsContent value="fee-plans" className="mt-0">
-                <FeePlansContent />
-              </TabsContent>
-            )}
-
-            {canBatches && (
-              <TabsContent value="batches" className="mt-0">
-                <BatchesContent />
-              </TabsContent>
-            )}
-
-            {canPaymentMethods && (
-              <TabsContent value="payment-methods" className="mt-0">
-                <PaymentMethodsSection />
-              </TabsContent>
-            )}
-
-            {canHolidays && (
-              <TabsContent value="holidays" className="mt-0">
-                <HolidaysSection />
-              </TabsContent>
-            )}
+            ))}
           </div>
         </Tabs>
       </div>

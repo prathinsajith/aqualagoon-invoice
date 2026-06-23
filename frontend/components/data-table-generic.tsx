@@ -178,7 +178,7 @@ export function DataTableGeneric<TData, TValue>({
                                 <IconChevronDown className="size-3.5 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuContent align="end" className="max-h-[60vh] w-56 max-w-[calc(100vw-1rem)] overflow-y-auto">
                             {table
                                 .getAllColumns()
                                 .filter((column) => column.getCanHide())

@@ -115,7 +115,7 @@ function CatalogSection({
         </span>
         <div className="ml-1 h-px flex-1 bg-border/60" />
       </div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] content-start gap-3">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(112px,1fr))] content-start gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:gap-3">
         {items.map((item) => (
           <CatalogCard key={lineKey(item)} item={item} onAdd={onAdd} />
         ))}

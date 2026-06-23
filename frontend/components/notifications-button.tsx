@@ -42,7 +42,7 @@ export function NotificationsButton() {
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" sideOffset={10} className="w-80 overflow-hidden p-0">
+      <PopoverContent align="end" sideOffset={10} className="w-80 max-w-[calc(100vw-1.5rem)] overflow-hidden p-0">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <p className="text-sm font-semibold">Notifications</p>
           {canProducts && (

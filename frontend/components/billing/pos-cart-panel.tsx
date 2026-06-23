@@ -122,7 +122,7 @@ export function PosCartPanel({
                       min={1}
                       max={pass ? undefined : (line.item.stockQuantity ?? 1)}
                       disabled={single}
-                      className="h-9 w-36"
+                      className="h-9 w-24 sm:w-32"
                     />
                     {!pass && !training && (
                       <div className="flex items-center gap-1.5">
@@ -136,11 +136,11 @@ export function PosCartPanel({
                           decimals
                           hideSteppers
                           placeholder="0"
-                          className="h-8 w-20"
+                          className="h-8 w-16 sm:w-20"
                         />
                       </div>
                     )}
-                    <span className="w-20 text-right text-sm font-semibold">{formatMoney(t.total)}</span>
+                    <span className="w-16 shrink-0 text-right text-sm font-semibold sm:w-20">{formatMoney(t.total)}</span>
                   </div>
                 </div>
               );

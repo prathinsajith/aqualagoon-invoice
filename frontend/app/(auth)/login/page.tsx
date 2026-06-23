@@ -4,15 +4,15 @@ import Link from "next/link";
 import { AuthShell } from "@/components/auth-shell";
 import { LoginForm } from "@/components/login-form";
 import { useRedirectIfAuthenticated } from "@/hooks/useRedirectIfAuthenticated";
-import { Spinner } from "@/components/ui/spinner";
+import { SwimLoader } from "@/components/swim-loader";
 
 export default function LoginPage() {
   const loading = useRedirectIfAuthenticated();
 
   if (loading) {
     return (
-      <div className="grid min-h-svh place-items-center bg-gradient-to-br from-[var(--color-aqua-500)] to-[var(--color-aqua-700)]">
-        <Spinner className="size-8 text-white" />
+      <div className="grid min-h-svh place-items-center bg-gradient-to-br from-[var(--color-aqua-500)] via-[var(--color-aqua-600)] to-[var(--color-aqua-700)]">
+        <SwimLoader label="Loading" />
       </div>
     );
   }

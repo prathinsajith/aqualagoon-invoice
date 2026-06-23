@@ -108,7 +108,7 @@ export function UserAvatarDialog({ user }: { user: User | null }) {
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-72 overflow-hidden rounded-2xl p-0" align="end" sideOffset={10}>
+      <DropdownMenuContent className="w-72 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl p-0" align="end" sideOffset={10}>
         {/* Header */}
         <div className="flex items-center gap-3 bg-gradient-to-br from-[var(--color-aqua-500)]/10 to-transparent px-4 py-4">
           <Avatar className="size-12 ring-2 ring-background shadow-sm">
