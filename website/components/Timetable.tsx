@@ -10,19 +10,19 @@ export default function Timetable({ timetable }: { timetable: TimetableContent }
         <thead>
           <tr>
             <th>Time</th>
-            {days.map((d, i) => (
-              <th key={i}>{d}</th>
+            {days.map((d) => (
+              <th key={d}>{d}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, ri) => (
-            <tr key={ri}>
+          {rows.map((row) => (
+            <tr key={row.time}>
               <td className="time">{row.time}</td>
-              {days.map((_, di) => {
+              {days.map((day, di) => {
                 const slot = slotByKey.get(row.cells[di] ?? "");
                 return (
-                  <td key={di}>
+                  <td key={day}>
                     {slot ? (
                       <span className="chip" style={{ color: slot.color, background: slot.bg }}>
                         {slot.label}

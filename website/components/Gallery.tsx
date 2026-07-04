@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Icon from "@/components/Icon";
 import type { GalleryView } from "@/lib/gallery";
@@ -32,12 +33,12 @@ export default function Gallery({
             style={{ aspectRatio: it.ratio, background: it.tint ?? "#0c3b63" }}
           >
             {it.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={it.imageUrl}
                 alt={it.title}
-                loading="lazy"
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                fill
+                sizes="(max-width: 960px) 50vw, 33vw"
+                style={{ objectFit: "cover" }}
               />
             ) : (
               <div className="ic">

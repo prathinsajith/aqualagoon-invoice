@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Icon from "@/components/Icon";
 import { getSiteContent, contentImage } from "@/lib/site-content";
+import { pageMetadata } from "@/lib/seo";
 
 export async function generateStaticParams() {
   const { services } = await getSiteContent();
@@ -14,20 +16,22 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const { services } = await getSiteContent();
+  const [{ slug }, { services }] = await Promise.all([params, getSiteContent()]);
   const sv = services.find((s) => s.id === slug);
   if (!sv) return { title: "Service — Aqua Lagoon" };
-  return {
+  // Bundled defaults have a 1200×630 JPEG share version (WhatsApp's scraper
+  // doesn't reliably render WebP); admin-uploaded images pass through as-is.
+  const shareImage = sv.imageUrl?.startsWith("/assets/svc-")
+    ? sv.imageUrl.replace("/assets/svc-", "/assets/og/svc-").replace(/\.webp$/, ".jpg")
+    : sv.imageUrl
+      ? contentImage(sv.imageUrl)
+      : undefined;
+  return pageMetadata({
     title: `${sv.title} — Aqua Lagoon`,
     description: sv.blurb || sv.long.slice(0, 160),
-    alternates: { canonical: `/services/${sv.id}` },
-    openGraph: {
-      title: `${sv.title} — Aqua Lagoon`,
-      description: sv.blurb || sv.long.slice(0, 160),
-      images: sv.imageUrl ? [contentImage(sv.imageUrl)] : undefined,
-    },
-  };
+    path: `/services/${sv.id}`,
+    image: shareImage,
+  });
 }
 
 export default async function ServiceDetailPage({
@@ -35,8 +39,7 @@ export default async function ServiceDetailPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
-  const { services } = await getSiteContent();
+  const [{ slug }, { services }] = await Promise.all([params, getSiteContent()]);
   const sv = services.find((s) => s.id === slug);
   if (!sv) notFound();
 
@@ -59,8 +62,7 @@ export default async function ServiceDetailPage({
         <div className="service-row img-left">
           <div className="service-media" style={{ background: sv.tint }}>
             {img ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={img} alt={sv.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+              <Image src={img} alt={sv.title} fill sizes="(max-width: 960px) 100vw, 560px" style={{ objectFit: "cover" }} />
             ) : (
               <div>
                 <Icon name={sv.icon} color={sv.color} size={96} />

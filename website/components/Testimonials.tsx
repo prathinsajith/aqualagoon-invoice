@@ -27,9 +27,9 @@ export default function Testimonials() {
           <div className="role">{t.role}</div>
         </div>
         <div className="dots">
-          {TESTIMONIALS.map((_, i) => (
+          {TESTIMONIALS.map((item, i) => (
             <button
-              key={i}
+              key={item.name}
               type="button"
               aria-label={`Show testimonial ${i + 1}`}
               className={i === index ? "is-active" : ""}

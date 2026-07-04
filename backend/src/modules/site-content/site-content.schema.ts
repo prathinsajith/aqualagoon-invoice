@@ -36,11 +36,13 @@ export const homepageSchema = z.object({
 });
 
 // ---- Contact & hours -------------------------------------------------------
+// Default to the brand's profile pages so the social features render out of the
+// box; the admin replaces these with the real handles in Contact & Hours.
 const socialSchema = z.object({
-  facebook: z.string().trim().max(300).default("#"),
-  instagram: z.string().trim().max(300).default("#"),
-  x: z.string().trim().max(300).default("#"),
-  youtube: z.string().trim().max(300).default("#"),
+  facebook: z.string().trim().max(300).default("https://www.facebook.com/aqualagoon"),
+  instagram: z.string().trim().max(300).default("https://www.instagram.com/aqualagoon"),
+  x: z.string().trim().max(300).default("https://x.com/aqualagoon"),
+  youtube: z.string().trim().max(300).default("https://www.youtube.com/@aqualagoon"),
 });
 
 export const contactSchema = z.object({
@@ -49,7 +51,12 @@ export const contactSchema = z.object({
   email: z.string().trim().max(120).default("hello@aqualagoon.com"),
   hoursWeekday: z.string().trim().max(120).default("Mon–Sat 6:00 AM – 9:00 PM"),
   hoursSunday: z.string().trim().max(120).default("Sunday 7:00 AM – 6:00 PM"),
-  social: socialSchema.default({ facebook: "#", instagram: "#", x: "#", youtube: "#" }),
+  social: socialSchema.default({
+    facebook: "https://www.facebook.com/aqualagoon",
+    instagram: "https://www.instagram.com/aqualagoon",
+    x: "https://x.com/aqualagoon",
+    youtube: "https://www.youtube.com/@aqualagoon",
+  }),
 });
 
 // ---- Services --------------------------------------------------------------
@@ -75,7 +82,6 @@ export const servicesSchema = z.object({
     .default([
       { id: "swim", icon: "waves", color: "#1479cf", tint: "#e0f4fd", title: "Open Swimming", blurb: "Day passes for lane swims and family splashes in clean, temperature-controlled water.", long: "Enjoy lane swimming, family sessions and open-water fun in our lifeguarded, temperature-controlled main pool. Day passes and monthly memberships available with towel and locker service.", tags: ["Day pass", "Lanes", "Family time"], cta: "Get a day pass", imgRight: false, imageUrl: "/assets/svc-swim.webp" },
       { id: "learn", icon: "gradcap", color: "#2b6fd4", tint: "#e6f0fe", title: "Learn to Swim", blurb: "Structured lessons for kids and adults, from first floats to confident strokes.", long: "Certified coaches guide beginners to advanced swimmers through a proven curriculum. Small batches, water-safety focus and progress badges for kids. Free trial for first-timers.", tags: ["Kids & adults", "Small batches", "Free trial"], cta: "Book a free trial", imgRight: true, imageUrl: "/assets/svc-learn.webp" },
-      { id: "park", icon: "droplets", color: "#0e9e8a", tint: "#e0f7f4", title: "Kids Water Park", blurb: "Slides, splash pads and shallow play zones designed just for little ones.", long: "A dedicated splash zone with gentle slides, mushroom fountains and shallow pools — all supervised and built for safe, giggly fun for younger children.", tags: ["Ages 3–10", "Supervised", "Slides"], cta: "Plan a visit", imgRight: false, imageUrl: "/assets/svc-park.webp" },
       { id: "yoga", icon: "yoga", color: "#5b52c9", tint: "#eef0ff", title: "Yoga Classes", blurb: "Calm, guided mat and aqua yoga to stretch, breathe and unwind.", long: "Start or end your day with guided yoga — mat sessions and gentle aqua yoga. Suitable for all levels with experienced instructors and a calm studio space.", tags: ["All levels", "Morning & evening", "Aqua yoga"], cta: "Join a session", imgRight: true, imageUrl: "/assets/svc-yoga.webp" },
       { id: "zumba", icon: "music", color: "#c94f7c", tint: "#ffeef4", title: "Zumba Dance Fitness", blurb: "High-energy dance workouts that make getting fit feel like a party.", long: "Sweat it out to great music in our high-energy Zumba classes. A fun cardio workout for all fitness levels — no dance experience needed, just bring the energy.", tags: ["Cardio", "All levels", "Group fun"], cta: "Try a class", imgRight: false, imageUrl: "/assets/svc-zumba.webp" },
       { id: "audi", icon: "ticket", color: "#d08512", tint: "#fff4e2", title: "Mini Auditorium", blurb: "A versatile space for birthdays, workshops, functions and celebrations.", long: "Host birthdays, workshops, community events and functions in our mini auditorium. Flexible seating, sound system and easy booking by the hour — poolside celebrations made simple.", tags: ["Events", "Hourly", "Sound system"], cta: "Reserve the hall", imgRight: true, imageUrl: "/assets/svc-audi.webp" },
@@ -182,8 +188,8 @@ export const timetableSchema = z.object({
       { key: "A", label: "Swim Coaching", color: "#0b6aab", bg: "#e0f4fd" },
       { key: "O", label: "Open Swim", color: "#0e7a6b", bg: "#e0f7f4" },
       { key: "Y", label: "Yoga", color: "#5b52c9", bg: "#eef0ff" },
-      { key: "Z", label: "Zumba", color: "#c94f7c", bg: "#ffeef4" },
-      { key: "K", label: "Kids Park", color: "#c47a12", bg: "#fff4e2" },
+      { key: "Z", label: "Zumba", color: "#ad3363", bg: "#ffeef4" },
+      { key: "K", label: "Kids Park", color: "#9a5f0b", bg: "#fff4e2" },
     ]),
   rows: z
     .array(rowSchema)
@@ -227,7 +233,7 @@ export const pricingSchema = z.object({
 
 // ---- Branding & SEO --------------------------------------------------------
 export const brandingSchema = z.object({
-  logoUrl: z.string().trim().max(500).default("/assets/logo.jpeg"),
+  logoUrl: z.string().trim().max(500).default("/assets/logo-160.webp"),
   metaTitle: z.string().trim().max(160).default("Aqua Lagoon — Swimming Pool, Wellness & Events"),
   metaDescription: z
     .string()
@@ -236,7 +242,7 @@ export const brandingSchema = z.object({
     .default(
       "Aqua Lagoon is a swimming pool, kids' water park and wellness centre. Swim lessons, open swims, yoga, zumba and a mini auditorium for events — safe splashes for every age.",
     ),
-  ogImageUrl: z.string().trim().max(500).default("/assets/hero.webp"),
+  ogImageUrl: z.string().trim().max(500).default("/assets/og-image.jpg"),
 });
 
 /** All sections, keyed. The key is the primary key of the `site_content` row. */

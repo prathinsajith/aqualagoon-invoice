@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
  */
 
 /** Page title + subtitle + a primary action button. */
-export function PageHeaderSkeleton({ withAction = true }: { withAction?: boolean }) {
+function PageHeaderSkeleton({ withAction = true }: { withAction?: boolean }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="space-y-2">
@@ -21,7 +21,7 @@ export function PageHeaderSkeleton({ withAction = true }: { withAction?: boolean
 }
 
 /** Search field + a couple of filter controls. */
-export function FilterBarSkeleton() {
+function FilterBarSkeleton() {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <Skeleton className="h-9 w-full max-w-md rounded-md" />
@@ -85,7 +85,7 @@ export function ListPageSkeleton({ cols = 5, rows = 8 }: { cols?: number; rows?:
 }
 
 /** A simple card block with a title and a few lines (for detail/settings pages). */
-export function CardSkeleton({ lines = 4, className }: { lines?: number; className?: string }) {
+function CardSkeleton({ lines = 4, className }: { lines?: number; className?: string }) {
   return (
     <div className={cn("rounded-2xl border-0 bg-card p-5 shadow-sm", className)}>
       <Skeleton className="mb-4 h-5 w-40" />

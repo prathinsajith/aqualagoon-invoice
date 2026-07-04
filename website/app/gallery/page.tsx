@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Gallery from "@/components/Gallery";
 import { fetchGallery } from "@/lib/gallery";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Gallery — Aqua Lagoon",
   description: "A peek into life at Aqua Lagoon — splashes, smiles and celebrations.",
-};
+  path: "/gallery",
+});
 
 export default async function GalleryPage() {
   const { items, categories } = await fetchGallery();

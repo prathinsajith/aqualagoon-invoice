@@ -1,22 +1,57 @@
+import Image from "next/image";
 import Link from "next/link";
 import Icon, { IconTile } from "@/components/Icon";
 import Timetable from "@/components/Timetable";
 import Testimonials from "@/components/Testimonials";
+import ServiceSlider from "@/components/ServiceSlider";
 import { AUDIENCES, WHYFIT, WHYUS } from "@/lib/data";
 import { BRAND } from "@/lib/constants";
 import { getSiteContent, contentImage } from "@/lib/site-content";
 
 export default async function HomePage() {
-  const { homepage, services, timetable } = await getSiteContent();
+  const { homepage, services, timetable, contact } = await getSiteContent();
   const heroSrc = contentImage(homepage.heroImageUrl);
+  const offerCards = services.map((sv) => ({
+    id: sv.id,
+    title: sv.title,
+    icon: sv.icon,
+    color: sv.color,
+    tint: sv.tint,
+    img: contentImage(sv.imageUrl),
+  }));
+  // Only show social icons that point somewhere real ("#" is the unset default).
+  const socialLinks = [
+    {
+      label: "Facebook",
+      href: contact.social.facebook,
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>,
+    },
+    {
+      label: "Instagram",
+      href: contact.social.instagram,
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="#fff" stroke="none" /></svg>,
+    },
+    {
+      label: "X",
+      href: contact.social.x,
+      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.9l-5.4-7-6.2 7H1.4l8.1-9.3L1 2h7l4.9 6.4L18.9 2z" /></svg>,
+    },
+  ].filter((s) => s.href && s.href !== "#");
 
   return (
     <div className="route-enter">
       {/* HERO */}
       <section className="hero-wrap" aria-label="Welcome">
         <div className="hero">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="hero-photo" src={heroSrc} alt="A swimmer at Aqua Lagoon" />
+          <Image
+            className="hero-photo"
+            src={heroSrc}
+            alt="A swimmer at Aqua Lagoon"
+            fill
+            priority
+            fetchPriority="high"
+            sizes="100vw"
+          />
           <div className="hero-overlay" />
           <div className="hero-body">
             <div>
@@ -31,18 +66,22 @@ export default async function HomePage() {
             </div>
             <div className="hero-foot">
               <div className="hero-stats">
-                {homepage.stats.map((s, i) => (
-                  <div className="hero-stat" key={i}>
+                {homepage.stats.map((s) => (
+                  <div className="hero-stat" key={`${s.label}-${s.value}`}>
                     <div className="val">{s.value}</div>
                     <div className="lbl">{s.label}</div>
                   </div>
                 ))}
               </div>
-              <div className="hero-social">
-                <a href="#" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg></a>
-                <a href="#" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="#fff" stroke="none" /></svg></a>
-                <a href="#" aria-label="X"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.9l-5.4-7-6.2 7H1.4l8.1-9.3L1 2h7l4.9 6.4L18.9 2z" /></svg></a>
-              </div>
+              {socialLinks.length > 0 && (
+                <div className="hero-social">
+                  {socialLinks.map((s) => (
+                    <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}>
+                      {s.icon}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -51,8 +90,7 @@ export default async function HomePage() {
         <div className="substrip">
           <div className="substrip-cell">
             <div className="substrip-avatar">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={heroSrc} alt="Swimmer" />
+              <Image src={heroSrc} alt="Swimmer" width={88} height={88} />
               <Link href="/services" className="go-btn" aria-label="Explore services">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7" /><path d="M8 7h9v9" /></svg>
               </Link>
@@ -67,21 +105,24 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* SERVICES STRIP */}
-      <section className="section container">
-        <div className="section-head" style={{ maxWidth: 640 }}>
-          <span className="eyebrow">What we offer</span>
-          <h2>Everything for water &amp; wellness</h2>
-        </div>
-        <div className="grid-3">
-          {services.map((sv) => (
-            <Link key={sv.id} href="/services" className="service-card">
-              <IconTile name={sv.icon} color={sv.color} tint={sv.tint} size={30} />
-              <h3>{sv.title}</h3>
-              <p>{sv.blurb}</p>
-              <span className="more">Learn more →</span>
-            </Link>
-          ))}
+      {/* WHAT WE OFFER — slider */}
+      <section className="offer-section">
+        {/* Wordmark drawn via ::before so a11y tooling ignores the decorative text */}
+        <div className="offer-wordmark" aria-hidden="true" data-text={BRAND.name} />
+        <div className="offer-inner">
+          <div className="offer-head">
+            <span className="eyebrow">What we offer</span>
+            <h2>Everything for water &amp; wellness</h2>
+            <p>
+              A safe, sparkling home for swimming lessons, open swims and family fun — plus yoga, zumba and a mini
+              auditorium for your events, all under one roof.
+            </p>
+            <div className="offer-cta">
+              <Link href="/contact?intent=book" className="btn btn-primary">Book Now</Link>
+              <Link href="/contact" className="btn btn-ghost">Contact Us</Link>
+            </div>
+          </div>
+          <ServiceSlider cards={offerCards} />
         </div>
       </section>
 
@@ -116,8 +157,7 @@ export default async function HomePage() {
           {WHYFIT.map((w) => (
             <div key={w.title} className="whyfit-card">
               <div className="art">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={w.img} alt={w.title} loading="lazy" />
+                <Image src={w.img} alt={w.title} width={132} height={132} />
               </div>
               <h3>{w.title}</h3>
               <p>{w.text}</p>
@@ -134,8 +174,13 @@ export default async function HomePage() {
         <div className="inner">
           <div className="pool-tile">
             {contentImage(homepage.whyUsImageUrl) ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={contentImage(homepage.whyUsImageUrl)} alt="Our pool" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <Image
+                src={contentImage(homepage.whyUsImageUrl)}
+                alt="Our pool"
+                fill
+                sizes="(max-width: 960px) 100vw, 520px"
+                style={{ objectFit: "cover" }}
+              />
             ) : (
               <span className="badge">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0c3b63" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z" /><circle cx="12" cy="13" r="3" /></svg>

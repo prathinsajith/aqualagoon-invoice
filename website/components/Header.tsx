@@ -1,29 +1,32 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { NAV, activeNavId, BRAND } from "@/lib/constants";
 
-export default function Header({ logoUrl = "/assets/logo.jpeg" }: { logoUrl?: string }) {
+const subscribeToScroll = (onChange: () => void) => {
+  window.addEventListener("scroll", onChange, { passive: true });
+  return () => window.removeEventListener("scroll", onChange);
+};
+const isScrolledPastHero = () => (window.scrollY || document.documentElement.scrollTop || 0) > 40;
+
+export default function Header({ logoUrl = "/assets/logo-160.webp" }: { logoUrl?: string }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const activeId = activeNavId(pathname);
 
-  const [scrolled, setScrolled] = useState(false);
+  // Server snapshot is false (top of page), so SSR + first paint stay in sync.
+  const scrolled = useSyncExternalStore(subscribeToScroll, isScrolledPastHero, () => false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const onScroll = () => setScrolled((window.scrollY || document.documentElement.scrollTop || 0) > 40);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   // Close the mobile menu whenever the route changes.
-  useEffect(() => {
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
     setMenuOpen(false);
-  }, [pathname]);
+  }
 
   const showOverlay = isHome && !scrolled;
 
@@ -63,8 +66,7 @@ export default function Header({ logoUrl = "/assets/logo.jpeg" }: { logoUrl?: st
         <div className="nav-shell">
           <div className="nav-bar">
             <Link href="/" className="brand" aria-label={`${BRAND.name} home`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="brand-logo" src={logoUrl} alt={`${BRAND.name} logo`} />
+              <Image className="brand-logo" src={logoUrl} alt={`${BRAND.name} logo`} width={54} height={54} priority />
               <span className="brand-word">{BRAND.name}</span>
             </Link>
             <nav className="nav-links" aria-label="Primary">
@@ -91,8 +93,7 @@ export default function Header({ logoUrl = "/assets/logo.jpeg" }: { logoUrl?: st
       <div className="solid-bar">
         <div className="bar-inner">
           <Link href="/" className="brand brand-solid" aria-label={`${BRAND.name} home`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="brand-logo" src={logoUrl} alt={`${BRAND.name} logo`} />
+            <Image className="brand-logo" src={logoUrl} alt={`${BRAND.name} logo`} width={54} height={54} priority />
             <span className="brand-stack">
               <span className="name">{BRAND.shortName}</span>
               <span className="tag">{BRAND.tagline}</span>
