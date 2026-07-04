@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { MediaImage } from "@/components/ui/media-image";
 import {
   IconDotsVertical,
   IconEye,
@@ -56,8 +57,7 @@ export function getProductColumns({
           <div className="flex items-center gap-3">
             <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-md border bg-muted/30">
               {img ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={img} alt={p.name} className="size-full object-cover" />
+                <MediaImage src={img} alt={p.name} width={40} height={40} className="size-full object-cover" />
               ) : (
                 <IconPhoto className="size-4 text-muted-foreground/40" />
               )}

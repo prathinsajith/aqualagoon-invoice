@@ -19,10 +19,25 @@ import {
 } from "@/services/training-service";
 import type { EnrollmentStatus } from "@/types/training";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/** Query options accepted by the list hooks (e.g. gate fetching on dialog open). */
+interface ListHookOptions {
+    enabled?: boolean;
+}
 
-const list = <T,>(key: string, fn: (p: any) => Promise<T>) => (params: any) =>
-    useQuery({ queryKey: [key, "list", params], queryFn: () => fn(params), placeholderData: keepPreviousData });
+/**
+ * Builds a typed list query hook from a service `list` function. Params are
+ * inferred from the service signature (no `any`), and an optional `enabled`
+ * lets callers gate the fetch (e.g. only when a dialog is open).
+ */
+const list =
+    <P, T>(key: string, fn: (params: P) => Promise<T>) =>
+    (params: P, options?: ListHookOptions) =>
+        useQuery({
+            queryKey: [key, "list", params],
+            queryFn: () => fn(params),
+            placeholderData: keepPreviousData,
+            enabled: options?.enabled,
+        });
 
 // --- Training types ---
 export const useTrainingTypes = list("training-types", TrainingTypeService.list);

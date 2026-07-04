@@ -249,6 +249,79 @@ model Holiday {
 }
 
 // ---------------------------------------------------------------------------
+// Public website content: gallery images shown on the marketing site. Managed
+// from the admin (Website → Gallery) and served publicly (only published rows).
+// ---------------------------------------------------------------------------
+
+model GalleryImage {
+  id          String    @id @default(uuid())
+  title       String
+  // Free-form category tag used by the website's gallery filter
+  // (e.g. "Pool", "Kids", "Yoga", "Zumba", "Events").
+  category    String    @default("General")
+  imageUrl    String    @map("image_url")
+  // Manual ordering on the public grid (ascending; ties break by createdAt).
+  sortOrder   Int       @default(0) @map("sort_order")
+  // Only published rows are returned by the public endpoint.
+  isPublished Boolean   @default(true) @map("is_published")
+  createdBy   String?   @map("created_by")
+  updatedBy   String?   @map("updated_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([isPublished])
+  @@index([category])
+  @@index([sortOrder])
+  @@index([deletedAt])
+  @@map("gallery_images")
+}
+
+// Leads captured from the public website's "Book Now" / contact form. Created
+// unauthenticated by the site; triaged from the admin (Website → Enquiries).
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+model Enquiry {
+  id        String        @id @default(uuid())
+  name      String
+  phone     String
+  email     String?
+  // The "Interested in" option the visitor picked (free text).
+  service   String?
+  message   String?
+  // Where it came from, e.g. "booking" (Book Now) or "contact".
+  source    String        @default("contact")
+  status    EnquiryStatus @default(NEW)
+  // Staff member who last actioned it + when.
+  handledBy String?       @map("handled_by")
+  handledAt DateTime?     @map("handled_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([source])
+  @@index([createdAt])
+  @@map("enquiries")
+}
+
+// Editable content blocks for the public marketing site (homepage/hero,
+// contact & hours, services, branding/SEO). One row per section, stored as a
+// JSON document validated per-key by the site-content module. Managed from the
+// admin (Website tab) and served publicly.
+model SiteContent {
+  key       String   @id
+  data      Json
+  updatedBy String?  @map("updated_by")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_content")
+}
+
+// ---------------------------------------------------------------------------
 // Inventory: sellable physical products and the categories that group them.
 // (Passes, memberships, fees and services are NOT modelled here — separate
 // modules own those.)
@@ -802,6 +875,11 @@ model StudentEnrollment {
   @@index([studentId])
   @@index([batchId])
   @@index([status])
+  // Dashboard "recent admissions" orders by and date-filters on createdAt.
+  @@index([createdAt])
+  // "Active enrollments in a batch" (capacity checks) and fee-plan lookups.
+  @@index([batchId, status])
+  @@index([feePlanId])
   @@map("student_enrollments")
 }
 
@@ -835,6 +913,8 @@ model StudentFee {
   @@index([status])
   @@index([invoiceId])
   @@index([dueDate])
+  // Per-enrollment fee ledger filters by enrollment + status together.
+  @@index([enrollmentId, status])
   @@map("student_fees")
 }
 

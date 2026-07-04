@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Can } from "@/components/permission-gate";
 import { UserFormDialog } from "@/app/(root)/users/user-form-dialog";
 import { useUsers } from "@/hooks/queries/use-users";
@@ -108,7 +108,7 @@ export function CustomerSelect({
         <PopoverContent
           align="start"
           collisionPadding={12}
-          className="flex max-h-[60vh] w-[var(--radix-popover-trigger-width)] min-w-72 flex-col overflow-hidden border p-0"
+          className="flex max-h-[60vh] w-[var(--radix-popover-trigger-width)] min-w-72 max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden border p-0"
         >
           <div className="relative shrink-0 border-b p-2">
             <IconSearch className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
@@ -123,8 +123,10 @@ export function CustomerSelect({
 
           <div className="min-h-0 flex-1 overflow-y-auto p-1">
             {isFetching && users.length === 0 ? (
-              <div className="grid h-20 place-items-center">
-                <Spinner className="size-5" />
+              <div className="space-y-2 p-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-4 w-full" />
+                ))}
               </div>
             ) : users.length === 0 ? (
               <p className="px-2 py-4 text-center text-xs text-muted-foreground">No customers found</p>

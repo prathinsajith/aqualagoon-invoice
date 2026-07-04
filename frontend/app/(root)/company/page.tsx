@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { DetailPageSkeleton } from "@/components/skeletons";
 import {
   Select,
   SelectContent,
@@ -142,11 +143,7 @@ function CompanyForm() {
   };
 
   if (isLoading && !company) {
-    return (
-      <div className="grid min-h-[40vh] place-items-center">
-        <Spinner className="size-8" />
-      </div>
-    );
+    return <DetailPageSkeleton cards={2} />;
   }
 
   const logo = resolveLogo(company?.logoUrl ?? null);
@@ -220,7 +217,7 @@ function CompanyForm() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="tagline">Tagline</Label>
-                <Input id="tagline" placeholder="Swimming Pool & Kids Water Park" {...register("tagline")} />
+                <Input id="tagline" placeholder="Swimming Pool" {...register("tagline")} />
                 {errors.tagline && <p className="text-xs text-destructive">{errors.tagline.message}</p>}
               </div>
             </Section>

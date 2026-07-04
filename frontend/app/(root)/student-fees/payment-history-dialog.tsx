@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useFeeHistory } from "@/hooks/queries/use-training";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -49,8 +49,19 @@ export function PaymentHistoryDialog({
         </DialogHeader>
 
         {isLoading ? (
-          <div className="grid h-32 place-items-center">
-            <Spinner className="size-7" />
+          <div className="space-y-2 py-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg border p-3">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-9 shrink-0 rounded-full" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-40" />
+                  </div>
+                </div>
+                <Skeleton className="h-4 w-16" />
+              </div>
+            ))}
           </div>
         ) : !rows || rows.length === 0 ? (
           <p className="rounded-lg border bg-muted/30 p-6 text-center text-sm text-muted-foreground">

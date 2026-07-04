@@ -1,10 +1,9 @@
 "use client";
 
-import * as TablerIcons from "@tabler/icons-react";
-import { type Icon } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { navIcon } from "@/lib/nav-icons";
 import { NAVBAR_DATA } from "@/lib/constant";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
@@ -23,7 +22,7 @@ export function BottomNav() {
 
   return (
     <nav
-      aria-label="Primary"
+      aria-label="Mobile navigation"
       className={cn(
         "fixed inset-x-0 bottom-0 z-50 lg:hidden",
         // Glass surface with curved top edges and a soft lift off the page.
@@ -35,9 +34,7 @@ export function BottomNav() {
     >
       <div className="mx-auto flex max-w-screen-sm items-stretch justify-around gap-1 px-2.5 pb-1.5 pt-2 sm:gap-2 sm:px-4">
         {items.map((item) => {
-          const IconComponent = item.icon
-            ? (TablerIcons as unknown as Record<string, Icon>)[item.icon]
-            : null;
+          const IconComponent = navIcon(item.icon);
           const isActive = pathname === item.url || pathname.startsWith(`${item.url}/`);
 
           return (

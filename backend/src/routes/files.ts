@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 
 /** Object keys this proxy is allowed to presign (defense against reading other keys). */
-const ALLOWED_PREFIXES = ["avatars/"];
+const ALLOWED_PREFIXES = ["avatars/", "products/", "gallery/", "site/"];
 
 /**
  * Public proxy for private-bucket objects: resolves a stable `/api/files/<key>`

@@ -10,11 +10,15 @@ const categoryKeys = {
     detail: (id: string) => ["product-categories", "detail", id] as const,
 };
 
-export function useProductCategories(params: CategoryListParams) {
+export function useProductCategories(
+    params: CategoryListParams,
+    options?: { enabled?: boolean },
+) {
     return useQuery({
         queryKey: categoryKeys.list(params),
         queryFn: () => ProductCategoryService.list(params),
         placeholderData: keepPreviousData,
+        enabled: options?.enabled,
     });
 }
 

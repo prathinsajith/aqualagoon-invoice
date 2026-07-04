@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { TableSkeleton } from "@/components/skeletons";
 import { DatePicker, DATE_PICKER_FUTURE_END, DATE_PICKER_PAST_START } from "@/components/ui/date-picker";
 import {
   Table,
@@ -172,9 +173,7 @@ export function HolidaysSection() {
             {getApiErrorMessage(error, "Failed to load holidays")}
           </div>
         ) : isLoading && !holidays ? (
-          <div className="grid min-h-[12vh] place-items-center">
-            <Spinner className="size-7" />
-          </div>
+          <TableSkeleton cols={4} rows={4} />
         ) : holidayList.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-lg bg-card py-10 text-center shadow-sm">
             <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">

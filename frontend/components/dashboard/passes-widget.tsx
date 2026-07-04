@@ -3,13 +3,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { IconTicket, IconTrophy } from "@tabler/icons-react";
 
-import { Spinner } from "@/components/ui/spinner";
+import { WidgetRowsSkeleton } from "@/components/skeletons";
 import { SectionCard, ViewAllLink } from "@/components/dashboard/section-card";
 import { PersonAvatar } from "@/components/person-avatar";
 import { DashboardService } from "@/services/dashboard-service";
 import { usePermissions } from "@/hooks/usePermissions";
 import { formatMoney } from "@/lib/format";
 import type { DateRange } from "@/lib/date-range";
+import type { PassTypeTotal, TopPassBuyer } from "@/types/billing";
 
 const rangeKey = (range: DateRange) => [range.from.toISOString(), range.to.toISOString()];
 
@@ -17,22 +18,28 @@ const rangeKey = (range: DateRange) => [range.from.toISOString(), range.to.toISO
 export function PassesIssuedCard({
   range,
   periodLabel,
+  data,
+  loading,
 }: {
   range: DateRange;
   periodLabel: string;
+  data?: PassTypeTotal[];
+  loading?: boolean;
 }) {
   const { can } = usePermissions();
   const enabled = can("pass.view");
+  const controlled = data !== undefined;
 
   const { data: passesData, isLoading: passesLoading } = useQuery({
     queryKey: ["dashboard", "passes-by-type", ...rangeKey(range)],
     queryFn: () => DashboardService.passesByType(range),
-    enabled,
+    enabled: enabled && !controlled,
   });
 
   if (!enabled) return null;
 
-  const passes = passesData ?? [];
+  const passes = data ?? passesData ?? [];
+  const isLoadingPasses = controlled ? !!loading : passesLoading;
   const totalCount = passes.reduce((sum, p) => sum + p.count, 0);
   const totalRevenue = passes.reduce((sum, p) => sum + p.revenue, 0);
 
@@ -44,10 +51,8 @@ export function PassesIssuedCard({
       caption={`${periodLabel.toLowerCase()} · by type`}
       action={<ViewAllLink href="/passes" />}
     >
-      {passesLoading ? (
-        <div className="grid h-24 place-items-center">
-          <Spinner className="size-6" />
-        </div>
+      {isLoadingPasses ? (
+        <WidgetRowsSkeleton rows={3} />
       ) : passes.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No passes issued in this period.
@@ -87,22 +92,28 @@ export function PassesIssuedCard({
 export function TopPassBuyersCard({
   range,
   periodLabel,
+  data,
+  loading,
 }: {
   range: DateRange;
   periodLabel: string;
+  data?: TopPassBuyer[];
+  loading?: boolean;
 }) {
   const { can } = usePermissions();
   const enabled = can("pass.view");
+  const controlled = data !== undefined;
 
   const { data: buyersData, isLoading: buyersLoading } = useQuery({
     queryKey: ["dashboard", "top-pass-buyers", ...rangeKey(range)],
     queryFn: () => DashboardService.topPassBuyers(5, range),
-    enabled,
+    enabled: enabled && !controlled,
   });
 
   if (!enabled) return null;
 
-  const buyers = buyersData ?? [];
+  const buyers = data ?? buyersData ?? [];
+  const isLoadingBuyers = controlled ? !!loading : buyersLoading;
 
   return (
     <SectionCard
@@ -112,10 +123,8 @@ export function TopPassBuyersCard({
       caption={`${periodLabel.toLowerCase()} · top 5`}
       contentClassName="divide-y divide-foreground/10"
     >
-      {buyersLoading ? (
-        <div className="grid h-24 place-items-center">
-          <Spinner className="size-6" />
-        </div>
+      {isLoadingBuyers ? (
+        <WidgetRowsSkeleton rows={3} />
       ) : buyers.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No pass buyers in this period.

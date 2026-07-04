@@ -4,6 +4,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { MainNav } from "@/components/main-nav";
 import { ModeToggle } from "@/components/mode-toggle";
 import { NotificationsButton } from "@/components/notifications-button";
+import { InstallButton } from "@/components/pwa/install-button";
 import { UserAvatarDialog } from "@/components/user-avatar-dialog";
 import { NAVBAR_DATA } from "@/lib/constant";
 import { User } from "@/stores/auth-store";
@@ -21,6 +22,7 @@ export function Header({ user }: { user: User | null }) {
 
         {/* Right-side actions */}
         <div className="ml-auto flex items-center gap-1.5">
+          <InstallButton />
           <ModeToggle />
           <NotificationsButton />
           <div className="ml-1 border-l border-border/60 pl-2.5">

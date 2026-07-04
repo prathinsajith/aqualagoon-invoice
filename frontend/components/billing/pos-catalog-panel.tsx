@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { MediaImage } from "@/components/ui/media-image";
 import { useMemo } from "react";
 import {
   IconSearch,
@@ -12,7 +12,7 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { isPass, isTraining, lineKey, resolveImg } from "./pos-utils";
@@ -44,12 +44,11 @@ function CatalogCard({ item, onAdd }: { item: CatalogItem; onAdd: (item: Catalog
         )}
       >
         {img ? (
-          <Image
+          <MediaImage
             src={img}
             alt={item.name}
             fill
-            unoptimized
-            sizes="150px"
+            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 200px"
             className="object-cover transition-transform group-hover:scale-105"
           />
         ) : (
@@ -116,7 +115,7 @@ function CatalogSection({
         </span>
         <div className="ml-1 h-px flex-1 bg-border/60" />
       </div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] content-start gap-3">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(112px,1fr))] content-start gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:gap-3">
         {items.map((item) => (
           <CatalogCard key={lineKey(item)} item={item} onAdd={onAdd} />
         ))}
@@ -168,8 +167,10 @@ export function PosCatalogPanel({
       </div>
 
       {loading ? (
-        <div className="grid flex-1 place-items-center">
-          <Spinner className="size-7" />
+        <div className="grid grid-cols-2 gap-3 p-1 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-xl" />
+          ))}
         </div>
       ) : items.length === 0 ? (
         <div className="grid flex-1 place-items-center rounded-xl border border-dashed text-sm text-muted-foreground">

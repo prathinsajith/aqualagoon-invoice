@@ -6,7 +6,7 @@ import { IconBell, IconAlertTriangle, IconPackageOff, IconChevronRight } from "@
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardService } from "@/services/dashboard-service";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
@@ -42,12 +42,12 @@ export function NotificationsButton() {
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" sideOffset={10} className="w-80 overflow-hidden p-0">
+      <PopoverContent align="end" sideOffset={10} className="w-80 max-w-[calc(100vw-1.5rem)] overflow-hidden p-0">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <p className="text-sm font-semibold">Notifications</p>
-          {canProducts && count > 0 && (
+          {canProducts && (
             <Link
-              href="/products"
+              href="/notifications"
               className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
             >
               View all <IconChevronRight className="size-3.5" />
@@ -59,8 +59,16 @@ export function NotificationsButton() {
           {!canProducts ? (
             <EmptyState message="You're all caught up." />
           ) : isLoading ? (
-            <div className="grid h-28 place-items-center">
-              <Spinner className="size-6" />
+            <div className="space-y-1">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-start gap-3 px-3 py-2.5">
+                  <Skeleton className="size-8 shrink-0 rounded-full" />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <Skeleton className="h-3.5 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : count === 0 ? (
             <EmptyState message="No alerts — stock levels look healthy." />

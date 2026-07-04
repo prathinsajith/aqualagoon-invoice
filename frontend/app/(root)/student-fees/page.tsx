@@ -10,7 +10,6 @@ import { Can } from "@/components/permission-gate";
 import { DataTableGeneric } from "@/components/data-table-generic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -173,12 +172,9 @@ export function StudentFeesContent() {
         <div className="rounded-md border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
           {getApiErrorMessage(error, "Failed to load student fees")}
         </div>
-      ) : isLoading && !data ? (
-        <div className="grid min-h-[30vh] place-items-center">
-          <Spinner className="size-8" />
-        </div>
       ) : (
         <DataTableGeneric
+          loading={isLoading && !data}
           columns={columns}
           data={data?.data ?? []}
           manualPagination

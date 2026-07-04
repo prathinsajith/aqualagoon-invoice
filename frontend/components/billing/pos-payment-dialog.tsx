@@ -123,7 +123,7 @@ export function PosPaymentDialog({
           </div>
 
           {paid > 0 && paid < total && (
-            <p className="text-xs text-amber-600 dark:text-amber-400">
+            <p className="text-xs text-destructive">
               Full payment required — {formatMoney(total - paid)} short.
             </p>
           )}

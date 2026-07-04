@@ -1,4 +1,5 @@
 import Fastify, { type FastifyError } from "fastify";
+import compress from "@fastify/compress";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import {
@@ -30,6 +31,9 @@ import { holidaysRoutes } from "./modules/holidays/holidays.routes.js";
 import { auditLogsRoutes } from "./modules/audit-logs/audit-logs.routes.js";
 import { productCategoriesRoutes } from "./modules/product-categories/product-categories.routes.js";
 import { productsRoutes } from "./modules/products/products.routes.js";
+import { galleryRoutes } from "./modules/gallery/gallery.routes.js";
+import { siteContentRoutes } from "./modules/site-content/site-content.routes.js";
+import { enquiriesRoutes } from "./modules/enquiries/enquiries.routes.js";
 import { paymentMethodsRoutes } from "./modules/payment-methods/payment-methods.routes.js";
 import { billingRoutes } from "./modules/billing/billing.routes.js";
 import { dashboardRoutes } from "./modules/dashboard/dashboard.routes.js";
@@ -51,6 +55,11 @@ import { studentFeesRoutes } from "./modules/student-fees/student-fees.routes.js
  */
 export async function buildApp() {
   const app = Fastify({
+    // Behind a platform proxy (Railway, and any load balancer) the socket IP is
+    // the proxy's. Trusting X-Forwarded-For makes `request.ip` the real client
+    // IP — essential for the per-IP login rate limit (otherwise every user
+    // shares one IP and trips it together) and for accurate audit-log IPs.
+    trustProxy: true,
     logger: {
       level: env.LOG_LEVEL,
       transport: env.isProduction
@@ -106,6 +115,20 @@ export async function buildApp() {
       if (error.code === "P2025") {
         return reply.status(404).send({ message: "Resource not found", code: "NOT_FOUND" });
       }
+      // Foreign-key / required-relation violations are client errors, not 500s.
+      if (error.code === "P2003" || error.code === "P2014") {
+        return reply.status(409).send({
+          message: "This action conflicts with related records",
+          code: "CONFLICT",
+        });
+      }
+      // Pool/connection timeout — the database is briefly unavailable.
+      if (error.code === "P2024") {
+        return reply.status(503).send({
+          message: "Service temporarily unavailable, please retry",
+          code: "SERVICE_UNAVAILABLE",
+        });
+      }
     }
 
     app.log.error(error);
@@ -128,6 +151,13 @@ export async function buildApp() {
     credentials: true,
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Authorization", "Content-Type"],
+  });
+  // Compress JSON/text responses (brotli > gzip) above ~1 KB — shrinks list and
+  // dashboard payloads ~70–80% for much faster transfer, especially on mobile.
+  await app.register(compress, {
+    global: true,
+    threshold: 1024,
+    encodings: ["br", "gzip", "deflate"],
   });
 
   // Infrastructure plugins.
@@ -155,6 +185,9 @@ export async function buildApp() {
   await app.register(auditLogsRoutes, { prefix: "/api" });
   await app.register(productCategoriesRoutes, { prefix: "/api" });
   await app.register(productsRoutes, { prefix: "/api" });
+  await app.register(galleryRoutes, { prefix: "/api" });
+  await app.register(siteContentRoutes, { prefix: "/api" });
+  await app.register(enquiriesRoutes, { prefix: "/api" });
   await app.register(paymentMethodsRoutes, { prefix: "/api" });
   await app.register(billingRoutes, { prefix: "/api" });
   await app.register(dashboardRoutes, { prefix: "/api" });

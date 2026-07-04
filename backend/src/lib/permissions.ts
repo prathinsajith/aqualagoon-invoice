@@ -64,6 +64,20 @@ export const PERMISSIONS: PermissionDef[] = [
   def("payment_method", "update", "Update payment methods"),
   def("payment_method", "delete", "Delete payment methods"),
 
+  // Website content (public marketing-site: homepage, contact, services, SEO)
+  def("website", "view", "View website content settings"),
+  def("website", "manage", "Manage website content settings"),
+
+  // Website enquiries / bookings (leads captured from the public site)
+  def("enquiry", "view", "View website enquiries & bookings"),
+  def("enquiry", "manage", "Update enquiry status (mark contacted/closed)"),
+
+  // Website gallery (public marketing-site content)
+  def("gallery", "view", "View website gallery images"),
+  def("gallery", "create", "Add website gallery images"),
+  def("gallery", "update", "Update website gallery images"),
+  def("gallery", "delete", "Delete website gallery images"),
+
   // Dashboard (admin analytics overview)
   def("dashboard", "view", "View the admin dashboard"),
 

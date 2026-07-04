@@ -237,8 +237,11 @@ export class BillingService {
         },
       });
 
-      // 8. Reduce stock + inventory transactions (decrement-and-verify guards
-      // against overselling under concurrent checkouts).
+      // 8. Reduce stock + inventory transactions. The decrement-and-verify must
+      // stay per-product (atomic decrement guards against overselling under
+      // concurrent checkouts), but the matching inventory-transaction rows are
+      // collected and written in a single createMany (2N → N+1 queries).
+      const inventoryRows: Prisma.InventoryTransactionCreateManyInput[] = [];
       for (const op of stockOps) {
         const updated = await tx.product.update({
           where: { id: op.id },
@@ -246,34 +249,45 @@ export class BillingService {
           select: { stockQuantity: true, name: true },
         });
         if (updated.stockQuantity < 0) throw Conflict(`Insufficient stock for ${updated.name}`);
-        await tx.inventoryTransaction.create({
-          data: {
-            productId: op.id,
-            type: "SALE",
-            quantityChange: -op.quantity,
-            balanceAfter: updated.stockQuantity,
-            referenceType: "invoice",
-            referenceId: invoice.id,
-            notes: invoiceNo,
-            createdBy: actor.userId,
-          },
+        inventoryRows.push({
+          productId: op.id,
+          type: "SALE",
+          quantityChange: -op.quantity,
+          balanceAfter: updated.stockQuantity,
+          referenceType: "invoice",
+          referenceId: invoice.id,
+          notes: invoiceNo,
+          createdBy: actor.userId,
         });
+      }
+      if (inventoryRows.length > 0) {
+        await tx.inventoryTransaction.createMany({ data: inventoryRows });
       }
 
       // 9. Issue + activate passes — only now that payment has succeeded.
       const passes: IssuedPass[] = [];
       const now = new Date();
       const holderName = input.holderName?.trim() || null;
+      // Reserve the whole block of pass numbers in ONE sequence bump (instead
+      // of one upsert per pass copy) — fewer round-trips and far less lock
+      // contention on the per-year counter row — then hand them out locally.
+      const totalPassQty = passOps.reduce((sum, op) => sum + op.quantity, 0);
+      let nextPassNumber = 0;
+      if (totalPassQty > 0) {
+        const pseq = await tx.passSequence.upsert({
+          where: { year },
+          create: { year, lastNumber: totalPassQty },
+          update: { lastNumber: { increment: totalPassQty } },
+        });
+        // lastNumber is the highest reserved; our block is the trailing range.
+        nextPassNumber = pseq.lastNumber - totalPassQty + 1;
+      }
       for (const op of passOps) {
         // All copies of this pass share the same start/expiry window.
         const expiryTime = addDuration(now, op.passType.durationType, op.passType.durationValue);
         for (let i = 0; i < op.quantity; i++) {
-          const pseq = await tx.passSequence.upsert({
-            where: { year },
-            create: { year, lastNumber: 1 },
-            update: { lastNumber: { increment: 1 } },
-          });
-          const passNumber = `${passPrefix}-${year}-${String(pseq.lastNumber).padStart(6, "0")}`;
+          const passNumber = `${passPrefix}-${year}-${String(nextPassNumber).padStart(6, "0")}`;
+          nextPassNumber++;
           // A single-entry pass is consumed the moment it's issued — taking the
           // pass IS the one entry, so it starts with 0 left and the entry is logged.
           const isSingleEntry =
@@ -358,26 +372,30 @@ export class BillingService {
       },
       ipAddress: actor.ip,
     });
-    for (const p of result.passes) {
-      await writeAudit(this.prisma, {
-        userId: actor.userId,
-        action: AuditAction.PASS_SOLD,
-        module: MODULE,
-        recordId: p.id,
-        newData: { passNumber: p.passNumber, passType: p.passTypeName, invoiceNo: dto.invoiceNo },
-        ipAddress: actor.ip,
-      });
-    }
-    for (const f of result.feeOps) {
-      await writeAudit(this.prisma, {
-        userId: actor.userId,
-        action: AuditAction.FEE_PAID,
-        module: MODULE,
-        recordId: f.id,
-        newData: { fee: f.name, invoiceNo: dto.invoiceNo },
-        ipAddress: actor.ip,
-      });
-    }
+    // Per-pass and per-fee audit entries are independent — write them in
+    // parallel instead of one serial round-trip each.
+    await Promise.all([
+      ...result.passes.map((p) =>
+        writeAudit(this.prisma, {
+          userId: actor.userId,
+          action: AuditAction.PASS_SOLD,
+          module: MODULE,
+          recordId: p.id,
+          newData: { passNumber: p.passNumber, passType: p.passTypeName, invoiceNo: dto.invoiceNo },
+          ipAddress: actor.ip,
+        }),
+      ),
+      ...result.feeOps.map((f) =>
+        writeAudit(this.prisma, {
+          userId: actor.userId,
+          action: AuditAction.FEE_PAID,
+          module: MODULE,
+          recordId: f.id,
+          newData: { fee: f.name, invoiceNo: dto.invoiceNo },
+          ipAddress: actor.ip,
+        }),
+      ),
+    ]);
 
     return { invoice: dto, change: result.change, passes: result.passes };
   }
@@ -576,26 +594,36 @@ export class BillingService {
 
       // Reverse training-fee payments this invoice collected: subtract exactly
       // what each line paid (supports partial payments), recompute status, and
-      // unlink the fee if it pointed at this invoice.
-      for (const item of existing.items) {
-        if (item.itemType !== "TRAINING") continue;
-        const fee = await tx.studentFee.findUnique({ where: { id: item.itemId } });
-        if (!fee) continue;
-        const paid = fee.paidAmount.sub(item.totalAmount);
-        const newPaid = paid.lessThan(0) ? new D(0) : paid;
-        const status = newPaid.greaterThanOrEqualTo(fee.finalAmount)
-          ? "PAID"
-          : newPaid.greaterThan(0)
-            ? "PARTIAL"
-            : "PENDING";
-        await tx.studentFee.update({
-          where: { id: fee.id },
-          data: {
-            paidAmount: newPaid,
-            status,
-            invoiceId: fee.invoiceId === id ? null : fee.invoiceId,
-          },
+      // unlink the fee if it pointed at this invoice. Prefetch every affected
+      // fee in one query (instead of N findUnique calls), then apply the
+      // independent updates in parallel.
+      const trainingItems = existing.items.filter((item) => item.itemType === "TRAINING");
+      if (trainingItems.length > 0) {
+        const fees = await tx.studentFee.findMany({
+          where: { id: { in: trainingItems.map((item) => item.itemId) } },
         });
+        const feeById = new Map(fees.map((f) => [f.id, f]));
+        await Promise.all(
+          trainingItems.map((item) => {
+            const fee = feeById.get(item.itemId);
+            if (!fee) return Promise.resolve();
+            const paid = fee.paidAmount.sub(item.totalAmount);
+            const newPaid = paid.lessThan(0) ? new D(0) : paid;
+            const status = newPaid.greaterThanOrEqualTo(fee.finalAmount)
+              ? "PAID"
+              : newPaid.greaterThan(0)
+                ? "PARTIAL"
+                : "PENDING";
+            return tx.studentFee.update({
+              where: { id: fee.id },
+              data: {
+                paidAmount: newPaid,
+                status,
+                invoiceId: fee.invoiceId === id ? null : fee.invoiceId,
+              },
+            });
+          }),
+        );
       }
 
       return tx.invoice.findUniqueOrThrow({ where: { id }, include: invoiceInclude });
@@ -739,13 +767,16 @@ export class BillingService {
     const invoice = await this.prisma.invoice.findUnique({ where: { id }, include: invoiceInclude });
     if (!invoice) throw NotFound("Invoice not found");
 
-    const company = await this.prisma.companySetting.findFirst();
-    const cashier = invoice.createdBy
-      ? await this.prisma.user.findUnique({
-          where: { id: invoice.createdBy },
-          select: { firstName: true, lastName: true },
-        })
-      : null;
+    // Company profile and cashier are independent — fetch them in parallel.
+    const [company, cashier] = await Promise.all([
+      this.prisma.companySetting.findFirst(),
+      invoice.createdBy
+        ? this.prisma.user.findUnique({
+            where: { id: invoice.createdBy },
+            select: { firstName: true, lastName: true },
+          })
+        : Promise.resolve(null),
+    ]);
     const dto = toInvoiceDto(invoice);
 
     return {
@@ -755,6 +786,7 @@ export class BillingService {
         address: company?.address ?? null,
         phone: company?.phone ?? null,
         email: company?.email ?? null,
+        logoUrl: company?.logoUrl ?? null,
       },
       invoiceNo: dto.invoiceNo,
       invoiceDate: invoice.createdAt,

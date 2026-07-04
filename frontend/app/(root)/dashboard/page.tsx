@@ -16,7 +16,7 @@ import {
 } from "@tabler/icons-react";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserStatusBadge } from "@/components/rbac/status-badge";
 import { PersonAvatar } from "@/components/person-avatar";
 import {
@@ -75,7 +75,7 @@ function StatCard({
           <div className="mt-0.5 flex items-baseline gap-2">
             <span className="text-2xl font-bold tracking-tight">
               {loading ? (
-                <Spinner className="size-5" />
+                <Skeleton className="h-7 w-16" />
               ) : (
                 (valueText ?? (value ?? 0).toLocaleString())
               )}
@@ -114,10 +114,19 @@ function RecentUsersSection({ users, loading }: { users: ManagedUser[]; loading:
       contentClassName="divide-y divide-foreground/10"
     >
       {loading ? (
-        <div className="grid h-32 place-items-center">
-          <Spinner className="size-6" />
+        <div className="space-y-1 py-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-2 py-2">
+              <Skeleton className="size-9 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-3 w-44" />
+              </div>
+              <Skeleton className="h-4 w-12" />
+            </div>
+          ))}
         </div>
-      ) : users.length === 0 ? (
+      ) :users.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">No users yet.</p>
       ) : (
         users.map((u) => (
@@ -153,10 +162,19 @@ function ActiveBatchesSection({ batches, loading }: { batches: TrainingBatch[]; 
       contentClassName="divide-y divide-foreground/10"
     >
       {loading ? (
-        <div className="grid h-32 place-items-center">
-          <Spinner className="size-6" />
+        <div className="space-y-1 py-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-2 py-2">
+              <Skeleton className="size-9 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-3 w-44" />
+              </div>
+              <Skeleton className="h-4 w-12" />
+            </div>
+          ))}
         </div>
-      ) : batches.length === 0 ? (
+      ) :batches.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">No active batches.</p>
       ) : (
         batches.map((b) => {
@@ -214,10 +232,19 @@ function NewAdmissionsSection({
       contentClassName="space-y-1"
     >
       {loading ? (
-        <div className="grid h-32 place-items-center">
-          <Spinner className="size-6" />
+        <div className="space-y-1 py-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-2 py-2">
+              <Skeleton className="size-9 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-3 w-44" />
+              </div>
+              <Skeleton className="h-4 w-12" />
+            </div>
+          ))}
         </div>
-      ) : admissions.length === 0 ? (
+      ) :admissions.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No admissions {isToday ? "today" : "in this period"} yet.
         </p>
@@ -296,20 +323,13 @@ function DashboardContent() {
     queryFn: () => UserService.list({ limit: 5, sortBy: "createdAt", sortOrder: "desc" }),
     enabled: canUsers,
   });
-  const { data: recentAdmissionsData, isLoading: recentAdmissionsLoading } = useQuery({
-    queryKey: ["dashboard", "recent-enrollments", range.from.toISOString(), range.to.toISOString()],
-    queryFn: () => DashboardService.recentEnrollments(8, range),
-    enabled: canEnrollments,
-  });
-  const { data: salesSummaryData, isLoading: salesSummaryLoading } = useQuery({
-    queryKey: ["dashboard", "sales-summary", range.from.toISOString(), range.to.toISOString()],
-    queryFn: () => DashboardService.salesSummary(range),
-    enabled: canBilling,
-  });
-  const { data: revenueBreakdownData, isLoading: revenueBreakdownLoading } = useQuery({
-    queryKey: ["dashboard", "revenue-breakdown", range.from.toISOString(), range.to.toISOString()],
-    queryFn: () => DashboardService.revenueBreakdown(range),
-    enabled: canBilling,
+  // One request for the whole dashboard (sales, revenue, payments, passes,
+  // products, invoices, admissions) instead of ~8 parallel calls. Widgets below
+  // receive their slice as props rather than self-fetching.
+  const { data: overview, isLoading: overviewLoading } = useQuery({
+    queryKey: ["dashboard", "overview", range.from.toISOString(), range.to.toISOString()],
+    queryFn: () => DashboardService.overview(range),
+    enabled: canBilling || canEnrollments,
   });
   // Training KPIs (only fetched for the non-billing / trainer view).
   const { data: activeBatchesData, isLoading: activeBatchesLoading } = useQuery({
@@ -339,29 +359,29 @@ function DashboardContent() {
     stats.push(
       {
         label: isToday ? "Today's revenue" : "Revenue",
-        valueText: formatMoney(salesSummaryData?.revenue ?? 0),
-        loading: salesSummaryLoading,
+        valueText: formatMoney(overview?.salesSummary.revenue ?? 0),
+        loading: overviewLoading,
         icon: IconCoin,
         tint: "bg-emerald-50 text-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-300",
       },
       {
         label: "Product revenue",
-        valueText: formatMoney(revenueBreakdownData?.product ?? 0),
-        loading: revenueBreakdownLoading,
+        valueText: formatMoney(overview?.revenueBreakdown.product ?? 0),
+        loading: overviewLoading,
         icon: IconShoppingCart,
         tint: "bg-blue-50 text-blue-500 dark:bg-blue-900/30 dark:text-blue-300",
       },
       {
         label: "Pass revenue",
-        valueText: formatMoney(revenueBreakdownData?.pass ?? 0),
-        loading: revenueBreakdownLoading,
+        valueText: formatMoney(overview?.revenueBreakdown.pass ?? 0),
+        loading: overviewLoading,
         icon: IconTicket,
         tint: "bg-violet-50 text-violet-500 dark:bg-violet-900/30 dark:text-violet-300",
       },
       {
         label: "Admissions revenue",
-        valueText: formatMoney(revenueBreakdownData?.training ?? 0),
-        loading: revenueBreakdownLoading,
+        valueText: formatMoney(overview?.revenueBreakdown.training ?? 0),
+        loading: overviewLoading,
         icon: IconSchool,
         tint: "bg-amber-50 text-amber-500 dark:bg-amber-900/30 dark:text-amber-300",
       },
@@ -387,7 +407,7 @@ function DashboardContent() {
   }
 
   const recentUsers = recentUsersData?.data ?? [];
-  const recentAdmissions = recentAdmissionsData ?? [];
+  const recentAdmissions = overview?.recentEnrollments ?? [];
   const activeBatches = activeBatchesData?.data ?? [];
 
   // Bottom "list" panels, chosen by role so the row is never lopsided.
@@ -441,12 +461,27 @@ function DashboardContent() {
       {canBilling && (
         <>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <PaymentsReceivedCard range={range} periodLabel={periodLabel} />
-            <PassesIssuedCard range={range} periodLabel={periodLabel} />
+            <PaymentsReceivedCard
+              range={range}
+              periodLabel={periodLabel}
+              data={overview?.paymentsByMethod ?? []}
+              loading={overviewLoading}
+            />
+            <PassesIssuedCard
+              range={range}
+              periodLabel={periodLabel}
+              data={overview?.passesByType ?? []}
+              loading={overviewLoading}
+            />
           </div>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <TopProductsCard range={range} />
-            <TopPassBuyersCard range={range} periodLabel={periodLabel} />
+            <TopProductsCard range={range} data={overview?.topProducts ?? []} loading={overviewLoading} />
+            <TopPassBuyersCard
+              range={range}
+              periodLabel={periodLabel}
+              data={overview?.topPassBuyers ?? []}
+              loading={overviewLoading}
+            />
           </div>
         </>
       )}
@@ -468,7 +503,7 @@ function DashboardContent() {
           {showAdmissions && (
             <NewAdmissionsSection
               admissions={recentAdmissions}
-              loading={recentAdmissionsLoading}
+              loading={overviewLoading}
               isToday={isToday}
             />
           )}
@@ -476,7 +511,13 @@ function DashboardContent() {
       )}
 
       {/* Recent invoices — full width at the bottom (billing only) */}
-      {canBilling && <RecentInvoicesCard range={range} />}
+      {canBilling && (
+        <RecentInvoicesCard
+          range={range}
+          data={overview?.recentInvoices ?? []}
+          loading={overviewLoading}
+        />
+      )}
 
       {/* Fallback for users with no dashboard-relevant access */}
       {nothingToShow && (

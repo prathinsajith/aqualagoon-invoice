@@ -1,0 +1,27 @@
+# Railway deploy config — Smart Tracking admin (Next.js 16, App Router).
+#
+# Setup in Railway:
+#   1. New service → deploy from this repo.
+#   2. Service → Settings → Root Directory = "frontend"  (so this file is used).
+#   3. Set the variable below (Service → Variables).
+#
+# Required BUILD-TIME variable (baked into the client bundle at `next build`,
+# so it must be set before the build runs):
+#   NEXT_PUBLIC_API_URL = https://<your-backend-domain>   # the API service URL
+#
+# PORT is injected by Railway automatically.
+
+[build]
+builder = "NIXPACKS"
+# `--prod=false` keeps devDependencies (typescript, tailwind, eslint) needed by
+# `next build`; `--frozen-lockfile` makes the install reproducible.
+buildCommand = "pnpm install --prod=false --frozen-lockfile && pnpm build"
+
+[deploy]
+# The package.json `start` script pins port 3300; on Railway we must bind the
+# injected $PORT instead, so start Next directly with -p $PORT.
+startCommand = "pnpm exec next start -p $PORT"
+healthcheckPath = "/login"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

@@ -53,11 +53,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
+    /** Show shimmer rows instead of data — for the first load of this table. */
+    loading?: boolean
     searchKey?: string
     searchPlaceholder?: string
     showColumnVisibility?: boolean
@@ -77,6 +80,7 @@ interface DataTableProps<TData, TValue> {
 export function DataTableGeneric<TData, TValue>({
     columns,
     data,
+    loading = false,
     searchKey,
     searchPlaceholder = "Search...",
     showColumnVisibility = true,
@@ -174,7 +178,7 @@ export function DataTableGeneric<TData, TValue>({
                                 <IconChevronDown className="size-3.5 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuContent align="end" className="max-h-[60vh] w-56 max-w-[calc(100vw-1rem)] overflow-y-auto">
                             {table
                                 .getAllColumns()
                                 .filter((column) => column.getCanHide())
@@ -217,6 +221,25 @@ export function DataTableGeneric<TData, TValue>({
                                                             : ""
                                                     }
                                                     onClick={header.column.getToggleSortingHandler()}
+                                                    // Keyboard-operable sort: focusable + Enter/Space toggles.
+                                                    role={header.column.getCanSort() ? "button" : undefined}
+                                                    tabIndex={header.column.getCanSort() ? 0 : undefined}
+                                                    aria-sort={
+                                                        header.column.getIsSorted() === "asc"
+                                                            ? "ascending"
+                                                            : header.column.getIsSorted() === "desc"
+                                                                ? "descending"
+                                                                : header.column.getCanSort()
+                                                                    ? "none"
+                                                                    : undefined
+                                                    }
+                                                    onKeyDown={(e) => {
+                                                        if (!header.column.getCanSort()) return;
+                                                        if (e.key === "Enter" || e.key === " ") {
+                                                            e.preventDefault();
+                                                            header.column.toggleSorting();
+                                                        }
+                                                    }}
                                                 >
                                                     {flexRender(
                                                         header.column.columnDef.header,
@@ -242,7 +265,18 @@ export function DataTableGeneric<TData, TValue>({
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows?.length ? (
+                        {loading ? (
+                            Array.from({ length: Math.min(currentPageSize, 8) }).map((_, r) => (
+                                <TableRow key={`skeleton-${r}`} className="hover:bg-transparent">
+                                    {onReorder && <TableCell className="w-8 pl-4" />}
+                                    {columns.map((_, c) => (
+                                        <TableCell key={c} className="py-3 px-4 first:pl-4 last:pr-4">
+                                            <Skeleton className={cn("h-4", c === 0 ? "w-32" : "w-20")} />
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
+                        ) : table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}

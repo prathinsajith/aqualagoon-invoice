@@ -11,7 +11,6 @@ import { DataTableGeneric } from "@/components/data-table-generic";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Spinner } from "@/components/ui/spinner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -188,12 +187,9 @@ export function PaymentMethodsSection() {
         <div className="rounded-md border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
           {getApiErrorMessage(error, "Failed to load payment methods")}
         </div>
-      ) : isLoading && !data ? (
-        <div className="grid min-h-[20vh] place-items-center">
-          <Spinner className="size-7" />
-        </div>
       ) : (
         <DataTableGeneric
+          loading={isLoading && !data}
           columns={columns}
           data={list}
           showPagination={false}

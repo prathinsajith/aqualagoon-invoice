@@ -1,6 +1,6 @@
 import type { PrismaClient } from "../../generated/prisma/client.js";
 import { env } from "../../config/env.js";
-import { hashPassword, verifyPassword } from "../../lib/password.js";
+import { hashPassword, verifyPassword, needsRehash } from "../../lib/password.js";
 import {
   signAccessToken,
   signMfaToken,
@@ -63,6 +63,14 @@ export class AuthService {
       throw Unauthorized("Invalid credentials");
     }
     if (user.status !== "ACTIVE") throw Forbidden("Your account is not active");
+
+    // Transparently upgrade legacy/high-cost hashes to the current params so
+    // the next login is faster. Best-effort — don't block or fail the login.
+    if (needsRehash(user.passwordHash)) {
+      void hashPassword(input.password)
+        .then((hash) => this.repo.updatePassword(user.id, hash, false))
+        .catch(() => {});
+    }
 
     // Password verified — if 2FA is on, hand back a short-lived MFA token and
     // require the authenticator code before issuing a real session.

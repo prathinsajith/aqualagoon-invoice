@@ -1,10 +1,9 @@
 "use client";
 
-import * as TablerIcons from "@tabler/icons-react";
-import { type Icon } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { navIcon } from "@/lib/nav-icons";
 import { NavItem } from "@/lib/constant";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
@@ -34,9 +33,7 @@ export function MainNav({ items, orientation = "horizontal", onNavigate }: MainN
       className={cn(isHorizontal ? "flex items-center gap-1" : "flex flex-col gap-1")}
     >
       {visible.map((item) => {
-        const IconComponent = item.icon
-          ? (TablerIcons as unknown as Record<string, Icon>)[item.icon]
-          : null;
+        const IconComponent = navIcon(item.icon);
         const isActive = pathname === item.url || pathname.startsWith(`${item.url}/`);
 
         return (

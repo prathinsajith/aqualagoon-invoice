@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { IconReceipt2 } from "@tabler/icons-react";
 
-import { Spinner } from "@/components/ui/spinner";
+import { WidgetRowsSkeleton } from "@/components/skeletons";
 import { InvoiceStatusBadge } from "@/components/billing/invoice-status-badge";
 import { SectionCard, ViewAllLink } from "@/components/dashboard/section-card";
 import { DashboardService } from "@/services/dashboard-service";
@@ -12,21 +12,32 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { formatMoney } from "@/lib/format";
 import { rangeKey } from "./dashboard-card-utils";
 import type { DateRange } from "@/lib/date-range";
+import type { InvoiceSummary } from "@/types/billing";
 
 /** Most recent invoices in the range. */
-export function RecentInvoicesCard({ range }: { range: DateRange }) {
+export function RecentInvoicesCard({
+  range,
+  data,
+  loading,
+}: {
+  range: DateRange;
+  data?: InvoiceSummary[];
+  loading?: boolean;
+}) {
   const { can } = usePermissions();
   const enabled = can("billing.view");
+  const controlled = data !== undefined;
 
   const { data: recentData, isLoading: recentLoading } = useQuery({
     queryKey: ["dashboard", "recent-invoices", ...rangeKey(range)],
     queryFn: () => DashboardService.recentInvoices(5, range),
-    enabled,
+    enabled: enabled && !controlled,
   });
 
   if (!enabled) return null;
 
-  const recent = recentData ?? [];
+  const recent = data ?? recentData ?? [];
+  const isLoadingRecent = controlled ? !!loading : recentLoading;
 
   return (
     <SectionCard
@@ -36,10 +47,8 @@ export function RecentInvoicesCard({ range }: { range: DateRange }) {
       action={<ViewAllLink href="/invoices" />}
       contentClassName="divide-y divide-foreground/10"
     >
-      {recentLoading ? (
-        <div className="grid h-32 place-items-center">
-          <Spinner className="size-6" />
-        </div>
+      {isLoadingRecent ? (
+        <WidgetRowsSkeleton />
       ) : recent.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">No invoices in this period.</p>
       ) : (

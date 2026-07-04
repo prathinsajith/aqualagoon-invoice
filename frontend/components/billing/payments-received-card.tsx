@@ -3,27 +3,35 @@
 import { useQuery } from "@tanstack/react-query";
 import { IconWallet } from "@tabler/icons-react";
 
-import { Spinner } from "@/components/ui/spinner";
+import { WidgetRowsSkeleton } from "@/components/skeletons";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { DashboardService } from "@/services/dashboard-service";
 import { usePermissions } from "@/hooks/usePermissions";
 import { formatMoney } from "@/lib/format";
 import { rangeKey, type DashboardRangeProps } from "./dashboard-card-utils";
+import type { PaymentMethodTotal } from "@/types/billing";
 
 /** Amount received in the range, grouped by payment method. */
-export function PaymentsReceivedCard({ range, periodLabel }: DashboardRangeProps) {
+export function PaymentsReceivedCard({
+  range,
+  periodLabel,
+  data,
+  loading,
+}: DashboardRangeProps & { data?: PaymentMethodTotal[]; loading?: boolean }) {
   const { can } = usePermissions();
   const enabled = can("billing.view");
+  const controlled = data !== undefined;
 
   const { data: paymentsData, isLoading: paymentsLoading } = useQuery({
     queryKey: ["dashboard", "payments-by-method", ...rangeKey(range)],
     queryFn: () => DashboardService.paymentsByMethod(range),
-    enabled,
+    enabled: enabled && !controlled,
   });
 
   if (!enabled) return null;
 
-  const payments = paymentsData ?? [];
+  const payments = data ?? paymentsData ?? [];
+  const isLoadingPayments = controlled ? !!loading : paymentsLoading;
   const paymentsTotal = payments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
@@ -33,10 +41,8 @@ export function PaymentsReceivedCard({ range, periodLabel }: DashboardRangeProps
       title="Payments received"
       caption={`${periodLabel.toLowerCase()} · by method`}
     >
-      {paymentsLoading ? (
-        <div className="grid h-24 place-items-center">
-          <Spinner className="size-6" />
-        </div>
+      {isLoadingPayments ? (
+        <WidgetRowsSkeleton rows={3} />
       ) : payments.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No payments received in this period.

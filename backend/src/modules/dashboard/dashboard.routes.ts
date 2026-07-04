@@ -6,6 +6,7 @@ import {
   limitQuery,
   limitRangeQuery,
   lowStockResponse,
+  overviewResponse,
   passesByTypeResponse,
   paymentsByMethodResponse,
   rangeQuery,
@@ -23,6 +24,21 @@ export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
 
   const tags = ["dashboard"];
   const security = [{ bearerAuth: [] }];
+
+  r.get(
+    "/dashboard/overview",
+    {
+      preHandler: [app.authenticate, app.requirePermission("dashboard.view")],
+      schema: {
+        tags,
+        summary: "All dashboard data in one payload for a date range (default today)",
+        security,
+        querystring: rangeQuery,
+        response: { 200: overviewResponse, ...commonErrors },
+      },
+    },
+    async (request) => ({ data: await service.overview(request.query) }),
+  );
 
   r.get(
     "/dashboard/sales-summary",

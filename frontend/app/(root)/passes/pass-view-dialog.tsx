@@ -19,7 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/rbac/confirm-dialog";
 import { Can } from "@/components/permission-gate";
 import { PassStatusBadge } from "@/components/passes/pass-status-badge";
@@ -111,8 +111,19 @@ export function PassViewDialog({
           </DialogHeader>
 
           {isLoading || !pass ? (
-            <div className="grid min-h-[20vh] place-items-center">
-              <Spinner className="size-7" />
+            <div className="space-y-5 py-2">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="space-y-1.5">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-4 w-28" />
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-2 border-t pt-4">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-16 w-full rounded-lg" />
+              </div>
             </div>
           ) : (
             <div className="space-y-5">

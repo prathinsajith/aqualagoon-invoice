@@ -1,3 +1,10 @@
+# Single-project repo (not a real monorepo). The `packages` field is required
+# by pnpm — without it, newer pnpm versions abort install with "packages field
+# missing or empty" (e.g. on Railway/Vercel CI). `.` matches the lockfile's
+# existing single importer, so --frozen-lockfile stays valid.
+packages:
+  - .
+
 allowBuilds:
   '@prisma/engines': true
   esbuild: true

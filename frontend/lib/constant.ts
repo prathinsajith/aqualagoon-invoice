@@ -57,6 +57,8 @@ export const NAVBAR_DATA: {
             icon: 'IconUsersGroup',
             permission: 'enrollment.view',
         },
+        // Website management lives in the profile dropdown (see UserAvatarDialog),
+        // alongside Settings / Company / Audit Logs — not in the header nav.
         // Audit Logs is admin-only and lives in the profile dropdown, not the header nav.
         // Hidden for now — uncomment to restore.
         // {

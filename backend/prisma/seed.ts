@@ -25,8 +25,36 @@ const SYSTEM_ROLES: { name: string; description: string }[] = [
   { name: "Guest", description: "Limited, read-only access." },
 ];
 
-const ADMIN_EMAIL = process.env["SEED_ADMIN_EMAIL"] ?? "sprathin007@gmail.com";
-const ADMIN_PASSWORD = process.env["SEED_ADMIN_PASSWORD"] ?? "Aqua@2026";
+/** Read a required env var; fail loudly so we never seed with code defaults. */
+function requiredEnv(key: string): string {
+  const value = process.env[key]?.trim();
+  if (!value) {
+    throw new Error(
+      `Missing required env var ${key}. Set it in your .env (see .env.example) before seeding.`,
+    );
+  }
+  return value;
+}
+
+/** Read an optional env var with an explicit fallback. */
+function optionalEnv(key: string, fallback: string): string {
+  return process.env[key]?.trim() || fallback;
+}
+
+// Credentials must come from the environment — never hardcode them in source.
+const ADMIN_EMAIL = requiredEnv("SEED_ADMIN_EMAIL");
+const ADMIN_PASSWORD = requiredEnv("SEED_ADMIN_PASSWORD");
+
+// Company profile (singleton). Seeded only when the table is empty, so these
+// are starter values the admin can later edit in Settings → Company.
+const COMPANY_NAME = requiredEnv("SEED_COMPANY_NAME");
+const COMPANY_TAGLINE = optionalEnv("SEED_COMPANY_TAGLINE", "");
+const COMPANY_EMAIL = requiredEnv("SEED_COMPANY_EMAIL");
+
+// Sample catalog + a demo trainer (with a known password) are useful for
+// local/staging demos but MUST NOT land in production. Off unless explicitly
+// enabled with SEED_SAMPLES=true.
+const SEED_SAMPLES = process.env["SEED_SAMPLES"] === "true";
 
 async function main(): Promise<void> {
   const adapter = new PrismaPg({ connectionString: process.env["DATABASE_URL"]! });
@@ -136,9 +164,9 @@ async function main(): Promise<void> {
     if ((await prisma.companySetting.count()) === 0) {
       await prisma.companySetting.create({
         data: {
-          name: "Aqua Lagoon",
-          tagline: "Swimming Pool & Kids Water Park",
-          email: "hello@aqualagoon.com",
+          name: COMPANY_NAME,
+          tagline: COMPANY_TAGLINE || null,
+          email: COMPANY_EMAIL,
         },
       });
       console.log("✓ Default company profile created");
@@ -159,8 +187,8 @@ async function main(): Promise<void> {
       console.log(`✓ Seeded ${methods.length} payment methods`);
     }
 
-    // 7. Sample pass types --------------------------------------------------
-    if ((await prisma.passType.count()) === 0) {
+    // 7. Sample pass types (demo only) --------------------------------------
+    if (SEED_SAMPLES && (await prisma.passType.count()) === 0) {
       await prisma.passType.createMany({
         data: [
           { type: "GUEST", name: "Guest 1 Hour Pass", durationType: "HOUR", durationValue: 1, entryType: "UNLIMITED", price: "100" },
@@ -174,8 +202,8 @@ async function main(): Promise<void> {
       console.log("✓ Seeded 6 sample pass types");
     }
 
-    // 8. Sample training data (types → programs → fee plans → a batch) -------
-    if ((await prisma.trainingType.count()) === 0) {
+    // 8. Sample training data + demo trainer (demo only) --------------------
+    if (SEED_SAMPLES && (await prisma.trainingType.count()) === 0) {
       const trainerRole = await prisma.role.findUnique({ where: { name: "Trainer" } });
       // A demo trainer (idempotent on userCode/email).
       const trainer = await prisma.user.upsert({
@@ -186,7 +214,7 @@ async function main(): Promise<void> {
           firstName: "Tara",
           lastName: "Trainer",
           email: "trainer@demo.aqualagoon.com",
-          passwordHash: await hashPassword("Demo@12345"),
+          passwordHash: await hashPassword(optionalEnv("SEED_SAMPLE_TRAINER_PASSWORD", "Demo@12345")),
           status: "ACTIVE",
         },
       });

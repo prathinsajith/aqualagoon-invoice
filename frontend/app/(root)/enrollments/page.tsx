@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { PaginationState } from "@tanstack/react-table";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
 import { toast } from "sonner";
@@ -11,7 +11,6 @@ import { Can } from "@/components/permission-gate";
 import { DataTableGeneric } from "@/components/data-table-generic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -69,14 +68,17 @@ export function EnrollmentsContent() {
 
   const resetToFirstPage = () => setPagination((p) => ({ ...p, pageIndex: 0 }));
 
-  const changeStatus = async (enrollment: StudentEnrollment, status: EnrollmentStatus) => {
-    try {
-      await update.mutateAsync({ id: enrollment.id, payload: { status } });
-      toast.success("Enrollment updated");
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to update enrollment"));
-    }
-  };
+  const changeStatus = useCallback(
+    async (enrollment: StudentEnrollment, status: EnrollmentStatus) => {
+      try {
+        await update.mutateAsync({ id: enrollment.id, payload: { status } });
+        toast.success("Enrollment updated");
+      } catch (err) {
+        toast.error(getApiErrorMessage(err, "Failed to update enrollment"));
+      }
+    },
+    [update],
+  );
 
   const columns = useMemo(
     () =>
@@ -84,8 +86,7 @@ export function EnrollmentsContent() {
         onChangeStatus: changeStatus,
         canUpdate: can("enrollment.update"),
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [can],
+    [can, changeStatus],
   );
 
   return (
@@ -159,12 +160,9 @@ export function EnrollmentsContent() {
         <div className="rounded-md border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
           {getApiErrorMessage(error, "Failed to load enrollments")}
         </div>
-      ) : isLoading && !data ? (
-        <div className="grid min-h-[30vh] place-items-center">
-          <Spinner className="size-8" />
-        </div>
       ) : (
         <DataTableGeneric
+          loading={isLoading && !data}
           columns={columns}
           data={data?.data ?? []}
           manualPagination

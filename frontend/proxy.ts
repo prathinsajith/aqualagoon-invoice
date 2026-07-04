@@ -39,6 +39,7 @@ export const config = {
   // static assets). Add new protected top-level routes here.
   matcher: [
     "/dashboard/:path*",
+    "/analytics/:path*",
     "/calendar/:path*",
     "/status/:path*",
     "/settings/:path*",
@@ -61,5 +62,7 @@ export const config = {
     "/attendance/:path*",
     "/student-fees/:path*",
     "/audit-logs/:path*",
+    "/notifications/:path*",
+    "/website/:path*",
   ],
 };
