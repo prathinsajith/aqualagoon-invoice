@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/env";
 import { getSiteContent } from "@/lib/site-content";
+import { AREAS } from "@/lib/areas";
 
-const STATIC_ROUTES = ["", "/services", "/classes", "/gallery", "/about", "/contact"];
+const STATIC_ROUTES = ["", "/services", "/classes", "/gallery", "/about", "/contact", "/areas"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { services } = await getSiteContent();
@@ -19,5 +20,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticEntries, ...serviceEntries];
+  // Per-town service-area pages ("swimming pool in <town>").
+  const areaEntries: MetadataRoute.Sitemap = AREAS.map((a) => ({
+    url: `${SITE_URL}/areas/${a.slug}`,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
+
+  return [...staticEntries, ...serviceEntries, ...areaEntries];
 }
