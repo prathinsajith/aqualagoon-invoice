@@ -11,6 +11,7 @@ export interface SocialLinks {
     instagram: string;
     x: string;
     youtube: string;
+    whatsapp: string;
 }
 
 export interface ContactContent {
