@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SiteContentService } from "@/services/site-content-service";
 import type { SiteContentKey } from "@/types/site-content";
 
-export const siteContentKeys = {
+const siteContentKeys = {
     all: ["site-content"] as const,
 };
 

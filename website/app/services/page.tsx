@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
+import Image from "next/image";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import { getSiteContent, contentImage } from "@/lib/site-content";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Services & Programs — Aqua Lagoon",
   description:
-    "Open swimming, learn-to-swim lessons, a kids' water park, yoga, zumba and a mini auditorium — explore everything Aqua Lagoon offers.",
-};
+    "Open swimming, learn-to-swim lessons, yoga, zumba and a mini auditorium — explore everything Aqua Lagoon offers.",
+  path: "/services",
+});
 
 export default async function ServicesPage() {
   const { services } = await getSiteContent();
@@ -29,8 +32,7 @@ export default async function ServicesPage() {
             <div key={sv.id} className={`service-row ${sv.imgRight ? "img-right" : "img-left"}`}>
               <Link href={`/services/${sv.id}`} className="service-media" style={{ background: sv.tint, textDecoration: "none" }}>
                 {img ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={img} alt={sv.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                  <Image src={img} alt={sv.title} fill sizes="(max-width: 960px) 100vw, 560px" style={{ objectFit: "cover" }} />
                 ) : (
                   <div>
                     <Icon name={sv.icon} color={sv.color} size={76} />

@@ -452,7 +452,7 @@ function DashboardContent() {
           )}
         >
           {stats.map((s) => (
-            <StatCard key={s.label} {...s} />
+            <StatCard {...s} key={s.label} />
           ))}
         </div>
       )}

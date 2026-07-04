@@ -24,11 +24,13 @@
   --blue-ink:    #0b6aab;
   --cyan:        #2bc0e8;
   --cyan-light:  #6fd6f5;
+  /* AA-contrast (4.5:1 on white) variant of the brand cyan, for small text. */
+  --cyan-text:   #0e7490;
   --sky:         #6fe0ff;
 
   --text:        #2f5266;
-  --text-body:   #5b7d92;
-  --text-muted:  #7fa9c4;
+  --text-body:   #54748a; /* ≥4.5:1 on white (AA) */
+  --text-muted:  #56788f; /* ≥4.5:1 on white (AA) */
   --text-slate:  #3a5568;
 
   --tint-blue:   #e0f4fd;
@@ -53,8 +55,8 @@
   --radius-md:   22px;
   --radius-sm:   16px;
 
-  --font-head: 'Fredoka', 'Nunito', system-ui, sans-serif;
-  --font-body: 'Nunito', system-ui, sans-serif;
+  --font-head: var(--font-fredoka, 'Fredoka'), var(--font-nunito, 'Nunito'), system-ui, sans-serif;
+  --font-body: var(--font-nunito, 'Nunito'), system-ui, sans-serif;
 
   --maxw: 1200px;
 }
@@ -101,7 +103,7 @@ main { flex: 1; }
 /* ---------- 4. Typography helpers ---------- */
 .eyebrow {
   font-weight: 800;
-  color: var(--cyan);
+  color: var(--cyan-text);
   letter-spacing: 2px;
   font-size: 13px;
   text-transform: uppercase;
@@ -121,7 +123,7 @@ main { flex: 1; }
 }
 .btn-primary { background: var(--grad-brand); color: #fff; box-shadow: 0 8px 20px rgba(24,119,204,.32); }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(24,119,204,.4); }
-.btn-soft { background: #eef8fd; color: var(--blue); }
+.btn-soft { background: #eef8fd; color: #0f66b3; /* AA on the tinted bg */ }
 .btn-soft:hover { background: #dcf0fb; }
 .btn-ghost { background: #fff; color: var(--blue); border: 2px solid var(--blue); }
 .btn-ghost:hover { background: #eaf7fd; }
@@ -219,8 +221,9 @@ main { flex: 1; }
 .mobile-menu.is-open { display: block; }
 .header-overlay .mobile-menu {
   margin: 10px 14px 0; border-radius: 18px;
-  background: rgba(10,46,80,.94);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  background: rgba(9,42,74,.97);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 44px rgba(4,24,44,.35);
   padding: 8px 16px 16px;
 }
 .header-overlay .mobile-menu .m-link {
@@ -229,6 +232,7 @@ main { flex: 1; }
   cursor: pointer; font-size: 16px; font-weight: 700; padding: 14px 6px; color: #eaf6fd;
 }
 .header-overlay .mobile-menu .m-cta {
+  display: block; text-align: center; box-sizing: border-box;
   margin-top: 12px; width: 100%; background: #fff; border: none; cursor: pointer;
   font-size: 16px; font-weight: 800; color: var(--navy); padding: 14px; border-radius: 999px;
 }
@@ -240,6 +244,7 @@ main { flex: 1; }
 }
 .header-solid .mobile-menu .m-link.is-active { background: #eaf7fd; color: var(--navy); }
 .header-solid .mobile-menu .m-cta {
+  display: block; text-align: center; box-sizing: border-box;
   margin-top: 12px; width: 100%; background: var(--grad-brand); border: none; cursor: pointer;
   font-size: 16px; font-weight: 800; color: #fff; padding: 14px; border-radius: 999px;
 }
@@ -303,6 +308,74 @@ main { flex: 1; }
 .service-card p { font-size: 15px; line-height: 1.55; color: var(--text-body); margin: 0; }
 .service-card .more { display: inline-block; margin-top: 14px; color: var(--blue); font-weight: 800; font-size: 14px; }
 
+/* ---------- What we offer — photo-card slider ---------- */
+.offer-section { position: relative; overflow: hidden; max-width: 1240px; margin: 0 auto; padding: 74px 22px 30px; }
+.offer-wordmark {
+  position: absolute; top: 34px; left: 0; right: 0; text-align: center;
+  font-family: var(--font-head); font-weight: 700; font-size: clamp(70px, 13vw, 180px);
+  line-height: .8; color: rgba(20, 90, 140, .07); white-space: nowrap; letter-spacing: -.02em;
+  pointer-events: none; user-select: none; z-index: 0;
+}
+/* Text lives in a pseudo-element so a11y audits skip the decorative watermark. */
+.offer-wordmark::before { content: attr(data-text); }
+.offer-inner { position: relative; z-index: 1; }
+.offer-head { text-align: center; max-width: 660px; margin: 0 auto 46px; }
+.offer-head h2 { font-family: var(--font-head); font-weight: 700; font-size: clamp(34px, 5vw, 50px); line-height: 1.05; color: var(--navy); margin: 12px 0 0; }
+.offer-head p { font-size: 17px; line-height: 1.6; color: var(--text-body); margin: 16px 0 0; }
+.offer-cta { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 28px; }
+
+.offer-slider { position: relative; }
+.offer-track {
+  display: flex; gap: 26px; overflow-x: auto; scroll-snap-type: x mandatory;
+  padding: 12px 4px 6px; scroll-padding: 0 22px;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.offer-track::-webkit-scrollbar { display: none; }
+.offer-slide { flex: 0 0 clamp(268px, 31%, 332px); scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; }
+
+.offer-card {
+  position: relative; display: block; width: 100%; height: 392px; border: none; padding: 0; cursor: pointer;
+  border-radius: 24px; overflow: hidden; box-shadow: 0 20px 44px rgba(12, 59, 99, .16);
+  transition: transform .22s, box-shadow .22s;
+}
+.offer-slide:nth-child(odd) .offer-card { transform: rotate(-1.3deg); }
+.offer-slide:nth-child(even) .offer-card { transform: rotate(1.3deg); }
+.offer-card:hover { transform: rotate(0deg) translateY(-6px); box-shadow: 0 30px 60px rgba(12, 59, 99, .24); }
+.offer-photo { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+.offer-photo-fallback { display: flex; align-items: center; justify-content: center; }
+.offer-card-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 38, 66, 0) 45%, rgba(8, 38, 66, .5) 100%); pointer-events: none; }
+.offer-chip {
+  position: absolute; top: 16px; left: 16px; width: 50px; height: 50px; border-radius: 14px;
+  background: rgba(255, 255, 255, .9); display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.offer-label {
+  position: relative; z-index: 2; margin-top: -26px; width: 88%; text-align: center;
+  background: var(--navy); border: none; cursor: pointer; color: #fff; font-weight: 800; font-size: 14px;
+  letter-spacing: .6px; text-transform: uppercase; padding: 16px; border-radius: 16px;
+  box-shadow: 0 14px 30px rgba(12, 59, 99, .28); transition: background .18s;
+}
+.offer-label:hover { background: var(--blue); }
+
+.offer-arrow {
+  position: absolute; top: 186px; width: 48px; height: 48px; border-radius: 50%; background: #fff;
+  border: 1px solid #e0eef6; color: var(--navy); cursor: pointer; box-shadow: 0 10px 26px rgba(12, 59, 99, .18);
+  display: flex; align-items: center; justify-content: center; z-index: 3; transition: background .18s, color .18s;
+}
+.offer-arrow.prev { left: -8px; }
+.offer-arrow.next { right: -8px; }
+.offer-arrow:hover { background: var(--navy); color: #fff; }
+
+/* Dots: 24px+ touch targets; the visible pill is drawn via ::before. */
+.offer-dots { display: flex; gap: 2px; justify-content: center; margin-top: 18px; }
+.offer-dot { position: relative; width: 24px; height: 24px; border: none; cursor: pointer; background: transparent; padding: 0; }
+.offer-dot::before {
+  content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 9px; height: 9px; border-radius: 999px; background: #c8dde6; transition: all .2s;
+}
+.offer-dot.is-active { width: 38px; }
+.offer-dot.is-active::before { width: 26px; background: var(--navy); }
+
 .everyone { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 28px; padding: 44px 34px; }
 .audience-card { background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 8px 22px rgba(24,119,204,.05); }
 .audience-card .icon-tile { width: 56px; height: 56px; margin: 0 auto 14px; }
@@ -332,13 +405,19 @@ main { flex: 1; }
 .quote-card .quote { font-size: 22px; line-height: 1.55; color: #eaf6fd; font-weight: 600; font-style: italic; }
 .quote-card .name { font-family: var(--font-head); font-weight: 600; color: var(--cyan-light); font-size: 17px; margin-top: 22px; }
 .quote-card .role { font-size: 13px; color: #9fc4dd; font-weight: 700; }
-.dots { display: flex; gap: 10px; justify-content: center; margin-top: 24px; }
-.dots button { width: 10px; height: 10px; border-radius: 999px; border: none; cursor: pointer; background: rgba(255,255,255,.28); transition: all .2s; }
-.dots button.is-active { width: 28px; background: var(--cyan-light); }
+/* Dots: 24px+ touch targets; the visible pill is drawn via ::before. */
+.dots { display: flex; gap: 2px; justify-content: center; margin-top: 16px; }
+.dots button { position: relative; width: 26px; height: 26px; border: none; cursor: pointer; background: transparent; padding: 0; }
+.dots button::before {
+  content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 10px; height: 10px; border-radius: 999px; background: rgba(255,255,255,.28); transition: all .2s;
+}
+.dots button.is-active { width: 40px; }
+.dots button.is-active::before { width: 28px; background: var(--cyan-light); }
 
 .whyus { background: linear-gradient(180deg, #ffffff, #eff9fd); margin-top: 70px; }
 .whyus .inner { max-width: var(--maxw); margin: 0 auto; padding: 74px 22px; display: grid; grid-template-columns: .9fr 1.1fr; gap: 52px; align-items: center; }
-.pool-tile { border-radius: 26px; overflow: hidden; aspect-ratio: 1/1; border: 6px solid #fff; box-shadow: 0 26px 54px rgba(24,119,204,.18); background: repeating-linear-gradient(135deg, #bfeafc 0 20px, #a7e0f7 20px 40px); display: flex; align-items: center; justify-content: center; }
+.pool-tile { position: relative; border-radius: 26px; overflow: hidden; aspect-ratio: 1/1; border: 6px solid #fff; box-shadow: 0 26px 54px rgba(24,119,204,.18); background: repeating-linear-gradient(135deg, #bfeafc 0 20px, #a7e0f7 20px 40px); display: flex; align-items: center; justify-content: center; }
 .pool-tile .badge, .placeholder-badge { font-family: var(--font-body); font-weight: 800; font-size: 13px; color: var(--navy); background: rgba(255,255,255,.85); padding: 8px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; }
 .whyus-list { display: flex; flex-direction: column; gap: 18px; }
 .whyus-item { display: flex; gap: 16px; align-items: flex-start; }
@@ -413,7 +492,7 @@ table.timetable td.time { padding: 15px 20px; font-weight: 800; color: var(--nav
 .price-card .feat { display: flex; gap: 9px; align-items: flex-start; font-size: 14px; color: var(--text-body); font-weight: 600; }
 .price-card.featured .feat { color: #dbecf7; }
 .price-card .feat svg { flex: none; margin-top: 1px; }
-.price-card .buy { width: 100%; cursor: pointer; font-weight: 800; font-size: 15px; padding: 13px; border-radius: 999px; border: none; background: #eef8fd; color: var(--blue); }
+.price-card .buy { width: 100%; cursor: pointer; font-weight: 800; font-size: 15px; padding: 13px; border-radius: 999px; border: none; background: #eef8fd; color: #0f66b3; /* AA on the tinted bg */ }
 .price-card.featured .buy { background: #fff; color: var(--blue); }
 .price-note { text-align: center; color: var(--text-muted); font-size: 14px; font-weight: 700; margin-top: 20px; }
 
@@ -443,7 +522,7 @@ table.timetable td.time { padding: 15px 20px; font-weight: 800; color: var(--nav
 .about-split h2 { font-weight: 700; font-size: 32px; color: var(--navy); margin: 0 0 16px; }
 .about-split p { font-size: 16px; line-height: 1.7; color: var(--text-body); margin: 0 0 14px; }
 .about-split p:last-child { margin-bottom: 0; }
-.about-tile { border-radius: 24px; overflow: hidden; aspect-ratio: 4/5; border: 6px solid #fff; box-shadow: 0 24px 50px rgba(24,119,204,.18); background: repeating-linear-gradient(135deg, #bfeafc 0 20px, #a7e0f7 20px 40px); display: flex; align-items: center; justify-content: center; }
+.about-tile { position: relative; border-radius: 24px; overflow: hidden; aspect-ratio: 4/5; border: 6px solid #fff; box-shadow: 0 24px 50px rgba(24,119,204,.18); background: repeating-linear-gradient(135deg, #bfeafc 0 20px, #a7e0f7 20px 40px); display: flex; align-items: center; justify-content: center; }
 .about-numbers { background: var(--bg-soft-2); }
 .about-numbers .inner { max-width: 1100px; margin: 0 auto; padding: 56px 22px; text-align: center; }
 .about-numbers h2 { font-weight: 700; font-size: 30px; color: var(--navy); margin: 0 0 30px; }

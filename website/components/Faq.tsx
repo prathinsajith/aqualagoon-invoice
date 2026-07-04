@@ -13,7 +13,7 @@ export default function Faq() {
         {FAQS.map((f, i) => {
           const isOpen = open === i;
           return (
-            <div key={i} className={`faq-item${isOpen ? " is-open" : ""}`}>
+            <div key={f.q} className={`faq-item${isOpen ? " is-open" : ""}`}>
               <button
                 className="faq-q"
                 type="button"

@@ -8,7 +8,7 @@ import type {
     GalleryUpdatePayload,
 } from "@/services/gallery-service";
 
-export const galleryKeys = {
+const galleryKeys = {
     all: ["gallery"] as const,
     list: (params: GalleryListParams) => ["gallery", "list", params] as const,
 };

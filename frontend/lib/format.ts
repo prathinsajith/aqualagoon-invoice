@@ -46,9 +46,11 @@ export function formatMoney(value: number): string {
  * 1234.5 → "1,234.50"). Forced to en-US grouping so separators stay ASCII
  * regardless of the device locale.
  */
+const amountFormatter = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+});
+
 export function formatAmount(value: number): string {
-    return value.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+    return amountFormatter.format(value);
 }

@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import Timetable from "@/components/Timetable";
 import Faq from "@/components/Faq";
 import { getSiteContent } from "@/lib/site-content";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Classes & Pricing — Aqua Lagoon",
   description:
     "Weekly timetable and simple, transparent pricing for swimming, yoga and zumba. Free trial for first-time swimmers.",
-};
+  path: "/classes",
+});
 
 export default async function ClassesPage() {
   const { timetable, pricing } = await getSiteContent();

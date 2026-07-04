@@ -1,7 +1,19 @@
-# Not a real pnpm workspace — this file only approves the native
-# post-install build scripts pnpm blocks by default (pnpm 11 supply-chain guard).
+# Single-project repo (not a real monorepo). The `packages` field is required
+# by pnpm — without it, newer pnpm versions abort install with "packages field
+# missing or empty" (e.g. on Railway/Vercel CI). `.` matches the lockfile's
+# existing single importer, so --frozen-lockfile stays valid.
+packages:
+  - .
+
+# Approve the native post-install build scripts pnpm blocks by default
+# (pnpm 11 supply-chain guard).
 #   - sharp:         image optimization used by next/image
 #   - unrs-resolver: native resolver used by eslint / eslint-config-next
 allowBuilds:
   sharp: true
   unrs-resolver: true
+
+# NOTE: unlike frontend/, this project does NOT enable minimumReleaseAge /
+# trustPolicy — the committed lockfile was resolved without them and contains
+# entries the policy would reject, which breaks every pnpm command. The
+# committed lockfile (+ --frozen-lockfile on CI) is the source of trust here.
