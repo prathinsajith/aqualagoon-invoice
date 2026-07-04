@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import Gallery from "@/components/Gallery";
+import JsonLd from "@/components/JsonLd";
 import { fetchGallery } from "@/lib/gallery";
 
 export const metadata: Metadata = pageMetadata({
@@ -14,6 +15,7 @@ export default async function GalleryPage() {
 
   return (
     <div className="route-enter">
+      <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Gallery", path: "/gallery" }])} />
       <div className="page-hero center bg-radial-center">
         <div className="container">
           <span className="eyebrow">Moments</span>

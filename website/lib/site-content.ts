@@ -203,9 +203,9 @@ const DEFAULT_CONTENT: SiteContent = {
   },
   branding: {
     logoUrl: "/assets/logo-160.webp",
-    metaTitle: "Aqua Lagoon — Swimming Pool, Wellness & Events",
+    metaTitle: "Aqua Lagoon — Swimming Pool in Kayamkulam, Kerala",
     metaDescription:
-      "Aqua Lagoon is a swimming pool, kids' water park and wellness centre. Swim lessons, open swims, yoga, zumba and a mini auditorium for events — safe splashes for every age.",
+      "Aqua Lagoon is a swimming pool & wellness centre in Kayamkulam, Kerala — swimming lessons, open swims, yoga, zumba and a mini auditorium. Serving Kayamkulam, Mavelikkara, Alappuzha & Oachira.",
     ogImageUrl: "/assets/og-image.jpg",
   },
 };

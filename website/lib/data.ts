@@ -31,6 +31,8 @@ export const WHYUS: WhyUs[] = [
 
 export type Faq = { q: string; a: string };
 export const FAQS: Faq[] = [
+  { q: "Where is Aqua Lagoon located?", a: "Aqua Lagoon is a swimming pool and wellness centre in Kayamkulam, Kerala. We welcome swimmers from Kayamkulam, Mavelikkara, Alappuzha, Oachira, Haripad, Kattanam, Krishnapuram, Nooranad, Bharanikkavu and nearby areas." },
+  { q: "Do you offer swimming classes in Kayamkulam for kids and adults?", a: "Yes. We run structured learn-to-swim classes and coaching for all ages in Kayamkulam — from a child's first float to adult stroke technique — with certified coaches in small batches." },
   { q: "Do I need to know swimming to join?", a: "Not at all! Our Learn to Swim program starts from the very basics — water confidence and floating — for both kids and adults." },
   { q: "Is there a free trial?", a: "Yes. First-time swimmers get one free trial session. Just book through the contact form or call us." },
   { q: "What should I bring?", a: "A swimsuit, towel and swim cap. Lockers and showers are available on-site. Caps are also available at reception." },
