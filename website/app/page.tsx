@@ -4,6 +4,7 @@ import Icon, { IconTile } from "@/components/Icon";
 import Timetable from "@/components/Timetable";
 import Testimonials from "@/components/Testimonials";
 import ServiceSlider from "@/components/ServiceSlider";
+import Social from "@/components/Social";
 import { AUDIENCES, WHYFIT, WHYUS } from "@/lib/data";
 import { BRAND } from "@/lib/constants";
 import { getSiteContent, contentImage } from "@/lib/site-content";
@@ -19,24 +20,6 @@ export default async function HomePage() {
     tint: sv.tint,
     img: contentImage(sv.imageUrl),
   }));
-  // Only show social icons that point somewhere real ("#" is the unset default).
-  const socialLinks = [
-    {
-      label: "Facebook",
-      href: contact.social.facebook,
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>,
-    },
-    {
-      label: "Instagram",
-      href: contact.social.instagram,
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="#fff" stroke="none" /></svg>,
-    },
-    {
-      label: "X",
-      href: contact.social.x,
-      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.9l-5.4-7-6.2 7H1.4l8.1-9.3L1 2h7l4.9 6.4L18.9 2z" /></svg>,
-    },
-  ].filter((s) => s.href && s.href !== "#");
 
   return (
     <div className="route-enter">
@@ -73,15 +56,7 @@ export default async function HomePage() {
                   </div>
                 ))}
               </div>
-              {socialLinks.length > 0 && (
-                <div className="hero-social">
-                  {socialLinks.map((s) => (
-                    <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}>
-                      {s.icon}
-                    </a>
-                  ))}
-                </div>
-              )}
+              <Social social={contact.social} wrapperClass="hero-social" />
             </div>
           </div>
         </div>

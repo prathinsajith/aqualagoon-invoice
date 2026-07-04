@@ -279,8 +279,17 @@ main { flex: 1; }
 .hero-stat .val { font-family: var(--font-head); font-weight: 700; font-size: 30px; color: #fff; line-height: 1; }
 .hero-stat .lbl { font-size: 12px; font-weight: 700; color: rgba(255,255,255,.82); margin-top: 6px; letter-spacing: .4px; }
 .hero-social { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 999px; padding: 8px; }
-.hero-social a { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: background .15s; }
-.hero-social a:hover { background: rgba(255,255,255,.18); }
+.hero-social a { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #fff; }
+
+/* ---------- Social icons: brand-colour on hover ---------- */
+/* Icons render with currentColor; each link adopts its platform colour on hover. */
+.soc { transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease; }
+.soc-facebook:hover  { background: #1877f2; border-color: #1877f2; color: #fff; }
+.soc-instagram:hover { background: #e4405f; border-color: #e4405f; color: #fff; }
+.soc-x:hover         { background: #000000; border-color: #000000; color: #fff; }
+.soc-youtube:hover   { background: #ff0000; border-color: #ff0000; color: #fff; }
+.soc-whatsapp:hover  { background: #25d366; border-color: #25d366; color: #fff; }
+.soc:hover { transform: translateY(-1px); }
 
 .substrip { max-width: 1360px; margin: 0 auto; padding: 34px 32px 20px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 34px; align-items: center; }
 .substrip-cell { display: flex; align-items: center; gap: 22px; }
@@ -576,9 +585,8 @@ table.timetable td.time { padding: 15px 20px; font-weight: 800; color: var(--nav
 .footer-brand .name { font-family: var(--font-head); font-weight: 700; font-size: 21px; color: var(--navy); }
 .footer-brand .tag { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--text-muted); margin-top: 5px; }
 .footer-col p { font-size: 15px; line-height: 1.6; color: var(--text-body); margin: 0 0 20px; max-width: 300px; }
-.footer-social { display: flex; gap: 10px; margin-bottom: 22px; }
-.footer-social a { width: 46px; height: 46px; border-radius: 50%; border: 1px solid #c8dde6; background: #fff; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all .15s; }
-.footer-social a:hover { border-color: var(--blue); background: #eaf7fd; }
+.footer-social { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+.footer-social a { width: 46px; height: 46px; border-radius: 50%; border: 1px solid #c8dde6; background: #fff; display: flex; align-items: center; justify-content: center; text-decoration: none; color: var(--navy); }
 .footer-contact { display: flex; flex-direction: column; gap: 9px; font-size: 14px; color: var(--text-body); font-weight: 600; }
 .footer-contact span { display: flex; align-items: center; gap: 9px; }
 .footer-center { display: flex; align-items: center; justify-content: center; gap: 16px; align-self: stretch; min-height: 230px; }
@@ -778,9 +786,8 @@ table.timetable td.time { padding: 15px 20px; font-weight: 800; color: var(--nav
 .cs-cell .l { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #8fd0ec; margin-top: 6px; text-transform: uppercase; }
 
 .cs-meta { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 40px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.14); }
-.cs-social { display: flex; gap: 10px; }
-.cs-social a { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; text-decoration: none; transition: background .15s; }
-.cs-social a:hover { background: var(--blue); }
+.cs-social { display: flex; flex-wrap: wrap; gap: 10px; }
+.cs-social a { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; text-decoration: none; color: #fff; }
 .cs-contact { display: flex; flex-direction: column; gap: 5px; text-align: right; font-size: 13px; color: rgba(255,255,255,.8); font-weight: 600; }
 .cs-contact span { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
 

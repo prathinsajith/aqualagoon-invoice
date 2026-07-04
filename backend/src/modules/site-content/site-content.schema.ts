@@ -43,6 +43,7 @@ const socialSchema = z.object({
   instagram: z.string().trim().max(300).default("https://www.instagram.com/aqualagoon"),
   x: z.string().trim().max(300).default("https://x.com/aqualagoon"),
   youtube: z.string().trim().max(300).default("https://www.youtube.com/@aqualagoon"),
+  whatsapp: z.string().trim().max(300).default("https://wa.me/919876543210"),
 });
 
 export const contactSchema = z.object({
@@ -56,6 +57,7 @@ export const contactSchema = z.object({
     instagram: "https://www.instagram.com/aqualagoon",
     x: "https://x.com/aqualagoon",
     youtube: "https://www.youtube.com/@aqualagoon",
+    whatsapp: "https://wa.me/919876543210",
   }),
 });
 
