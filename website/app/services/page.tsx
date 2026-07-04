@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import Image from "next/image";
 import Link from "next/link";
 import Icon from "@/components/Icon";
+import JsonLd from "@/components/JsonLd";
 import { getSiteContent, contentImage } from "@/lib/site-content";
 
 export const metadata: Metadata = pageMetadata({
@@ -17,6 +18,7 @@ export default async function ServicesPage() {
 
   return (
     <div className="route-enter">
+      <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Services", path: "/services" }])} />
       <div className="page-hero bg-radial-right">
         <div className="container">
           <span className="eyebrow">Our facilities</span>

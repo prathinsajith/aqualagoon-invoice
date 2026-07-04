@@ -585,6 +585,9 @@ table.timetable td.time { padding: 15px 20px; font-weight: 800; color: var(--nav
 .footer-brand .name { font-family: var(--font-head); font-weight: 700; font-size: 21px; color: var(--navy); }
 .footer-brand .tag { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--text-muted); margin-top: 5px; }
 .footer-col p { font-size: 15px; line-height: 1.6; color: var(--text-body); margin: 0 0 20px; max-width: 300px; }
+.footer-col p.footer-area { font-size: 13px; font-weight: 700; color: var(--navy); margin: -8px 0 20px; }
+.footer-col p.footer-area a { color: inherit; }
+.footer-col p.footer-area a:hover { color: var(--blue); text-decoration: underline; }
 .footer-social { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
 .footer-social a { width: 46px; height: 46px; border-radius: 50%; border: 1px solid #c8dde6; background: #fff; display: flex; align-items: center; justify-content: center; text-decoration: none; color: var(--navy); }
 .footer-contact { display: flex; flex-direction: column; gap: 9px; font-size: 14px; color: var(--text-body); font-weight: 600; }

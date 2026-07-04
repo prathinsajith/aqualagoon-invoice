@@ -19,6 +19,49 @@ export const BRAND = {
 export const ORG_TYPE = "SportsActivityLocation";
 
 /**
+ * Physical location + service area — powers local SEO (structured data, titles,
+ * the footer "areas served" line). VERIFY the postal code and geo coordinates
+ * against the real venue; approximate values hurt local ranking.
+ */
+export const LOCATION = {
+  locality: "Kayamkulam",
+  region: "Kerala",
+  postalCode: "690537",
+  country: "IN",
+  // Approx. Kayamkulam town centre — replace with the venue's exact pin.
+  geo: { latitude: 9.1746, longitude: 76.501 },
+  /**
+   * Towns the pool draws swimmers from — the local search terms to rank for.
+   * Trim any that are too far to genuinely serve; keep the nearest first.
+   */
+  areasServed: [
+    "Kayamkulam",
+    "Mavelikkara",
+    "Alappuzha",
+    "Oachira",
+    "Haripad",
+    "Kattanam",
+    "Krishnapuram",
+    "Karthikappally",
+    "Nooranad",
+    "Bharanikkavu",
+    "Thamarakulam",
+    "Cheppad",
+    "Karuvatta",
+    "Chengannur",
+  ],
+} as const;
+
+/**
+ * Human-readable service-area line for the footer. Shows the nearest towns
+ * (the full list drives the structured-data `areaServed`), then "& nearby".
+ */
+export const SERVICE_AREA_TEXT = (() => {
+  const primary = LOCATION.areasServed.slice(0, 6);
+  return `Serving ${primary.slice(0, -1).join(", ")} & ${primary.at(-1)} and nearby areas`;
+})();
+
+/**
  * Google Maps location (Aqua Lagoon, Kayamkulam).
  * `link` opens the place / directions; `embedUrl` is a keyless iframe embed.
  */

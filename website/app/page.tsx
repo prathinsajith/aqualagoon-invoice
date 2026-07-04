@@ -3,6 +3,7 @@ import Link from "next/link";
 import Icon, { IconTile } from "@/components/Icon";
 import Timetable from "@/components/Timetable";
 import Testimonials from "@/components/Testimonials";
+import Faq from "@/components/Faq";
 import ServiceSlider from "@/components/ServiceSlider";
 import Social from "@/components/Social";
 import { AUDIENCES, WHYFIT, WHYUS } from "@/lib/data";
@@ -193,6 +194,11 @@ export default async function HomePage() {
           <Link href="/classes" className="btn btn-soft">Full schedule &amp; pricing →</Link>
         </div>
         <Timetable timetable={timetable} />
+      </section>
+
+      {/* FAQ — local Q&A content (helps search + AI answer engines) */}
+      <section className="section container">
+        <Faq />
       </section>
 
       {/* CTA */}

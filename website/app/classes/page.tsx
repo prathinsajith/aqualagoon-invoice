@@ -1,10 +1,24 @@
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import Link from "next/link";
 import Icon from "@/components/Icon";
+import JsonLd from "@/components/JsonLd";
 import Timetable from "@/components/Timetable";
 import Faq from "@/components/Faq";
 import { getSiteContent } from "@/lib/site-content";
+import { FAQS } from "@/lib/data";
+
+// FAQPage structured data — mirrors the visible FAQ so Google (rich results)
+// and AI answer engines can lift these Q&As directly.
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
 
 export const metadata: Metadata = pageMetadata({
   title: "Classes & Pricing — Aqua Lagoon",
@@ -17,6 +31,8 @@ export default async function ClassesPage() {
   const { timetable, pricing } = await getSiteContent();
   return (
     <div className="route-enter">
+      <JsonLd data={faqJsonLd} />
+      <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Classes & Pricing", path: "/classes" }])} />
       <div className="page-hero bg-radial-left">
         <div className="container">
           <span className="eyebrow">Schedule &amp; rates</span>

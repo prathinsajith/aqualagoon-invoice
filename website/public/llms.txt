@@ -1,0 +1,32 @@
+# Aqua Lagoon
+
+> Aqua Lagoon is a swimming pool and wellness centre in Kayamkulam, Kerala, India. It offers swimming lessons and coaching for kids and adults, open/lane swimming, yoga and zumba classes, and a mini auditorium for events. Website: https://aqualagoon.in
+
+## About
+
+- Type: Swimming pool & wellness centre (SportsActivityLocation)
+- Location: Kayamkulam, Kerala, India (PIN 690537)
+- Areas served: Kayamkulam, Mavelikkara, Alappuzha, Oachira, Haripad, Kattanam, Krishnapuram, Karthikappally, Nooranad, Bharanikkavu, Thamarakulam, Cheppad, Karuvatta and Chengannur
+- Certified coaches, small batches, lifeguarded and temperature-controlled pool
+
+## Services
+
+- Open Swimming — day passes and memberships for lane swims and family sessions
+- Learn to Swim — structured lessons and coaching for kids and adults, free trial for first-timers
+- Yoga classes — mat and aqua yoga for all levels
+- Zumba dance fitness — high-energy group cardio
+- Mini Auditorium — hourly-booked hall for birthdays, workshops and functions
+
+## Key pages
+
+- [Home](https://aqualagoon.in/): overview of the pool and programs
+- [Services](https://aqualagoon.in/services): all programs in detail
+- [Classes & Pricing](https://aqualagoon.in/classes): weekly timetable, membership passes and FAQs
+- [Gallery](https://aqualagoon.in/gallery): photos of the facility
+- [About](https://aqualagoon.in/about): the story, safety standards and class details
+- [Contact](https://aqualagoon.in/contact): address, map directions, phone, email, opening hours and booking form
+
+## Notes
+
+- For live phone number, email, opening hours and bookings, see the Contact page.
+- Common searches this business answers: "swimming pool in Kayamkulam", "swimming classes in Kayamkulam", "learn to swim Kayamkulam", "swimming coaching for kids", "yoga classes Kayamkulam", "zumba classes Kayamkulam", "event hall / mini auditorium Kayamkulam".

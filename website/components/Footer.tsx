@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Social from "@/components/Social";
-import { NAV, BRAND } from "@/lib/constants";
+import { NAV, BRAND, SERVICE_AREA_TEXT } from "@/lib/constants";
 import type { ContactContent } from "@/lib/site-content";
 
 export default function Footer({
@@ -31,8 +31,11 @@ export default function Footer({
               </div>
             </div>
             <p>
-              Swimming pool, kids&apos; water park &amp; wellness centre. Safe splashes and happy memories for the whole
+              A swimming pool &amp; wellness centre in Kayamkulam, Kerala. Safe splashes and happy memories for the whole
               family.
+            </p>
+            <p className="footer-area">
+              <Link href="/areas">{SERVICE_AREA_TEXT}</Link>
             </p>
             <Social social={social} wrapperClass="footer-social" />
             <div className="footer-contact">
