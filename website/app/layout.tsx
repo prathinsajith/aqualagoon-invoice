@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getSiteContent, contentImage } from "@/lib/site-content";
 import { API_URL, SITE_URL } from "@/lib/env";
-import { BRAND, ORG_TYPE, MAPS } from "@/lib/constants";
+import { BRAND, ORG_TYPE, MAPS, LOCATION } from "@/lib/constants";
 
 export const viewport: Viewport = {
   themeColor: "#0c3b63",
@@ -74,6 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": ORG_TYPE,
+    "@id": `${SITE_URL}/#business`,
     name: BRAND.name,
     description: branding.metaDescription,
     url: SITE_URL,
@@ -81,12 +82,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     image: absUrl(contentImage(branding.ogImageUrl) || "/assets/og-image.jpg"),
     telephone: contact.phone,
     email: contact.email,
-    address: { "@type": "PostalAddress", streetAddress: contact.address },
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: contact.address,
+      addressLocality: LOCATION.locality,
+      addressRegion: LOCATION.region,
+      postalCode: LOCATION.postalCode,
+      addressCountry: LOCATION.country,
+    },
+    geo: { "@type": "GeoCoordinates", latitude: LOCATION.geo.latitude, longitude: LOCATION.geo.longitude },
     hasMap: MAPS.link,
+    // The towns this pool serves — the local searches we want to rank for.
+    areaServed: LOCATION.areasServed.map((name) => ({ "@type": "Place", name })),
+    priceRange: "₹₹",
     openingHours: [contact.hoursWeekday, contact.hoursSunday].filter(Boolean),
-    sameAs: [contact.social.facebook, contact.social.instagram, contact.social.x, contact.social.youtube].filter(
-      (u) => u && u !== "#",
-    ),
+    sameAs: [
+      contact.social.facebook,
+      contact.social.instagram,
+      contact.social.x,
+      contact.social.youtube,
+      contact.social.whatsapp,
+    ].filter((u) => u && u !== "#"),
   };
 
   return (

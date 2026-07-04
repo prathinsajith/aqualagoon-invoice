@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import Icon from "@/components/Icon";
 import ContactForm from "@/components/ContactForm";
+import JsonLd from "@/components/JsonLd";
 import { getSiteContent } from "@/lib/site-content";
 import { MAPS } from "@/lib/constants";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Contact & Booking — Aqua Lagoon",
-  description: "Questions, bookings or a facility tour — get in touch with the Aqua Lagoon team.",
+  title: "Contact — Swimming Pool in Kayamkulam | Aqua Lagoon",
+  description:
+    "Visit or book Aqua Lagoon swimming pool in Kayamkulam, Kerala. Serving Kayamkulam, Mavelikkara, Alappuzha & Oachira — get directions, call or send an enquiry.",
   path: "/contact",
 });
 
@@ -35,6 +37,7 @@ export default async function ContactPage({
 
   return (
     <div className="route-enter">
+      <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Contact", path: "/contact" }])} />
       <div className="page-hero bg-radial-left">
         <div className="container">
           <span className="eyebrow">Get in touch</span>

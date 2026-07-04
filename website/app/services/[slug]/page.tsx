@@ -3,8 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Icon from "@/components/Icon";
+import JsonLd from "@/components/JsonLd";
 import { getSiteContent, contentImage } from "@/lib/site-content";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, serviceJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 
 export async function generateStaticParams() {
   const { services } = await getSiteContent();
@@ -48,6 +49,14 @@ export default async function ServiceDetailPage({
 
   return (
     <div className="route-enter">
+      <JsonLd data={serviceJsonLd({ id: sv.id, title: sv.title, description: sv.blurb || sv.long.slice(0, 200) })} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Services", path: "/services" },
+          { name: sv.title, path: `/services/${sv.id}` },
+        ])}
+      />
       <div className="page-hero bg-radial-right">
         <div className="container">
           <Link href="/services" className="eyebrow" style={{ display: "inline-block", marginBottom: 4 }}>

@@ -236,13 +236,13 @@ export const pricingSchema = z.object({
 // ---- Branding & SEO --------------------------------------------------------
 export const brandingSchema = z.object({
   logoUrl: z.string().trim().max(500).default("/assets/logo-160.webp"),
-  metaTitle: z.string().trim().max(160).default("Aqua Lagoon — Swimming Pool, Wellness & Events"),
+  metaTitle: z.string().trim().max(160).default("Aqua Lagoon — Swimming Pool in Kayamkulam, Kerala"),
   metaDescription: z
     .string()
     .trim()
     .max(320)
     .default(
-      "Aqua Lagoon is a swimming pool, kids' water park and wellness centre. Swim lessons, open swims, yoga, zumba and a mini auditorium for events — safe splashes for every age.",
+      "Aqua Lagoon is a swimming pool & wellness centre in Kayamkulam, Kerala — swimming lessons, open swims, yoga, zumba and a mini auditorium. Serving Kayamkulam, Mavelikkara, Alappuzha & Oachira.",
     ),
   ogImageUrl: z.string().trim().max(500).default("/assets/og-image.jpg"),
 });
