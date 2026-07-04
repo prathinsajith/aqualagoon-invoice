@@ -11,6 +11,7 @@ import {
   IconCalendar,
   IconAnalyze,
   IconChartBar,
+  IconWorld,
 } from "@tabler/icons-react";
 
 /**
@@ -34,6 +35,7 @@ const NAV_ICONS: Record<string, Icon> = {
   IconCalendar,
   IconAnalyze,
   IconChartBar,
+  IconWorld,
 };
 
 /** Resolves a nav icon name to its component, or null if unknown. */

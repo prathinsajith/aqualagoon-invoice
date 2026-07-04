@@ -80,6 +80,16 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().min(1).default("no-reply@aqualagoon.com"),
   EMAIL_FROM_NAME: z.string().min(1).default("Aqua Lagoon"),
   EMAIL_DEV_FALLBACK: z.stringbool().default(true),
+
+  // --- Enquiry / booking notifications ------------------------------------
+  // Where new website enquiries are emailed. Falls back to the site's contact
+  // email, then EMAIL_FROM, when unset.
+  ENQUIRY_NOTIFY_EMAIL: z.string().optional(),
+  // WhatsApp Cloud API (Meta). Set all three to also get WhatsApp alerts.
+  // WHATSAPP_NOTIFY_TO is the recipient in international format (e.g. 919876543210).
+  WHATSAPP_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_ID: z.string().optional(),
+  WHATSAPP_NOTIFY_TO: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -112,6 +122,8 @@ export const env = {
   corsOrigins: data.CORS_ORIGIN.split(",").map((origin) => origin.trim()),
   storageDriver: hasS3 ? ("s3" as const) : ("local" as const),
   mailEnabled,
+  whatsappEnabled:
+    !!data.WHATSAPP_TOKEN && !!data.WHATSAPP_PHONE_ID && !!data.WHATSAPP_NOTIFY_TO,
   // Explicit MAIL_FROM wins; otherwise compose "Name <addr>".
   mailFrom: data.MAIL_FROM ?? `${data.EMAIL_FROM_NAME} <${data.EMAIL_FROM}>`,
 } as const;

@@ -63,5 +63,6 @@ export const config = {
     "/student-fees/:path*",
     "/audit-logs/:path*",
     "/notifications/:path*",
+    "/website/:path*",
   ],
 };

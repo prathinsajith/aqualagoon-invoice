@@ -8,6 +8,7 @@ import {
   IconUser,
   IconBuildingStore,
   IconHistory,
+  IconWorld,
   IconSun,
   IconMoon,
   IconDeviceDesktop,
@@ -153,6 +154,14 @@ export function UserAvatarDialog({ user }: { user: User | null }) {
               <Link href="/settings" className="cursor-pointer gap-2.5 py-2">
                 <IconSettings className="size-4 text-muted-foreground" />
                 Settings
+              </Link>
+            </DropdownMenuItem>
+          </Can>
+          <Can permission="website.view">
+            <DropdownMenuItem asChild>
+              <Link href="/website" className="cursor-pointer gap-2.5 py-2">
+                <IconWorld className="size-4 text-muted-foreground" />
+                Website
               </Link>
             </DropdownMenuItem>
           </Can>

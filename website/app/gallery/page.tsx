@@ -1,0 +1,25 @@
+import type { Metadata } from "next";
+import Gallery from "@/components/Gallery";
+import { fetchGallery } from "@/lib/gallery";
+
+export const metadata: Metadata = {
+  title: "Gallery — Aqua Lagoon",
+  description: "A peek into life at Aqua Lagoon — splashes, smiles and celebrations.",
+};
+
+export default async function GalleryPage() {
+  const { items, categories } = await fetchGallery();
+
+  return (
+    <div className="route-enter">
+      <div className="page-hero center bg-radial-center">
+        <div className="container">
+          <span className="eyebrow">Moments</span>
+          <h1>Gallery</h1>
+          <p>A peek into life at Aqua Lagoon — splashes, smiles and celebrations.</p>
+        </div>
+      </div>
+      <Gallery items={items} categories={categories} />
+    </div>
+  );
+}

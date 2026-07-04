@@ -1,0 +1,8 @@
+# Playwright MCP output
+.playwright-mcp/
+
+# Design-iteration screenshots (repo root only)
+/*.png
+
+# OS / editor
+.DS_Store
