@@ -13,6 +13,7 @@ export interface SocialLinks {
   instagram: string;
   x: string;
   youtube: string;
+  whatsapp: string;
 }
 export interface ContactContent {
   address: string;
@@ -124,6 +125,7 @@ const DEFAULT_CONTENT: SiteContent = {
       instagram: "https://www.instagram.com/aqualagoon",
       x: "https://x.com/aqualagoon",
       youtube: "https://www.youtube.com/@aqualagoon",
+      whatsapp: "https://wa.me/919876543210",
     },
   },
   services: [

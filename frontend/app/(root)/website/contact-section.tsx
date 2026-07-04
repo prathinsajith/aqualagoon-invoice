@@ -84,6 +84,10 @@ export function ContactSection() {
                         <Label htmlFor="s-yt" className="text-xs font-normal text-muted-foreground">YouTube</Label>
                         <Input id="s-yt" value={form.social.youtube} onChange={(e) => setSocial("youtube", e.target.value)} placeholder="https://youtube.com/…" />
                     </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="s-wa" className="text-xs font-normal text-muted-foreground">WhatsApp</Label>
+                        <Input id="s-wa" value={form.social.whatsapp} onChange={(e) => setSocial("whatsapp", e.target.value)} placeholder="https://wa.me/919876543210" />
+                    </div>
                 </div>
             </div>
         </SectionCard>
