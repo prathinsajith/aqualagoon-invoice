@@ -5,7 +5,7 @@ import { EnquiryService } from "@/services/enquiry-service";
 import type { EnquiryListParams } from "@/services/enquiry-service";
 import type { EnquiryStatus } from "@/types/enquiry";
 
-export const enquiryKeys = {
+const enquiryKeys = {
     all: ["enquiries"] as const,
     list: (params: EnquiryListParams) => ["enquiries", "list", params] as const,
 };

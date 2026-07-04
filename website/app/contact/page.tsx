@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Icon from "@/components/Icon";
 import ContactForm from "@/components/ContactForm";
 import { getSiteContent } from "@/lib/site-content";
 import { MAPS } from "@/lib/constants";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Contact & Booking — Aqua Lagoon",
   description: "Questions, bookings or a facility tour — get in touch with the Aqua Lagoon team.",
-};
+  path: "/contact",
+});
 
 export default async function ContactPage({
   searchParams,
@@ -60,6 +62,7 @@ export default async function ContactPage({
               title="Aqua Lagoon location on Google Maps"
               style={{ width: "100%", height: "100%", border: 0, display: "block" }}
               loading="lazy"
+              sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
               referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen
             />
