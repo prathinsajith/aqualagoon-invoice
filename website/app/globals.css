@@ -562,9 +562,16 @@ table.timetable td.time { padding: 15px 20px; font-weight: 800; color: var(--nav
 .contact-form .sub { color: var(--text-muted); font-size: 14px; font-weight: 700; margin: 0 0 22px; }
 .field { margin-bottom: 14px; }
 .field label { display: block; font-weight: 800; font-size: 13px; color: var(--navy); margin-bottom: 6px; }
+.field label .opt { font-weight: 700; color: var(--text-muted); }
 .field input, .field textarea, .field select { width: 100%; border: 2px solid var(--border-input); border-radius: 12px; padding: 13px 15px; font-size: 15px; color: var(--navy); outline: none; background: #fff; transition: border-color .15s; }
 .field textarea { resize: vertical; }
 .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--cyan); }
+/* Invalid fields: red border + focus ring, with an inline message below. */
+.field input[aria-invalid="true"], .field textarea[aria-invalid="true"] { border-color: #dc2626; }
+.field input[aria-invalid="true"]:focus, .field textarea[aria-invalid="true"]:focus { border-color: #dc2626; }
+.field-error { display: flex; align-items: center; gap: 5px; color: #dc2626; font-size: 12.5px; font-weight: 700; margin: 6px 0 0; }
+.field-error::before { content: "!"; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: #dc2626; color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+.form-error { margin: 2px 0 12px; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-submit { margin-top: 4px; width: 100%; background: var(--grad-brand); border: none; cursor: pointer; color: #fff; font-weight: 800; font-size: 16px; padding: 15px; border-radius: 999px; box-shadow: 0 12px 26px rgba(24,119,204,.28); transition: transform .15s; }
 .form-submit:hover { transform: translateY(-2px); }
@@ -586,6 +593,14 @@ table.timetable td.time { padding: 15px 20px; font-weight: 800; color: var(--nav
 .footer-brand .tag { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--text-muted); margin-top: 5px; }
 .footer-col p { font-size: 15px; line-height: 1.6; color: var(--text-body); margin: 0 0 20px; max-width: 300px; }
 .footer-col p.footer-area { font-size: 13px; font-weight: 700; color: var(--navy); margin: -8px 0 20px; }
+.area-chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.area-chip {
+  display: inline-flex; align-items: center; font-size: 14px; font-weight: 700; color: var(--navy);
+  background: var(--bg-soft); border: 1px solid var(--border); border-radius: 999px; padding: 10px 18px;
+  text-decoration: none; transition: background .15s, border-color .15s, transform .15s;
+}
+.area-chip:hover { background: #eaf7fd; border-color: var(--blue); transform: translateY(-1px); }
+
 .footer-col p.footer-area a { color: inherit; }
 .footer-col p.footer-area a:hover { color: var(--blue); text-decoration: underline; }
 .footer-social { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }

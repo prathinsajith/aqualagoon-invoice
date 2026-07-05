@@ -28,6 +28,8 @@ export default function robots(): MetadataRoute.Robots {
       ...AI_AND_SEARCH_BOTS.map((userAgent) => ({ userAgent, allow: "/" })),
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
-    host: SITE_URL,
+    // No `host:` — it's a non-standard directive only Yandex ever used; Google
+    // and Bing flag it as "Syntax not understood". Canonical host is handled by
+    // <link rel="canonical"> + the www→apex redirect instead.
   };
 }

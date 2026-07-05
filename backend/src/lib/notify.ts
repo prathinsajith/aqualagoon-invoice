@@ -1,76 +1,69 @@
 import { env } from "../config/env.js";
 import { sendMail } from "./mail/mailer.js";
+import type { MailBranding } from "./mail/branding.js";
+import {
+  enquiryNotificationEmail,
+  enquiryConfirmationEmail,
+  type EnquiryNotice,
+  type EnquiryContact,
+} from "./mail/templates.js";
 
-export interface EnquiryNotice {
-  name: string;
-  phone: string;
-  email: string | null;
-  service: string | null;
-  message: string | null;
-  source: string;
-}
+export type { EnquiryNotice, EnquiryContact };
 
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] ?? c);
+export interface NotifyOptions {
+  brand: MailBranding;
+  notice: EnquiryNotice;
+  /** Where to send the business notification (resolved by the caller). */
+  adminEmail: string | null;
+  /** Business contact info shown in the visitor's confirmation email. */
+  contact: EnquiryContact;
 }
 
 /**
- * Best-effort notification for a new website enquiry/booking — emails the
- * business and (if configured) sends a WhatsApp alert. Never throws: a failed
- * notification must not fail the visitor's form submission.
+ * Best-effort notifications for a new website enquiry/booking:
+ *   1. emails the business a notification,
+ *   2. emails the visitor a branded confirmation (only if they left an email),
+ *   3. sends a WhatsApp alert to the business (if configured).
+ * Never throws — a failed notification must not fail the visitor's submission.
  */
-export async function notifyNewEnquiry(e: EnquiryNotice, toEmail: string | null): Promise<void> {
-  const kind = e.source === "booking" ? "Booking request" : "Enquiry";
-  const rows: [string, string | null][] = [
-    ["Name", e.name],
-    ["Phone", e.phone],
-    ["Email", e.email],
-    ["Interested in", e.service],
-    ["Message", e.message],
-  ];
-  const present = rows.filter(([, v]) => !!v) as [string, string][];
-  const textLines = present.map(([k, v]) => `${k}: ${v}`);
+export async function notifyNewEnquiry({ brand, notice, adminEmail, contact }: NotifyOptions): Promise<void> {
+  // --- Business notification email ----------------------------------------
+  if (adminEmail) {
+    const msg = enquiryNotificationEmail(brand, notice);
+    await sendMail({ ...msg, to: adminEmail });
+  }
 
-  // --- Email ---------------------------------------------------------------
-  if (toEmail) {
-    const html = `
-      <h2 style="font-family:sans-serif;color:#0c3b63">New ${escapeHtml(kind)} from the website</h2>
-      <table style="font-family:sans-serif;font-size:14px;border-collapse:collapse">
-        ${present
-          .map(
-            ([k, v]) =>
-              `<tr><td style="padding:6px 12px 6px 0;color:#7fa9c4;vertical-align:top"><b>${escapeHtml(k)}</b></td><td style="padding:6px 0;color:#0c3b63">${escapeHtml(v)}</td></tr>`,
-          )
-          .join("")}
-      </table>`;
-    await sendMail({
-      to: toEmail,
-      subject: `New ${kind} — ${e.name}`,
-      text: `New ${kind.toLowerCase()} from the website:\n\n${textLines.join("\n")}`,
-      html,
-    });
+  // --- Visitor confirmation email (email is optional on the form) ---------
+  if (notice.email) {
+    const msg = enquiryConfirmationEmail(brand, notice, contact);
+    await sendMail({ ...msg, to: notice.email });
   }
 
   // --- WhatsApp (Meta Cloud API) ------------------------------------------
   if (env.whatsappEnabled) {
-    const body = `*New ${kind}*\n${textLines.join("\n")}`;
+    const kind = notice.source === "booking" ? "Booking request" : "Enquiry";
+    const lines = [
+      `Name: ${notice.name}`,
+      `Phone: ${notice.phone}`,
+      notice.email ? `Email: ${notice.email}` : null,
+      notice.service ? `Interested in: ${notice.service}` : null,
+      notice.message ? `Message: ${notice.message}` : null,
+    ].filter(Boolean);
+    const body = `*New ${kind}*\n${lines.join("\n")}`;
     try {
-      const res = await fetch(
-        `https://graph.facebook.com/v21.0/${env.WHATSAPP_PHONE_ID}/messages`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${env.WHATSAPP_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            to: env.WHATSAPP_NOTIFY_TO,
-            type: "text",
-            text: { body },
-          }),
+      const res = await fetch(`https://graph.facebook.com/v21.0/${env.WHATSAPP_PHONE_ID}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.WHATSAPP_TOKEN}`,
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to: env.WHATSAPP_NOTIFY_TO,
+          type: "text",
+          text: { body },
+        }),
+      });
       if (!res.ok) {
         console.error(`[whatsapp] send failed (${res.status}): ${await res.text().catch(() => "")}`);
       }

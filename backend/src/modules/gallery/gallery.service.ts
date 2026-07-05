@@ -3,6 +3,7 @@ import { buildPaginationMeta } from "../../lib/pagination.js";
 import type { PaginationMeta } from "../../lib/response.js";
 import { NotFound } from "../../lib/errors.js";
 import { AuditAction, writeAudit } from "../../lib/audit.js";
+import { revalidateWebsite } from "../../lib/revalidate.js";
 import type { StorageDriver } from "../../lib/storage/index.js";
 import type { ActorContext } from "../users/users.service.js";
 import { GalleryRepository } from "./gallery.repository.js";
@@ -70,6 +71,7 @@ export class GalleryService {
       newData: dto,
       ipAddress: actor.ip,
     });
+    void revalidateWebsite("gallery");
     return dto;
   }
 
@@ -94,6 +96,7 @@ export class GalleryService {
       newData: toGalleryDto(updated),
       ipAddress: actor.ip,
     });
+    void revalidateWebsite("gallery");
     return toGalleryDto(updated);
   }
 
@@ -113,5 +116,6 @@ export class GalleryService {
       oldData: toGalleryDto(existing),
       ipAddress: actor.ip,
     });
+    void revalidateWebsite("gallery");
   }
 }

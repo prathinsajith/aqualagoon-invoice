@@ -7,7 +7,8 @@ import Faq from "@/components/Faq";
 import ServiceSlider from "@/components/ServiceSlider";
 import Social from "@/components/Social";
 import { AUDIENCES, WHYFIT, WHYUS } from "@/lib/data";
-import { BRAND } from "@/lib/constants";
+import { AREAS } from "@/lib/areas";
+import { BRAND, LOCATION } from "@/lib/constants";
 import { getSiteContent, contentImage } from "@/lib/site-content";
 
 export default async function HomePage() {
@@ -194,6 +195,22 @@ export default async function HomePage() {
           <Link href="/classes" className="btn btn-soft">Full schedule &amp; pricing →</Link>
         </div>
         <Timetable timetable={timetable} />
+      </section>
+
+      {/* AREAS WE SERVE — internal links to per-town pages + local keywords */}
+      <section className="section container">
+        <div className="section-head" style={{ maxWidth: 640 }}>
+          <span className="eyebrow">Areas we serve</span>
+          <h2>A swimming pool for the whole region</h2>
+          <p>Based in {LOCATION.locality}, we welcome swimmers from across the surrounding towns.</p>
+        </div>
+        <div className="area-chips">
+          {AREAS.map((a) => (
+            <Link key={a.slug} href={`/areas/${a.slug}`} className="area-chip">
+              Swimming pool in {a.name}
+            </Link>
+          ))}
+        </div>
       </section>
 
       {/* FAQ — local Q&A content (helps search + AI answer engines) */}
