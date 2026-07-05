@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import type { PrismaClient } from "../../generated/prisma/client.js";
 import { AuditAction, writeAudit } from "../../lib/audit.js";
+import { revalidateWebsite } from "../../lib/revalidate.js";
 import type { ActorContext } from "../users/users.service.js";
 import {
   SECTION_SCHEMAS,
@@ -59,6 +60,9 @@ export class SiteContentService {
       newData: value as object,
       ipAddress: actor.ip,
     });
+
+    // Refresh the marketing site's cached pages so the edit shows immediately.
+    void revalidateWebsite("site-content");
 
     return value;
   }

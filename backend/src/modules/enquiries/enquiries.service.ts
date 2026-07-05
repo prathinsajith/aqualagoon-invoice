@@ -7,6 +7,7 @@ import { NotFound } from "../../lib/errors.js";
 import { AuditAction, writeAudit } from "../../lib/audit.js";
 import { env } from "../../config/env.js";
 import { notifyNewEnquiry } from "../../lib/notify.js";
+import { loadMailBranding } from "../../lib/mail/branding.js";
 import type { ActorContext } from "../users/users.service.js";
 import type { z } from "zod";
 import type { createEnquiryBody, enquirySchema, listEnquiriesQuery } from "./enquiries.schema.js";
@@ -63,9 +64,16 @@ export class EnquiriesService {
 
   private async notify(dto: EnquiryDto): Promise<void> {
     try {
-      const toEmail = env.ENQUIRY_NOTIFY_EMAIL || (await this.contactEmail()) || env.EMAIL_FROM;
-      await notifyNewEnquiry(
-        {
+      const [brand, contact] = await Promise.all([
+        loadMailBranding(this.prisma),
+        this.contactInfo(),
+      ]);
+      const adminEmail = env.ENQUIRY_NOTIFY_EMAIL || contact.email || env.EMAIL_FROM;
+      await notifyNewEnquiry({
+        brand,
+        adminEmail,
+        contact,
+        notice: {
           name: dto.name,
           phone: dto.phone,
           email: dto.email,
@@ -73,18 +81,18 @@ export class EnquiriesService {
           message: dto.message,
           source: dto.source,
         },
-        toEmail,
-      );
+      });
     } catch (error) {
       console.error("[enquiry] notification failed:", error);
     }
   }
 
-  /** The site's configured contact email (from CMS), used as the notify fallback. */
-  private async contactEmail(): Promise<string | null> {
+  /** The site's configured contact details (from CMS) — notify recipient + visitor-facing contact. */
+  private async contactInfo(): Promise<{ email: string | null; phone: string | null }> {
     const row = await this.prisma.siteContent.findUnique({ where: { key: "contact" } });
-    const email = (row?.data as { email?: unknown } | null)?.email;
-    return typeof email === "string" && email ? email : null;
+    const data = (row?.data ?? null) as { email?: unknown; phone?: unknown } | null;
+    const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+    return { email: str(data?.email), phone: str(data?.phone) };
   }
 
   async list(

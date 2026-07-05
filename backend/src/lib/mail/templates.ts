@@ -87,7 +87,7 @@ export function welcomeEmail(
   const html = layout(
     brand,
     `
-    <h1 style="margin:0 0 12px;font-size:20px;color:#0f172a;">Welcome aboard, ${name}! 🌊</h1>
+    <h1 style="margin:0 0 12px;font-size:20px;color:#0f172a;">Welcome aboard, ${name}!</h1>
     <p style="margin:0 0 8px;">Your ${escapeHtml(brand.name)} account has been created. You can now sign in to the admin console.</p>
     ${button(opts.loginUrl, "Go to sign in")}
     <p style="margin:0;color:#64748b;font-size:13px;">If you weren't expecting this, please contact your administrator.</p>
@@ -107,7 +107,7 @@ export function setPasswordEmail(
   const html = layout(
     brand,
     `
-    <h1 style="margin:0 0 12px;font-size:20px;color:#0f172a;">Welcome aboard, ${name}! 🌊</h1>
+    <h1 style="margin:0 0 12px;font-size:20px;color:#0f172a;">Welcome aboard, ${name}!</h1>
     <p style="margin:0 0 8px;">An account has been created for you on ${escapeHtml(brand.name)}. Set your password to finish setting up and sign in.</p>
     ${button(opts.setupUrl, "Set your password")}
     <p style="margin:0 0 8px;color:#64748b;font-size:13px;">This link expires in ${opts.ttl}. If it expires, use "Forgot password" on the sign-in page to request a new one.</p>
@@ -116,4 +116,142 @@ export function setPasswordEmail(
   );
   const text = `Welcome to ${brand.name}, ${opts.name}!\n\nSet your password to finish setting up your account (expires in ${opts.ttl}):\n${opts.setupUrl}`;
   return { to: "", subject, html, text };
+}
+
+// ── Website enquiry / booking emails ────────────────────────────────────────
+
+export interface EnquiryNotice {
+  name: string;
+  phone: string;
+  email: string | null;
+  service: string | null;
+  message: string | null;
+  source: string;
+}
+
+/** Business contact details surfaced in the visitor's confirmation email. */
+export interface EnquiryContact {
+  phone: string | null;
+  email: string | null;
+}
+
+function enquiryKind(source: string): string {
+  return source === "booking" ? "Booking request" : "Enquiry";
+}
+
+/** A label/value details table for the submitted fields (skips empty ones). */
+function detailsTable(notice: EnquiryNotice): string {
+  const rows: [string, string | null][] = [
+    ["Name", notice.name],
+    ["Phone", notice.phone],
+    ["Email", notice.email],
+    ["Interested in", notice.service],
+    ["Message", notice.message],
+  ];
+  const cells = rows
+    .filter(([, v]) => !!v)
+    .map(
+      ([k, v]) =>
+        `<tr><td style="padding:7px 14px 7px 0;color:#64748b;vertical-align:top;white-space:nowrap;font-size:13px;"><strong>${escapeHtml(k)}</strong></td><td style="padding:7px 0;color:#0f172a;font-size:14px;">${escapeHtml(v as string).replace(/\n/g, "<br>")}</td></tr>`,
+    )
+    .join("");
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">${cells}</table>`;
+}
+
+function detailsText(notice: EnquiryNotice): string {
+  return [
+    `Name: ${notice.name}`,
+    `Phone: ${notice.phone}`,
+    notice.email ? `Email: ${notice.email}` : null,
+    notice.service ? `Interested in: ${notice.service}` : null,
+    notice.message ? `Message: ${notice.message}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** Notifies the business of a new website enquiry/booking. */
+export function enquiryNotificationEmail(brand: MailBranding, notice: EnquiryNotice): MailMessage {
+  const kind = enquiryKind(notice.source);
+  const html = layout(
+    brand,
+    `
+    <h1 style="margin:0 0 12px;font-size:20px;color:#0f172a;">New ${escapeHtml(kind.toLowerCase())} from the website</h1>
+    <p style="margin:0 0 20px;color:#475569;">You have a new ${escapeHtml(kind.toLowerCase())}. Reply or call the visitor back.</p>
+    <div style="background:#f2f9fd;border-radius:12px;padding:16px 18px;">
+      ${detailsTable(notice)}
+    </div>
+  `,
+  );
+  const text = `New ${kind.toLowerCase()} from the website:\n\n${detailsText(notice)}`;
+  return { to: "", subject: `New ${kind} — ${notice.name}`, html, text };
+}
+
+/** Confirms receipt to the visitor who submitted the form (needs their email). */
+export function enquiryConfirmationEmail(
+  brand: MailBranding,
+  notice: EnquiryNotice,
+  contact?: EnquiryContact,
+): MailMessage {
+  const kind = enquiryKind(notice.source);
+  const isBooking = notice.source === "booking";
+  const firstName = escapeHtml(notice.name.split(" ")[0] || notice.name);
+  const intro = isBooking
+    ? `We've received your booking request and our team will call you back shortly to confirm the details.`
+    : `Thanks for reaching out! We've received your enquiry and our team will get back to you soon.`;
+  const steps = isBooking
+    ? ["We review your booking request", "Our team calls you to confirm the details", "See you at the pool"]
+    : ["We review your message", "Our team gets back to you shortly", "We help you get started"];
+  const reachUs = contact?.phone
+    ? `Prefer to talk now? Call <strong style="color:#0f172a;">${escapeHtml(contact.phone)}</strong> and we'll be happy to help.`
+    : `Need anything sooner? Just reply to this email.`;
+  const callButton = contact?.phone
+    ? button(`tel:${contact.phone.replace(/[^\d+]/g, "")}`, "Call us")
+    : "";
+  const html = layout(
+    brand,
+    `
+    <h1 style="margin:0 0 12px;font-size:20px;color:#0f172a;">${isBooking ? "Booking request received" : "We've received your enquiry"}</h1>
+    <p style="margin:0 0 8px;">Hi ${firstName},</p>
+    <p style="margin:0 0 22px;">${intro}</p>
+    <div style="background:#f2f9fd;border-radius:12px;padding:16px 18px;margin:0 0 22px;">
+      <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Your ${escapeHtml(kind.toLowerCase())}</div>
+      ${detailsTable(notice)}
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 12px;">What happens next</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
+      ${steps
+        .map(
+          (s, i) =>
+            `<tr>
+              <td width="32" style="padding:0 12px 14px 0;vertical-align:top;">
+                <div style="width:26px;height:26px;border-radius:50%;background:${AQUA};color:#ffffff;font-size:13px;font-weight:800;text-align:center;line-height:26px;">${i + 1}</div>
+              </td>
+              <td style="padding:0 0 14px;vertical-align:middle;color:#334155;font-size:14px;">${escapeHtml(s)}</td>
+            </tr>`,
+        )
+        .join("")}
+    </table>
+    ${callButton}
+    <p style="margin:${callButton ? "8" : "20"}px 0 0;color:#475569;font-size:14px;text-align:center;">${reachUs}</p>
+  `,
+  );
+  const text = [
+    `Hi ${notice.name},`,
+    "",
+    intro,
+    "",
+    `Your ${kind.toLowerCase()}:`,
+    detailsText(notice),
+    "",
+    "What happens next:",
+    ...steps.map((s, i) => `${i + 1}. ${s}`),
+    "",
+    contact?.phone ? `Prefer to talk now? Call ${contact.phone}.` : "",
+    `— ${brand.name}`,
+  ]
+    .filter((l) => l !== "")
+    .join("\n");
+  const subject = isBooking ? `We got your booking request — ${brand.name}` : `Thanks for your enquiry — ${brand.name}`;
+  return { to: notice.email ?? "", subject, html, text };
 }

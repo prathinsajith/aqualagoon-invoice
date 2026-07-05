@@ -42,7 +42,7 @@ interface ApiGalleryImage {
  */
 export async function fetchGallery(): Promise<{ items: GalleryView[]; categories: string[] }> {
   try {
-    const res = await fetch(`${API_URL}/api/gallery`, { cache: "no-store" });
+    const res = await fetch(`${API_URL}/api/gallery`, { next: { revalidate: 3600 } });
     if (!res.ok) return fallback();
 
     const json = (await res.json()) as { data?: ApiGalleryImage[]; meta?: { categories?: string[] } };

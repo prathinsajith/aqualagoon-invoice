@@ -233,13 +233,14 @@ interface ApiResponse {
 }
 
 /**
- * Fetches the full site content from the backend (server-side; revalidated every
- * 60s). Falls back to DEFAULT_CONTENT if the API is unreachable.
+ * Fetches the full site content from the backend (server-side). Cached so pages
+ * render instantly without a per-request backend round-trip; the backend calls
+ * /api/revalidate on save so edits still appear at once, with a 1-hour fallback
+ * refresh. Falls back to DEFAULT_CONTENT if the API is unreachable.
  */
 export async function getSiteContent(): Promise<SiteContent> {
   try {
-    // No caching: admin edits must appear on the site immediately.
-    const res = await fetch(`${API_URL}/api/site-content`, { cache: "no-store" });
+    const res = await fetch(`${API_URL}/api/site-content`, { next: { revalidate: 3600 } });
     if (!res.ok) return DEFAULT_CONTENT;
     const json = (await res.json()) as ApiResponse;
     const d = json.data;

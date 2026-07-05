@@ -90,6 +90,12 @@ const envSchema = z.object({
   WHATSAPP_TOKEN: z.string().optional(),
   WHATSAPP_PHONE_ID: z.string().optional(),
   WHATSAPP_NOTIFY_TO: z.string().optional(),
+
+  // --- Website ISR revalidation ---------------------------------------------
+  // When content/gallery is saved, ping the marketing site's /api/revalidate so
+  // its cached pages refresh immediately. Set both to enable (no-op otherwise).
+  WEBSITE_REVALIDATE_URL: z.string().url().optional(),
+  REVALIDATE_SECRET: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -124,6 +130,7 @@ export const env = {
   mailEnabled,
   whatsappEnabled:
     !!data.WHATSAPP_TOKEN && !!data.WHATSAPP_PHONE_ID && !!data.WHATSAPP_NOTIFY_TO,
+  revalidateEnabled: !!data.WEBSITE_REVALIDATE_URL && !!data.REVALIDATE_SECRET,
   // Explicit MAIL_FROM wins; otherwise compose "Name <addr>".
   mailFrom: data.MAIL_FROM ?? `${data.EMAIL_FROM_NAME} <${data.EMAIL_FROM}>`,
 } as const;
