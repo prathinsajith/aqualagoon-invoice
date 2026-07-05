@@ -1,45 +1,39 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { SERVICE_OPTIONS } from "@/lib/data";
+import { enquiryFormSchema, type EnquiryFormValues } from "@/lib/enquiry-schema";
 
 export default function ContactForm({ source = "contact" }: { source?: "contact" | "booking" }) {
   const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return;
-    }
-    const fd = new FormData(form);
-    const payload = {
-      name: String(fd.get("name") || "").trim(),
-      phone: String(fd.get("phone") || "").trim(),
-      email: String(fd.get("email") || "").trim(),
-      service: String(fd.get("service") || "").trim(),
-      message: String(fd.get("message") || "").trim(),
-      source,
-    };
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<EnquiryFormValues>({
+    resolver: zodResolver(enquiryFormSchema),
+    mode: "onTouched", // validate a field once the user leaves it, then live
+    defaultValues: { name: "", phone: "", email: "", service: SERVICE_OPTIONS[0], message: "" },
+  });
 
-    setSubmitting(true);
+  async function onSubmit(values: EnquiryFormValues) {
     setError(null);
     try {
       const res = await fetch("/api/enquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...values, source }),
       });
       if (!res.ok) throw new Error();
       setSubmitted(true);
-      form.reset();
+      reset();
     } catch {
       setError("Something went wrong. Please try again or call us directly.");
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -64,26 +58,50 @@ export default function ContactForm({ source = "contact" }: { source?: "contact"
 
   return (
     <div className="contact-form">
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <h2>Book or enquire</h2>
         <p className="sub">We&apos;ll get back within a day.</p>
         <div className="field">
           <label htmlFor="cf-name">Full name</label>
-          <input id="cf-name" name="name" type="text" placeholder="Your name" required />
+          <input
+            id="cf-name"
+            type="text"
+            placeholder="Your name"
+            aria-invalid={!!errors.name}
+            {...register("name")}
+          />
+          {errors.name && <p className="field-error">{errors.name.message}</p>}
         </div>
         <div className="field-row">
           <div className="field">
             <label htmlFor="cf-phone">Phone</label>
-            <input id="cf-phone" name="phone" type="tel" placeholder="Mobile number" required />
+            <input
+              id="cf-phone"
+              type="tel"
+              inputMode="tel"
+              placeholder="Mobile number"
+              aria-invalid={!!errors.phone}
+              {...register("phone")}
+            />
+            {errors.phone && <p className="field-error">{errors.phone.message}</p>}
           </div>
           <div className="field">
-            <label htmlFor="cf-email">Email</label>
-            <input id="cf-email" name="email" type="email" placeholder="you@email.com" required />
+            <label htmlFor="cf-email">
+              Email <span className="opt">(optional)</span>
+            </label>
+            <input
+              id="cf-email"
+              type="email"
+              placeholder="you@email.com"
+              aria-invalid={!!errors.email}
+              {...register("email")}
+            />
+            {errors.email && <p className="field-error">{errors.email.message}</p>}
           </div>
         </div>
         <div className="field">
           <label htmlFor="cf-service">Interested in</label>
-          <select id="cf-service" name="service" defaultValue={SERVICE_OPTIONS[0]}>
+          <select id="cf-service" {...register("service")}>
             {SERVICE_OPTIONS.map((o) => (
               <option key={o} value={o}>
                 {o}
@@ -93,13 +111,18 @@ export default function ContactForm({ source = "contact" }: { source?: "contact"
         </div>
         <div className="field">
           <label htmlFor="cf-message">Message</label>
-          <textarea id="cf-message" name="message" rows={3} placeholder="Tell us what you need…" />
+          <textarea
+            id="cf-message"
+            rows={3}
+            placeholder="Tell us what you need…"
+            aria-invalid={!!errors.message}
+            {...register("message")}
+          />
+          {errors.message && <p className="field-error">{errors.message.message}</p>}
         </div>
-        {error && (
-          <p style={{ color: "#dc2626", fontSize: 14, fontWeight: 700, margin: "0 0 10px" }}>{error}</p>
-        )}
-        <button className="form-submit" type="submit" disabled={submitting}>
-          {submitting ? "Sending…" : "Send request →"}
+        {error && <p className="field-error form-error">{error}</p>}
+        <button className="form-submit" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Sending…" : "Send request →"}
         </button>
       </form>
     </div>

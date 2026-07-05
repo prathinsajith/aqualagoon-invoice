@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fredoka, Nunito } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -31,9 +32,19 @@ export async function generateMetadata(): Promise<Metadata> {
   // one. Falls back to the bundled 1200×630 card (hero + logo + brand name).
   const ogImage = contentImage(branding.ogImageUrl) || "/assets/og-image.jpg";
   const icon = contentImage(branding.logoUrl) || "/assets/logo-160.webp";
+  // Search-engine ownership verification. Codes are public (they render in the
+  // page <head>), so the Google one is baked in as the default; either can be
+  // overridden via env.
+  const googleVerification =
+    process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "9cgrNg8rXfcGvGVnQ61qP8NOCaOf2PrRStYisoQp2uM";
+  const bingVerification = process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION;
   return {
     metadataBase: new URL(SITE_URL),
     applicationName: BRAND.name,
+    verification: {
+      ...(googleVerification ? { google: googleVerification } : {}),
+      ...(bingVerification ? { other: { "msvalidate.01": bingVerification } } : {}),
+    },
     title: {
       default: branding.metaTitle,
       template: `%s`,
@@ -69,6 +80,8 @@ const absUrl = (u: string) => (u.startsWith("/") ? `${SITE_URL}${u}` : u);
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { branding, contact } = await getSiteContent();
   const logoUrl = contentImage(branding.logoUrl) || "/assets/logo-160.webp";
+  const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID || "xhc2qttknk";
+  const gaId = process.env.NEXT_PUBLIC_GA_ID || "G-TCDGT6KBQQ";
 
   // Structured data (helps Google understand & richly display the business).
   const jsonLd = {
@@ -123,6 +136,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <main>{children}</main>
           <Footer logoUrl={logoUrl} contact={contact} />
         </div>
+        {/* Microsoft Clarity — heatmaps + session recordings (analytics only, no SEO
+            impact). Loads after the page is interactive so it never blocks render.
+            Project ID is env-overridable; falls back to the live project. */}
+        {clarityId ? (
+          <Script id="ms-clarity" strategy="afterInteractive">
+            {`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","${clarityId}");`}
+          </Script>
+        ) : null}
+        {/* Google Analytics 4 — visitor counts, traffic sources, conversions.
+            Loads after interactive so it never blocks render. ID env-overridable. */}
+        {gaId ? (
+          <>
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
+            <Script id="ga4" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');`}
+            </Script>
+          </>
+        ) : null}
       </body>
     </html>
   );

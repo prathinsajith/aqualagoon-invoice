@@ -23,7 +23,9 @@ export const enquirySchema = z.object({
 export const createEnquiryBody = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   phone: z.string().trim().min(1, "Phone is required").max(60),
-  email: z.string().trim().min(1, "Email is required").email("Enter a valid email").max(160),
+  // Optional — but must be a valid address when provided (used to email the
+  // visitor a confirmation).
+  email: z.string().trim().email("Enter a valid email").max(160).optional().or(z.literal("")),
   service: z.string().trim().max(120).optional().or(z.literal("")),
   message: z.string().trim().max(2000).optional().or(z.literal("")),
   source: z.enum(["contact", "booking"]).default("contact"),
