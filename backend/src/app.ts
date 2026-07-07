@@ -139,12 +139,32 @@ export async function buildApp() {
     });
   });
 
-  // CSP is disabled so the bundled Swagger UI assets load; tighten this if the
-  // API is ever served on a public origin. CORP is relaxed to cross-origin so
-  // the frontend (different origin) can embed served avatar images in <img>.
+  // Security headers (helmet also sets X-Content-Type-Options, HSTS, etc.).
+  // The API only ever returns JSON/binary, so we lock the CSP right down to
+  // `default-src 'none'` (defense-in-depth: even if a response were rendered as
+  // a document, nothing could load or execute). CORP is relaxed to cross-origin
+  // so the website/admin (different origins) can embed served images in <img>.
   await app.register(helmet, {
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        "default-src": ["'none'"],
+        "frame-ancestors": ["'none'"],
+        "base-uri": ["'none'"],
+      },
+    },
     crossOriginResourcePolicy: { policy: "cross-origin" },
+  });
+  // The bundled Swagger UI (/docs) needs inline scripts/styles + its own
+  // assets, so relax the CSP for just that path (it's a dev/ops explorer, not
+  // an API surface). Runs after helmet's onRequest hook, overriding its header.
+  app.addHook("onSend", async (request, reply) => {
+    if (request.url.startsWith("/docs")) {
+      reply.header(
+        "content-security-policy",
+        "default-src 'self'; base-uri 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https:; font-src 'self' https: data:; connect-src 'self'",
+      );
+    }
   });
   await app.register(cors, {
     origin: env.corsOrigins,
