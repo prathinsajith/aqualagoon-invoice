@@ -30,7 +30,7 @@ export default function Gallery({
           <div
             key={`${it.title}-${i}`}
             className="gallery-item"
-            style={{ aspectRatio: it.ratio, background: it.tint ?? "#0c3b63" }}
+            style={{ background: it.tint ?? "#0c3b63" }}
           >
             {it.imageUrl ? (
               <Image

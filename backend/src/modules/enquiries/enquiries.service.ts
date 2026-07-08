@@ -29,6 +29,9 @@ function toDto(e: Enquiry): EnquiryDto {
     email: e.email,
     service: e.service,
     message: e.message,
+    eventDate: e.eventDate,
+    eventType: e.eventType,
+    guests: e.guests,
     source: e.source,
     status: e.status,
     handledBy: e.handledBy,
@@ -46,10 +49,13 @@ export class EnquiriesService {
     const row = await this.prisma.enquiry.create({
       data: {
         name: input.name,
-        phone: input.phone,
+        phone: clean(input.phone),
         email: clean(input.email),
         service: clean(input.service),
         message: clean(input.message),
+        eventDate: input.eventDate ?? null,
+        eventType: clean(input.eventType),
+        guests: clean(input.guests),
         source: input.source,
       },
     });
@@ -79,6 +85,10 @@ export class EnquiriesService {
           email: dto.email,
           service: dto.service,
           message: dto.message,
+          // Booking-only fields (event date shown as YYYY-MM-DD).
+          eventDate: dto.eventDate ? dto.eventDate.toISOString().slice(0, 10) : null,
+          eventType: dto.eventType,
+          guests: dto.guests,
           source: dto.source,
         },
       });

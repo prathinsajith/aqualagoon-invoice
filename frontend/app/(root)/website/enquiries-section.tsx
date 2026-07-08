@@ -39,6 +39,14 @@ function fmt(d: string) {
     }
 }
 
+function fmtDate(d: string) {
+    try {
+        return new Date(d).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+    } catch {
+        return d;
+    }
+}
+
 export function EnquiriesSection() {
     const [page, setPage] = useState(1);
     const [searchInput, setSearchInput] = useState("");
@@ -136,9 +144,11 @@ export function EnquiriesSection() {
                                         <Badge variant="outline" className="capitalize">{e.source === "booking" ? "Book Now" : "Contact"}</Badge>
                                     </div>
                                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                                        <a href={`tel:${e.phone}`} className="inline-flex items-center gap-1.5 hover:text-foreground">
-                                            <IconPhone className="size-3.5" /> {e.phone}
-                                        </a>
+                                        {e.phone && (
+                                            <a href={`tel:${e.phone}`} className="inline-flex items-center gap-1.5 hover:text-foreground">
+                                                <IconPhone className="size-3.5" /> {e.phone}
+                                            </a>
+                                        )}
                                         {e.email && (
                                             <a href={`mailto:${e.email}`} className="inline-flex items-center gap-1.5 hover:text-foreground">
                                                 <IconMail className="size-3.5" /> {e.email}
@@ -170,6 +180,19 @@ export function EnquiriesSection() {
                                 </Can>
                             </div>
 
+                            {(e.eventDate || e.eventType || e.guests) && (
+                                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+                                    {e.eventDate && (
+                                        <span><span className="text-muted-foreground">Event date:</span> <span className="font-medium">{fmtDate(e.eventDate)}</span></span>
+                                    )}
+                                    {e.eventType && (
+                                        <span><span className="text-muted-foreground">Type:</span> <span className="font-medium">{e.eventType}</span></span>
+                                    )}
+                                    {e.guests && (
+                                        <span><span className="text-muted-foreground">Guests:</span> <span className="font-medium">{e.guests}</span></span>
+                                    )}
+                                </div>
+                            )}
                             {e.service && (
                                 <p className="mt-3 text-sm">
                                     <span className="text-muted-foreground">Interested in:</span> <span className="font-medium">{e.service}</span>

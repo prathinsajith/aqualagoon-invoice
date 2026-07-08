@@ -59,3 +59,7 @@ export const GALLERY: GalleryItem[] = [
   { label: "Community workshop", cat: "Events", icon: "ticket", tint: "linear-gradient(135deg,#ffd58f,#c47a12)", ratio: "4/5" },
 ];
 export const SERVICE_OPTIONS = ["Learn to Swim (Kids)", "Learn to Swim (Adults)", "Open Swimming / Day Pass", "Yoga", "Zumba", "Auditorium Booking", "Something else"];
+
+// Private-event booking form options.
+export const EVENT_TYPE_OPTIONS = ["Birthday Party", "Corporate Event", "Private Party", "Kids Pool Party", "Other Celebration"];
+export const GUEST_OPTIONS = ["1 - 10", "11 - 20", "21 - 50", "51 - 100", "100+"];
