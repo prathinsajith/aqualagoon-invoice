@@ -62,7 +62,7 @@ export default function Header({ logoUrl = "/assets/logo-160.webp" }: { logoUrl?
 
   if (showOverlay) {
     return (
-      <header className="site-header header-overlay">
+      <header className={`site-header header-overlay${menuOpen ? " menu-open" : ""}`}>
         <div className="nav-shell">
           <div className="nav-bar">
             <Link href="/" className="brand" aria-label={`${BRAND.name} home`}>
@@ -79,6 +79,9 @@ export default function Header({ logoUrl = "/assets/logo-160.webp" }: { logoUrl?
             </nav>
             <Link href="/contact" className="link-contact">
               Contact Us
+            </Link>
+            <Link href="/contact?intent=book" className="cta-quote">
+              Book Now
             </Link>
             {burger("#fff")}
           </div>

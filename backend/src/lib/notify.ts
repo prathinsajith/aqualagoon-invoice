@@ -44,8 +44,11 @@ export async function notifyNewEnquiry({ brand, notice, adminEmail, contact }: N
     const kind = notice.source === "booking" ? "Booking request" : "Enquiry";
     const lines = [
       `Name: ${notice.name}`,
-      `Phone: ${notice.phone}`,
+      notice.phone ? `Phone: ${notice.phone}` : null,
       notice.email ? `Email: ${notice.email}` : null,
+      notice.eventDate ? `Event date: ${notice.eventDate}` : null,
+      notice.eventType ? `Event type: ${notice.eventType}` : null,
+      notice.guests ? `Guests: ${notice.guests}` : null,
       notice.service ? `Interested in: ${notice.service}` : null,
       notice.message ? `Message: ${notice.message}` : null,
     ].filter(Boolean);

@@ -288,11 +288,17 @@ enum EnquiryStatus {
 model Enquiry {
   id        String        @id @default(uuid())
   name      String
-  phone     String
+  // Optional: the contact form collects a phone; the event-booking form collects
+  // an email instead. At least one is always present (enforced in the API schema).
+  phone     String?
   email     String?
   // The "Interested in" option the visitor picked (free text).
   service   String?
   message   String?
+  // Private-event booking details (only set when source = "booking").
+  eventDate DateTime? @map("event_date")
+  eventType String?   @map("event_type")
+  guests    String?
   // Where it came from, e.g. "booking" (Book Now) or "contact".
   source    String        @default("contact")
   status    EnquiryStatus @default(NEW)

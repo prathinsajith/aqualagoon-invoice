@@ -122,10 +122,13 @@ export function setPasswordEmail(
 
 export interface EnquiryNotice {
   name: string;
-  phone: string;
+  phone: string | null;
   email: string | null;
   service: string | null;
   message: string | null;
+  eventDate?: string | null;
+  eventType?: string | null;
+  guests?: string | null;
   source: string;
 }
 
@@ -145,6 +148,9 @@ function detailsTable(notice: EnquiryNotice): string {
     ["Name", notice.name],
     ["Phone", notice.phone],
     ["Email", notice.email],
+    ["Event date", notice.eventDate ?? null],
+    ["Event type", notice.eventType ?? null],
+    ["Guests", notice.guests ?? null],
     ["Interested in", notice.service],
     ["Message", notice.message],
   ];
@@ -161,8 +167,11 @@ function detailsTable(notice: EnquiryNotice): string {
 function detailsText(notice: EnquiryNotice): string {
   return [
     `Name: ${notice.name}`,
-    `Phone: ${notice.phone}`,
+    notice.phone ? `Phone: ${notice.phone}` : null,
     notice.email ? `Email: ${notice.email}` : null,
+    notice.eventDate ? `Event date: ${notice.eventDate}` : null,
+    notice.eventType ? `Event type: ${notice.eventType}` : null,
+    notice.guests ? `Guests: ${notice.guests}` : null,
     notice.service ? `Interested in: ${notice.service}` : null,
     notice.message ? `Message: ${notice.message}` : null,
   ]

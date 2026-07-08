@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Icon, { IconTile } from "@/components/Icon";
-import Timetable from "@/components/Timetable";
+import BookingCalendar from "@/components/BookingCalendar";
 import Testimonials from "@/components/Testimonials";
 import Faq from "@/components/Faq";
 import ServiceSlider from "@/components/ServiceSlider";
@@ -12,7 +12,7 @@ import { BRAND, LOCATION } from "@/lib/constants";
 import { getSiteContent, contentImage } from "@/lib/site-content";
 
 export default async function HomePage() {
-  const { homepage, services, timetable, contact } = await getSiteContent();
+  const { homepage, services, contact } = await getSiteContent();
   const heroSrc = contentImage(homepage.heroImageUrl);
   const offerCards = services.map((sv) => ({
     id: sv.id,
@@ -76,7 +76,9 @@ export default async function HomePage() {
           </div>
           <div className="substrip-divider" />
           <div className="substrip-cell">
-            <svg width="54" height="34" viewBox="0 0 54 34" fill="none" stroke="#0c3b63" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flex: "none" }}><path d="M6 3v28" /><path d="M48 3v28" /><path d="M13 17h28" /><path d="M13 17l7-7" /><path d="M13 17l7 7" /><path d="M41 17l-7-7" /><path d="M41 17l-7 7" /></svg>
+            <div className="substrip-icon">
+              <svg width="46" height="30" viewBox="0 0 54 34" fill="none" stroke="#0c3b63" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v28" /><path d="M48 3v28" /><path d="M13 17h28" /><path d="M13 17l7-7" /><path d="M13 17l7 7" /><path d="M41 17l-7-7" /><path d="M41 17l-7 7" /></svg>
+            </div>
             <p className="p2">Guided by certified coaches. Built for confidence. Creating serene spaces made for wellness and play.</p>
           </div>
         </div>
@@ -84,8 +86,6 @@ export default async function HomePage() {
 
       {/* WHAT WE OFFER — slider */}
       <section className="offer-section">
-        {/* Wordmark drawn via ::before so a11y tooling ignores the decorative text */}
-        <div className="offer-wordmark" aria-hidden="true" data-text={BRAND.name} />
         <div className="offer-inner">
           <div className="offer-head">
             <span className="eyebrow">What we offer</span>
@@ -124,7 +124,7 @@ export default async function HomePage() {
       </section>
 
       {/* WHY WE'RE THE RIGHT FIT */}
-      <section className="section container" style={{ paddingBottom: 10 }}>
+      <section className="section container" style={{ paddingBottom: 72 }}>
         <div className="section-head">
           <span className="eyebrow">Why Aqua Lagoon</span>
           <h2>Where passion meets precision</h2>
@@ -185,16 +185,17 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* TIMETABLE PREVIEW */}
+      {/* BOOK A PRIVATE EVENT */}
       <section className="section container">
-        <div className="timetable-head">
-          <div>
-            <span className="eyebrow">Plan your visit</span>
-            <h2>This week&apos;s timetable</h2>
-          </div>
-          <Link href="/classes" className="btn btn-soft">Full schedule &amp; pricing →</Link>
+        <div className="section-head" style={{ maxWidth: 640 }}>
+          <span className="eyebrow">Plan your visit</span>
+          <h2>Book your private event</h2>
+          <p>
+            Host your next birthday, celebration or gathering at {BRAND.name}. Pick a date and share a few details —
+            we&apos;ll call you back to confirm availability.
+          </p>
         </div>
-        <Timetable timetable={timetable} />
+        <BookingCalendar />
       </section>
 
       {/* AREAS WE SERVE — internal links to per-town pages + local keywords */}
